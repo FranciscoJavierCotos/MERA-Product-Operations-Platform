@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SearchBar } from "@/components/shared/search-bar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { searchTickets } from "@/lib/supabase/queries/tickets";
 import { Ticket } from "@/types/ticket.types";
@@ -20,12 +20,24 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { formatDate } from "@/lib/utils/date";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
+import { useNavigation } from "@/lib/hooks/use-navigation";
 
 export default function SearchPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { savePageState, getPageState } = useNavigation();
+
+  // Restore search state when returning to page
+  useEffect(() => {
+    const savedState = getPageState();
+    if (savedState?.searchQuery) {
+      setSearchQuery(savedState.searchQuery);
+      setTickets(savedState.tickets || []);
+      setHasSearched(savedState.hasSearched || false);
+    }
+  }, []);
 
   const handleSearch = async (query: string) => {
     setLoading(true);
@@ -35,9 +47,21 @@ export default function SearchPage() {
       const supabase = createClient();
       const results = await searchTickets(supabase, query);
       setTickets(results);
+
+      // Save search state for when user returns
+      savePageState({
+        searchQuery: query,
+        tickets: results,
+        hasSearched: true,
+      });
     } catch (error) {
       console.error("Search error:", error);
       setTickets([]);
+      savePageState({
+        searchQuery: query,
+        tickets: [],
+        hasSearched: true,
+      });
     } finally {
       setLoading(false);
     }
@@ -60,6 +84,7 @@ export default function SearchPage() {
           <SearchBar
             placeholder='Search tickets by title or description... (use "quotes" for exact match)'
             onSearch={handleSearch}
+            defaultValue={searchQuery}
           />
           <div className="mt-4 text-xs text-gray-500">
             <p>

@@ -14,6 +14,8 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils/format";
 import { Profile } from "@/types/user.types";
+import { GoBackButton } from "./go-back-button";
+import { useNavigation } from "@/lib/hooks/use-navigation";
 
 interface NavbarProps {
   user: Profile | null;
@@ -22,8 +24,11 @@ interface NavbarProps {
 export function Navbar({ user }: NavbarProps) {
   const router = useRouter();
   const supabase = createClient();
+  const { clearHistory } = useNavigation();
 
   const handleLogout = async () => {
+    // Clear navigation history on logout
+    clearHistory();
     await supabase.auth.signOut();
     router.push("/login");
     router.refresh();
@@ -35,7 +40,9 @@ export function Navbar({ user }: NavbarProps) {
     <div className="bg-white shadow-sm">
       <div className="ml-0 md:ml-64">
         <div className="flex justify-between h-16 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center">
+          <div className="flex items-center gap-4">
+            <GoBackButton showText={true} />
+            <div className="h-6 w-px bg-gray-300 hidden sm:block" />
             <h2 className="text-2xl font-bold text-gray-900">
               Support Ticket System
             </h2>

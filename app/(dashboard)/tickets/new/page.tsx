@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { createTicket } from "@/lib/supabase/queries/tickets";
@@ -17,19 +17,49 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useEffect } from "react";
 import { Profile } from "@/types/user.types";
+import { useUnsavedChanges } from "@/lib/hooks/use-unsaved-changes";
+import { UnsavedChangesModal } from "@/components/shared/unsaved-changes-modal";
+import { GoBackWithProtection } from "@/components/layout/go-back-with-protection";
 
 export default function NewTicketPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState("medium");
+  const [priority, setPriority] = useState<
+    "low" | "medium" | "high" | "urgent"
+  >("medium");
   const [assignedTo, setAssignedTo] = useState("");
   const [supportMembers, setSupportMembers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
+
+  // Track form dirty state
+  const hasUnsavedChanges = useMemo(() => {
+    return (
+      title.trim() !== "" || description.trim() !== "" || assignedTo !== ""
+    );
+  }, [title, description, assignedTo]);
+
+  const {
+    showModal,
+    requestNavigation,
+    handleSaveAndNavigate,
+    handleDiscardAndNavigate,
+    handleCancel,
+  } = useUnsavedChanges({
+    enabled: hasUnsavedChanges,
+    onSave: async () => {
+      await handleSubmit(new Event("submit") as any);
+    },
+    onDiscard: () => {
+      setTitle("");
+      setDescription("");
+      setPriority("medium");
+      setAssignedTo("");
+    },
+  });
 
   useEffect(() => {
     async function loadSupportMembers() {
@@ -72,6 +102,21 @@ export default function NewTicketPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
+      <div className="mb-4">
+        <GoBackWithProtection
+          hasUnsavedChanges={hasUnsavedChanges}
+          onSave={async () => {
+            await handleSubmit(new Event("submit") as any);
+          }}
+          onDiscard={() => {
+            setTitle("");
+            setDescription("");
+            setPriority("medium");
+            setAssignedTo("");
+          }}
+        />
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Create New Ticket</CardTitle>
@@ -114,7 +159,9 @@ export default function NewTicketPage() {
                 <Label htmlFor="priority">Priority *</Label>
                 <Select
                   value={priority}
-                  onValueChange={setPriority}
+                  onValueChange={(value) =>
+                    setPriority(value as "low" | "medium" | "high" | "urgent")
+                  }
                   disabled={loading}
                 >
                   <SelectTrigger id="priority">
@@ -157,7 +204,7 @@ export default function NewTicketPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.back()}
+                onClick={() => requestNavigation(() => router.back())}
                 disabled={loading}
               >
                 Cancel
@@ -166,6 +213,14 @@ export default function NewTicketPage() {
           </form>
         </CardContent>
       </Card>
+
+      <UnsavedChangesModal
+        open={showModal}
+        onSave={handleSaveAndNavigate}
+        onDiscard={handleDiscardAndNavigate}
+        onCancel={handleCancel}
+        isSaving={loading}
+      />
     </div>
   );
 }
