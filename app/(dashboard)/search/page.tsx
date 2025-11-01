@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SearchBar } from "@/components/shared/search-bar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { searchTickets } from "@/lib/supabase/queries/tickets";
 import { Ticket } from "@/types/ticket.types";
@@ -28,16 +28,22 @@ export default function SearchPage() {
   const [hasSearched, setHasSearched] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { savePageState, getPageState } = useNavigation();
+  const hasRestoredState = useRef(false);
 
   // Restore search state when returning to page
   useEffect(() => {
-    const savedState = getPageState();
-    if (savedState?.searchQuery) {
-      setSearchQuery(savedState.searchQuery);
-      setTickets(savedState.tickets || []);
-      setHasSearched(savedState.hasSearched || false);
+    // Only restore once when component mounts or pathname changes back to this page
+    if (!hasRestoredState.current) {
+      const savedState = getPageState();
+      if (savedState?.searchQuery) {
+        console.log("Restoring search state:", savedState);
+        setSearchQuery(savedState.searchQuery);
+        setTickets(savedState.tickets || []);
+        setHasSearched(savedState.hasSearched || false);
+      }
+      hasRestoredState.current = true;
     }
-  }, []);
+  }, [getPageState]);
 
   const handleSearch = async (query: string) => {
     setLoading(true);

@@ -174,3 +174,10 @@ export async function searchTickets(supabase: Client, query: string) {
     return data as unknown as Ticket[];
   }
 }
+
+export async function deleteTicket(supabase: Client, id: string) {
+  const { error } = await supabase.from("tickets").delete().eq("id", id);
+
+  if (error) throw error;
+  return { success: true };
+}

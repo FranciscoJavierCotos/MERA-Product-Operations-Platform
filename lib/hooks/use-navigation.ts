@@ -71,10 +71,22 @@ export function useNavigation() {
 
   // Save page state (like search queries, filters)
   const savePageState = (state: Record<string, any>) => {
-    if (
+    // Find the entry for the current pathname
+    const currentEntry = globalHistory.stack.find(
+      (item) => item.path === pathname
+    );
+
+    if (currentEntry) {
+      currentEntry.state = {
+        ...currentEntry.state,
+        ...state,
+      };
+      persistHistory();
+    } else if (
       globalHistory.currentIndex >= 0 &&
       globalHistory.stack[globalHistory.currentIndex]
     ) {
+      // Fallback to current index
       globalHistory.stack[globalHistory.currentIndex].state = {
         ...globalHistory.stack[globalHistory.currentIndex].state,
         ...state,
@@ -85,11 +97,22 @@ export function useNavigation() {
 
   // Get saved page state
   const getPageState = (): Record<string, any> | undefined => {
+    // Find the entry for the current pathname
+    const currentEntry = globalHistory.stack.find(
+      (item) => item.path === pathname
+    );
+
+    if (currentEntry?.state) {
+      return currentEntry.state;
+    }
+
+    // Fallback to current index
     if (
       globalHistory.currentIndex >= 0 &&
       globalHistory.stack[globalHistory.currentIndex]
     ) {
-      return globalHistory.stack[globalHistory.currentIndex].state;
+      const state = globalHistory.stack[globalHistory.currentIndex].state;
+      return state;
     }
     return undefined;
   };
@@ -109,6 +132,26 @@ export function useNavigation() {
         });
         globalHistory.currentIndex = 0;
         persistHistory();
+      } else {
+        // Check if current pathname exists in history
+        const existingIndex = globalHistory.stack.findIndex(
+          (item) => item.path === pathname
+        );
+
+        if (existingIndex !== -1) {
+          // We're returning to an existing page (e.g., back navigation)
+          globalHistory.currentIndex = existingIndex;
+          persistHistory();
+        } else {
+          // This is a new page but history exists (e.g., direct navigation or refresh)
+          globalHistory.stack.push({
+            path: pathname,
+            scrollPosition: 0,
+            timestamp: Date.now(),
+          });
+          globalHistory.currentIndex = globalHistory.stack.length - 1;
+          persistHistory();
+        }
       }
 
       lastPathname.current = pathname;
@@ -120,14 +163,17 @@ export function useNavigation() {
     if (pathname !== lastPathname.current) {
       saveScrollPosition();
 
-      // Check if we're going back in history
-      const existingIndex = globalHistory.stack.findIndex(
-        (item, index) =>
-          index < globalHistory.currentIndex && item.path === pathname
-      );
+      // Check if we're going back to the immediate previous page
+      const previousIndex = globalHistory.currentIndex - 1;
+      const isPreviousPage =
+        previousIndex >= 0 &&
+        globalHistory.stack[previousIndex]?.path === pathname;
 
-      if (existingIndex === -1) {
-        // New navigation - add to stack and trim any forward history
+      if (isPreviousPage) {
+        // User clicked browser back or our back button - going back in history
+        globalHistory.currentIndex = previousIndex;
+      } else {
+        // Forward navigation - always add new entry to preserve history
         globalHistory.stack = globalHistory.stack.slice(
           0,
           globalHistory.currentIndex + 1
@@ -138,9 +184,6 @@ export function useNavigation() {
           timestamp: Date.now(),
         });
         globalHistory.currentIndex = globalHistory.stack.length - 1;
-      } else {
-        // This shouldn't happen with router.back(), but handle it anyway
-        globalHistory.currentIndex = existingIndex;
       }
 
       persistHistory();

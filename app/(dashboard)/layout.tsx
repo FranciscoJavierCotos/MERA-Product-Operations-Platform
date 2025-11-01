@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { getProfile } from "@/lib/supabase/queries/users";
+import { UnsavedChangesProvider } from "@/lib/contexts/unsaved-changes-context";
 
 export default async function DashboardLayout({
   children,
@@ -34,18 +35,20 @@ export default async function DashboardLayout({
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Sidebar />
-      <div className="md:pl-64 flex flex-col flex-1">
-        <Navbar user={displayProfile} />
-        <main className="flex-1">
-          <div className="py-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              {children}
+    <UnsavedChangesProvider>
+      <div className="min-h-screen bg-gray-100">
+        <Sidebar />
+        <div className="md:pl-64 flex flex-col flex-1">
+          <Navbar user={displayProfile} />
+          <main className="flex-1">
+            <div className="py-6">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {children}
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+    </UnsavedChangesProvider>
   );
 }

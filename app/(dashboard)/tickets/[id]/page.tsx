@@ -12,6 +12,8 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { formatTicketNumber } from "@/lib/utils/format";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils/date";
 import { Separator } from "@/components/ui/separator";
+import { DeleteButton } from "@/components/tickets/ticket-actions";
+import { TicketDetailClient } from "./ticket-detail-client";
 
 export default async function TicketDetailPage({
   params,
@@ -23,9 +25,16 @@ export default async function TicketDetailPage({
   const comments = await getTicketComments(supabase, params.id);
   const tasks = await getTasksByTicket(supabase, params.id);
 
+  // Get current user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (!ticket) {
     return <div>Ticket not found</div>;
   }
+
+  const isCreator = user && ticket.created_by === user.id;
 
   return (
     <div className="space-y-6">
@@ -43,24 +52,21 @@ export default async function TicketDetailPage({
             {ticket.creator?.full_name || "Unknown"}
           </p>
         </div>
+        {isCreator && <DeleteButton ticketId={ticket.id} />}
       </div>
+
+      <TicketDetailClient
+        ticketId={ticket.id}
+        title={ticket.title}
+        description={ticket.description}
+        isCreator={!!isCreator}
+      />
 
       <Card>
         <CardHeader>
-          <CardTitle>{ticket.title}</CardTitle>
+          <CardTitle>Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-2">
-              Description
-            </h3>
-            <p className="text-gray-900 whitespace-pre-wrap">
-              {ticket.description}
-            </p>
-          </div>
-
-          <Separator />
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <h3 className="text-sm font-medium text-gray-700">Assigned To</h3>

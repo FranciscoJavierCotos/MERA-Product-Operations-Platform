@@ -18,9 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Profile } from "@/types/user.types";
-import { useUnsavedChanges } from "@/lib/hooks/use-unsaved-changes";
-import { UnsavedChangesModal } from "@/components/shared/unsaved-changes-modal";
-import { GoBackWithProtection } from "@/components/layout/go-back-with-protection";
+import { useUnsavedChangesContext } from "@/lib/contexts/unsaved-changes-context";
 
 export default function NewTicketPage() {
   const [title, setTitle] = useState("");
@@ -34,6 +32,7 @@ export default function NewTicketPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
+  const unsavedChangesContext = useUnsavedChangesContext();
 
   // Track form dirty state
   const hasUnsavedChanges = useMemo(() => {
@@ -42,24 +41,41 @@ export default function NewTicketPage() {
     );
   }, [title, description, assignedTo]);
 
-  const {
-    showModal,
-    requestNavigation,
-    handleSaveAndNavigate,
-    handleDiscardAndNavigate,
-    handleCancel,
-  } = useUnsavedChanges({
-    enabled: hasUnsavedChanges,
-    onSave: async () => {
-      await handleSubmit(new Event("submit") as any);
-    },
-    onDiscard: () => {
+  // Register/unregister with context
+  useEffect(() => {
+    unsavedChangesContext.setHasUnsavedChanges(hasUnsavedChanges);
+  }, [hasUnsavedChanges, unsavedChangesContext]);
+
+  // Register save/discard handlers for the global back button
+  useEffect(() => {
+    const handleSave = async () => {
+      // Create a synthetic form submission
+      const form = document.querySelector("form");
+      if (form) {
+        const submitEvent = new Event("submit", {
+          cancelable: true,
+          bubbles: true,
+        });
+        form.dispatchEvent(submitEvent);
+      }
+    };
+
+    const handleDiscard = () => {
       setTitle("");
       setDescription("");
       setPriority("medium");
       setAssignedTo("");
-    },
-  });
+    };
+
+    unsavedChangesContext.registerHandlers({
+      onSave: handleSave,
+      onDiscard: handleDiscard,
+    });
+
+    return () => {
+      unsavedChangesContext.unregisterHandlers();
+    };
+  }, [unsavedChangesContext]);
 
   useEffect(() => {
     async function loadSupportMembers() {
@@ -92,6 +108,9 @@ export default function NewTicketPage() {
         created_by: session.user.id,
       });
 
+      // Clear unsaved changes flag after successful creation
+      unsavedChangesContext.setHasUnsavedChanges(false);
+
       router.push(`/tickets/${ticket.id}`);
     } catch (err: any) {
       setError(err.message || "An error occurred creating the ticket");
@@ -102,21 +121,6 @@ export default function NewTicketPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="mb-4">
-        <GoBackWithProtection
-          hasUnsavedChanges={hasUnsavedChanges}
-          onSave={async () => {
-            await handleSubmit(new Event("submit") as any);
-          }}
-          onDiscard={() => {
-            setTitle("");
-            setDescription("");
-            setPriority("medium");
-            setAssignedTo("");
-          }}
-        />
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Create New Ticket</CardTitle>
@@ -204,7 +208,7 @@ export default function NewTicketPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => requestNavigation(() => router.back())}
+                onClick={() => router.back()}
                 disabled={loading}
               >
                 Cancel
@@ -213,14 +217,6 @@ export default function NewTicketPage() {
           </form>
         </CardContent>
       </Card>
-
-      <UnsavedChangesModal
-        open={showModal}
-        onSave={handleSaveAndNavigate}
-        onDiscard={handleDiscardAndNavigate}
-        onCancel={handleCancel}
-        isSaving={loading}
-      />
     </div>
   );
 }
