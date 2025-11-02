@@ -12,9 +12,10 @@ const statusConfig: Record<
     variant: "default" | "secondary" | "destructive" | "outline";
   }
 > = {
-  open: { label: "Open", variant: "default" },
-  in_progress: { label: "In Progress", variant: "secondary" },
-  waiting_response: { label: "Waiting Response", variant: "outline" },
+  new: { label: "New", variant: "default" },
+  pending_customer: { label: "Pending Customer Side", variant: "outline" },
+  pending_internal: { label: "Pending Our Side", variant: "secondary" },
+  escalated: { label: "Escalated", variant: "destructive" },
   resolved: { label: "Resolved", variant: "secondary" },
   closed: { label: "Closed", variant: "outline" },
 };

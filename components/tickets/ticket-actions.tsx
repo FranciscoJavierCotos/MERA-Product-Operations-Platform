@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -16,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/client";
 import { updateTicket, deleteTicket } from "@/lib/supabase/queries/tickets";
-import { Ticket } from "@/types/ticket.types";
+import { Ticket, TicketStatus } from "@/types/ticket.types";
 import { useUnsavedChangesContextOptional } from "@/lib/contexts/unsaved-changes-context";
 
 interface DeleteButtonProps {
@@ -28,17 +35,23 @@ export function DeleteButton({ ticketId }: DeleteButtonProps) {
   const supabase = createClient();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleDelete = async () => {
     setIsDeleting(true);
+    setError(null);
     try {
       await deleteTicket(supabase, ticketId);
       router.push("/tickets");
       router.refresh();
     } catch (error) {
       console.error("Failed to delete ticket:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete ticket. You may not have permission."
+      );
       setIsDeleting(false);
-      setShowDeleteDialog(false);
     }
   };
 
@@ -62,10 +75,18 @@ export function DeleteButton({ ticketId }: DeleteButtonProps) {
               undone.
             </DialogDescription>
           </DialogHeader>
+          {error && (
+            <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+              {error}
+            </div>
+          )}
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setShowDeleteDialog(false)}
+              onClick={() => {
+                setShowDeleteDialog(false);
+                setError(null);
+              }}
               disabled={isDeleting}
             >
               Cancel
@@ -364,4 +385,152 @@ export function EditableDescription({
   return (
     <p className="text-gray-900 whitespace-pre-wrap">{initialDescription}</p>
   );
+}
+
+interface EditableStatusProps {
+  ticketId: string;
+  initialStatus: TicketStatus;
+  isEditing: boolean;
+  onEditEnd?: () => void;
+  isClosed: boolean;
+}
+
+export function EditableStatus({
+  ticketId,
+  initialStatus,
+  isEditing,
+  onEditEnd,
+  isClosed,
+}: EditableStatusProps) {
+  const router = useRouter();
+  const supabase = createClient();
+  const unsavedChangesContext = useUnsavedChangesContextOptional();
+  const [status, setStatus] = useState(initialStatus);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const statusRef = useRef(status);
+  const initialStatusRef = useRef(initialStatus);
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
+
+  useEffect(() => {
+    initialStatusRef.current = initialStatus;
+  }, [initialStatus]);
+
+  useEffect(() => {
+    if (!isEditing || !unsavedChangesContext) return;
+
+    unsavedChangesContext.registerHandlers({
+      onSave: async () => {
+        const currentStatus = statusRef.current;
+        await updateTicket(supabase, ticketId, { status: currentStatus });
+        onEditEnd?.();
+        router.refresh();
+      },
+      onDiscard: () => {
+        setStatus(initialStatusRef.current);
+        onEditEnd?.();
+      },
+    });
+
+    const hasChanges = statusRef.current !== initialStatusRef.current;
+    unsavedChangesContext.setHasUnsavedChanges(hasChanges);
+
+    return () => {
+      unsavedChangesContext.unregisterHandlers();
+    };
+  }, [isEditing]);
+
+  useEffect(() => {
+    if (!isEditing || !unsavedChangesContext) return;
+
+    const hasChanges = status !== initialStatus;
+    if (unsavedChangesContext.hasUnsavedChanges !== hasChanges) {
+      unsavedChangesContext.setHasUnsavedChanges(hasChanges);
+    }
+  }, [status]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updateTicket(supabase, ticketId, { status });
+      if (unsavedChangesContext) {
+        unsavedChangesContext.setHasUnsavedChanges(false);
+      }
+      onEditEnd?.();
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to update status:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setStatus(initialStatus);
+    if (unsavedChangesContext) {
+      unsavedChangesContext.setHasUnsavedChanges(false);
+    }
+    onEditEnd?.();
+  };
+
+  const getStatusLabel = (status: TicketStatus) => {
+    switch (status) {
+      case "new":
+        return "New";
+      case "pending_customer":
+        return "Pending Customer Side";
+      case "pending_internal":
+        return "Pending Our Side";
+      case "escalated":
+        return "Escalated";
+      case "resolved":
+        return "Resolved";
+      case "closed":
+        return "Closed";
+      default:
+        return status;
+    }
+  };
+
+  if (isEditing && !isClosed) {
+    return (
+      <div className="flex items-center gap-2">
+        <Select
+          value={status}
+          onValueChange={(value) => setStatus(value as TicketStatus)}
+          disabled={isSaving}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="new">New</SelectItem>
+            <SelectItem value="pending_customer">
+              Pending Customer Side
+            </SelectItem>
+            <SelectItem value="pending_internal">Pending Our Side</SelectItem>
+            <SelectItem value="escalated">Escalated</SelectItem>
+            <SelectItem value="resolved">Resolved</SelectItem>
+            <SelectItem value="closed">Closed</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button size="sm" onClick={handleSave} disabled={isSaving}>
+          <Save className="h-4 w-4" />
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleCancel}
+          disabled={isSaving}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
+
+  return <span>{getStatusLabel(initialStatus)}</span>;
 }

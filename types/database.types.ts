@@ -71,9 +71,10 @@ export interface Database {
           title: string;
           description: string;
           status:
-            | "open"
-            | "in_progress"
-            | "waiting_response"
+            | "new"
+            | "pending_customer"
+            | "pending_internal"
+            | "escalated"
             | "resolved"
             | "closed";
           priority: "low" | "medium" | "high" | "urgent";
@@ -85,6 +86,7 @@ export interface Database {
           tags: string[];
           attachments: Json;
           custom_fields: Json;
+          time_worked_minutes: number;
           search_vector: unknown | null;
           created_at: string;
           updated_at: string;
@@ -97,9 +99,10 @@ export interface Database {
           title: string;
           description: string;
           status?:
-            | "open"
-            | "in_progress"
-            | "waiting_response"
+            | "new"
+            | "pending_customer"
+            | "pending_internal"
+            | "escalated"
             | "resolved"
             | "closed";
           priority?: "low" | "medium" | "high" | "urgent";
@@ -111,6 +114,7 @@ export interface Database {
           tags?: string[];
           attachments?: Json;
           custom_fields?: Json;
+          time_worked_minutes?: number;
           search_vector?: unknown | null;
           created_at?: string;
           updated_at?: string;
@@ -123,9 +127,10 @@ export interface Database {
           title?: string;
           description?: string;
           status?:
-            | "open"
-            | "in_progress"
-            | "waiting_response"
+            | "new"
+            | "pending_customer"
+            | "pending_internal"
+            | "escalated"
             | "resolved"
             | "closed";
           priority?: "low" | "medium" | "high" | "urgent";
@@ -137,6 +142,7 @@ export interface Database {
           tags?: string[];
           attachments?: Json;
           custom_fields?: Json;
+          time_worked_minutes?: number;
           search_vector?: unknown | null;
           created_at?: string;
           updated_at?: string;
@@ -282,9 +288,10 @@ export interface Database {
     Enums: {
       user_role: "admin" | "support_lead" | "support_member" | "client";
       ticket_status:
-        | "open"
-        | "in_progress"
-        | "waiting_response"
+        | "new"
+        | "pending_customer"
+        | "pending_internal"
+        | "escalated"
         | "resolved"
         | "closed";
       ticket_priority: "low" | "medium" | "high" | "urgent";

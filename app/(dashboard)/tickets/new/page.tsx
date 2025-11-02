@@ -26,7 +26,15 @@ export default function NewTicketPage() {
   const [priority, setPriority] = useState<
     "low" | "medium" | "high" | "urgent"
   >("medium");
-  const [assignedTo, setAssignedTo] = useState("");
+  const [status, setStatus] = useState<
+    | "new"
+    | "pending_customer"
+    | "pending_internal"
+    | "escalated"
+    | "resolved"
+    | "closed"
+  >("new");
+  const [assignedTo, setAssignedTo] = useState<string>("");
   const [supportMembers, setSupportMembers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +52,7 @@ export default function NewTicketPage() {
   // Register/unregister with context
   useEffect(() => {
     unsavedChangesContext.setHasUnsavedChanges(hasUnsavedChanges);
-  }, [hasUnsavedChanges, unsavedChangesContext]);
+  }, [hasUnsavedChanges]); // Remove unsavedChangesContext from dependencies
 
   // Register save/discard handlers for the global back button
   useEffect(() => {
@@ -64,6 +72,7 @@ export default function NewTicketPage() {
       setTitle("");
       setDescription("");
       setPriority("medium");
+      setStatus("new");
       setAssignedTo("");
     };
 
@@ -75,7 +84,7 @@ export default function NewTicketPage() {
     return () => {
       unsavedChangesContext.unregisterHandlers();
     };
-  }, [unsavedChangesContext]);
+  }, []); // Empty deps - register once on mount
 
   useEffect(() => {
     async function loadSupportMembers() {
@@ -104,7 +113,8 @@ export default function NewTicketPage() {
         title,
         description,
         priority,
-        assigned_to: assignedTo || undefined,
+        status: assignedTo ? status : "new",
+        assigned_to: assignedTo || null,
         created_by: session.user.id,
       });
 
@@ -181,24 +191,70 @@ export default function NewTicketPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="assigned">Assign To</Label>
+                <Label htmlFor="status">Status *</Label>
                 <Select
-                  value={assignedTo}
-                  onValueChange={setAssignedTo}
-                  disabled={loading}
+                  value={status}
+                  onValueChange={(value) =>
+                    setStatus(
+                      value as
+                        | "new"
+                        | "pending_customer"
+                        | "pending_internal"
+                        | "escalated"
+                        | "resolved"
+                        | "closed"
+                    )
+                  }
+                  disabled={loading || !assignedTo}
                 >
-                  <SelectTrigger id="assigned">
-                    <SelectValue placeholder="Select user" />
+                  <SelectTrigger id="status">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {supportMembers.map((member) => (
-                      <SelectItem key={member.id} value={member.id}>
-                        {member.full_name}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="pending_customer">
+                      Pending Customer Side
+                    </SelectItem>
+                    <SelectItem value="pending_internal">
+                      Pending Our Side
+                    </SelectItem>
+                    <SelectItem value="escalated">Escalated</SelectItem>
+                    <SelectItem value="resolved">Resolved</SelectItem>
+                    <SelectItem value="closed">Closed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="assigned">Assign To</Label>
+              <Select
+                value={assignedTo || "unassigned"}
+                onValueChange={(value) => {
+                  setAssignedTo(value === "unassigned" ? "" : value);
+                  if (value === "unassigned") {
+                    setStatus("new");
+                  }
+                }}
+                disabled={loading}
+              >
+                <SelectTrigger id="assigned">
+                  <SelectValue placeholder="Unassigned" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {supportMembers.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!assignedTo && (
+                <p className="text-xs text-gray-500">
+                  Status will be set to "New" for unassigned tickets
+                </p>
+              )}
             </div>
 
             <div className="flex gap-4">

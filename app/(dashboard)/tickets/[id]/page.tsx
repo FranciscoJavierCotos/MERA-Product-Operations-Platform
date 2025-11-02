@@ -6,14 +6,16 @@ import {
 import { getTasksByTicket } from "@/lib/supabase/queries/tasks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { StatusBadge } from "@/components/shared/status-badge";
-import { PriorityBadge } from "@/components/shared/priority-badge";
+import { StatusBadgeDropdown } from "@/components/shared/status-badge-dropdown";
+import { AssignedUserDropdown } from "@/components/shared/assigned-user-dropdown";
+import { PriorityBadgeDropdown } from "@/components/shared/priority-badge-dropdown";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { formatTicketNumber } from "@/lib/utils/format";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils/date";
 import { Separator } from "@/components/ui/separator";
 import { DeleteButton } from "@/components/tickets/ticket-actions";
 import { TicketDetailClient } from "./ticket-detail-client";
+import { TimeWorkedButton } from "@/components/tickets/time-worked-button";
 
 export default async function TicketDetailPage({
   params,
@@ -30,11 +32,29 @@ export default async function TicketDetailPage({
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Get user profile to check role
+  type ProfileRole = {
+    role: "admin" | "support_lead" | "support_member" | "client";
+  };
+  let profile: ProfileRole | null = null;
+  if (user) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    profile = data as ProfileRole | null;
+  }
+
   if (!ticket) {
     return <div>Ticket not found</div>;
   }
 
   const isCreator = user && ticket.created_by === user.id;
+  const isSupportAgent =
+    profile &&
+    ["admin", "support_lead", "support_member"].includes(profile.role);
+  const isClosed = ticket.status === "closed";
 
   return (
     <div className="space-y-6">
@@ -44,8 +64,18 @@ export default async function TicketDetailPage({
             <h1 className="text-3xl font-bold text-gray-900">
               {formatTicketNumber(ticket.ticket_number)}
             </h1>
-            <StatusBadge status={ticket.status} />
-            <PriorityBadge priority={ticket.priority} />
+            <StatusBadgeDropdown
+              ticketId={ticket.id}
+              status={ticket.status}
+              isSupportAgent={!!isSupportAgent}
+              isClosed={isClosed}
+            />
+            <PriorityBadgeDropdown
+              ticketId={ticket.id}
+              priority={ticket.priority}
+              isSupportAgent={!!isSupportAgent}
+              isClosed={isClosed}
+            />
           </div>
           <p className="mt-2 text-sm text-gray-700">
             Created {formatRelativeTime(ticket.created_at)} by{" "}
@@ -60,55 +90,72 @@ export default async function TicketDetailPage({
         title={ticket.title}
         description={ticket.description}
         isCreator={!!isCreator}
+        isSupportAgent={!!isSupportAgent}
+        isClosed={isClosed}
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <h3 className="text-sm font-medium text-gray-700">Assigned To</h3>
-              <div className="mt-2 flex items-center gap-2">
-                {ticket.assigned_user ? (
-                  <>
-                    <UserAvatar
-                      name={ticket.assigned_user.full_name}
-                      avatarUrl={ticket.assigned_user.avatar_url}
-                      className="h-6 w-6"
-                    />
-                    <span className="text-sm">
-                      {ticket.assigned_user.full_name}
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-sm text-gray-500">Unassigned</span>
-                )}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-700">
+                  Assigned To
+                </h3>
+                <AssignedUserDropdown
+                  ticketId={ticket.id}
+                  assignedUser={
+                    ticket.assigned_user
+                      ? {
+                          id: ticket.assigned_user.id,
+                          full_name: ticket.assigned_user.full_name,
+                          avatar_url: ticket.assigned_user.avatar_url || null,
+                        }
+                      : null
+                  }
+                  isSupportAgent={!!isSupportAgent}
+                  isClosed={isClosed}
+                />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-700">Created</h3>
+                <p className="mt-2 text-sm">
+                  {formatDateTime(ticket.created_at)}
+                </p>
               </div>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-700">Created</h3>
-              <p className="mt-2 text-sm">
-                {formatDateTime(ticket.created_at)}
-              </p>
-            </div>
-          </div>
 
-          {ticket.tags && ticket.tags.length > 0 && (
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                {ticket.tags.map((tag) => (
-                  <Badge key={tag} variant="outline">
-                    {tag}
-                  </Badge>
-                ))}
+            {ticket.tags && ticket.tags.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Tags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {ticket.tags.map((tag) => (
+                    <Badge key={tag} variant="outline">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Time Worked</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TimeWorkedButton
+              ticketId={ticket.id}
+              timeWorkedMinutes={ticket.time_worked_minutes}
+              isClosed={isClosed}
+            />
+          </CardContent>
+        </Card>
+      </div>
 
       {tasks && tasks.length > 0 && (
         <Card>

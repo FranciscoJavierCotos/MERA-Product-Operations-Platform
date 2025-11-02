@@ -1,9 +1,10 @@
 import { Profile } from "./user.types";
 
 export type TicketStatus =
-  | "open"
-  | "in_progress"
-  | "waiting_response"
+  | "new"
+  | "pending_customer"
+  | "pending_internal"
+  | "escalated"
   | "resolved"
   | "closed";
 export type TicketPriority = "low" | "medium" | "high" | "urgent";
@@ -23,6 +24,7 @@ export interface Ticket {
   tags: string[];
   attachments?: any[];
   custom_fields?: Record<string, any>;
+  time_worked_minutes: number;
   created_at: string;
   updated_at: string;
   resolved_at?: string;

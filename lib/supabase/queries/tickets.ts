@@ -181,3 +181,18 @@ export async function deleteTicket(supabase: Client, id: string) {
   if (error) throw error;
   return { success: true };
 }
+
+export async function updateTimeWorked(
+  supabase: Client,
+  ticketId: string,
+  timeWorkedMinutes: number
+) {
+  const { data, error } = await (supabase.from("tickets") as any)
+    .update({ time_worked_minutes: timeWorkedMinutes })
+    .eq("id", ticketId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}

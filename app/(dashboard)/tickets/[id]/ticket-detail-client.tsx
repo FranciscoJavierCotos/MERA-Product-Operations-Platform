@@ -13,6 +13,8 @@ interface TicketDetailClientProps {
   title: string;
   description: string;
   isCreator: boolean;
+  isSupportAgent: boolean;
+  isClosed: boolean;
 }
 
 export function TicketDetailClient({
@@ -20,16 +22,20 @@ export function TicketDetailClient({
   title,
   description,
   isCreator,
+  isSupportAgent,
+  isClosed,
 }: TicketDetailClientProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
+
+  const canEdit = (isCreator || isSupportAgent) && !isClosed;
 
   return (
     <>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between gap-4">
-            {isCreator ? (
+            {canEdit ? (
               <EditableTitle
                 ticketId={ticketId}
                 initialTitle={title}
@@ -39,7 +45,7 @@ export function TicketDetailClient({
             ) : (
               <h2 className="text-xl font-semibold">{title}</h2>
             )}
-            {isCreator && !isEditingTitle && (
+            {canEdit && !isEditingTitle && (
               <EditButton onClick={() => setIsEditingTitle(true)} />
             )}
           </div>
@@ -50,13 +56,13 @@ export function TicketDetailClient({
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Description</CardTitle>
-            {isCreator && !isEditingDescription && (
+            {canEdit && !isEditingDescription && (
               <EditButton onClick={() => setIsEditingDescription(true)} />
             )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {isCreator ? (
+          {canEdit ? (
             <EditableDescription
               ticketId={ticketId}
               initialDescription={description}
