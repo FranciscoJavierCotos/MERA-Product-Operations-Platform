@@ -41,6 +41,7 @@ export interface TicketComment {
   user_id: string;
   content: string;
   is_internal: boolean;
+  time_worked_minutes?: number;
   attachments?: any[];
   created_at: string;
   updated_at: string;

@@ -9,13 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadgeDropdown } from "@/components/shared/status-badge-dropdown";
 import { AssignedUserDropdown } from "@/components/shared/assigned-user-dropdown";
 import { PriorityBadgeDropdown } from "@/components/shared/priority-badge-dropdown";
-import { UserAvatar } from "@/components/shared/user-avatar";
 import { formatTicketNumber } from "@/lib/utils/format";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils/date";
-import { Separator } from "@/components/ui/separator";
 import { DeleteButton } from "@/components/tickets/ticket-actions";
 import { TicketDetailClient } from "./ticket-detail-client";
 import { TimeWorkedButton } from "@/components/tickets/time-worked-button";
+import { CommentsSection } from "@/components/tickets/comments-section";
 
 export default async function TicketDetailPage({
   params,
@@ -191,43 +190,11 @@ export default async function TicketDetailPage({
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Comments ({comments?.length || 0})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {comments && comments.length > 0 ? (
-              comments.map((comment: any) => (
-                <div key={comment.id} className="flex gap-3">
-                  <UserAvatar
-                    name={comment.user?.full_name || "Unknown"}
-                    avatarUrl={comment.user?.avatar_url}
-                    className="h-8 w-8"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">
-                        {comment.user?.full_name || "Unknown"}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {formatRelativeTime(comment.created_at)}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">
-                      {comment.content}
-                    </p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-gray-500 text-center py-4">
-                No comments yet
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <CommentsSection
+        ticketId={params.id}
+        initialComments={comments || []}
+        currentUserId={user?.id}
+      />
     </div>
   );
 }

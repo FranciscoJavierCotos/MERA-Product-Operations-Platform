@@ -57,3 +57,124 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Tiptap Editor Styles */
+.ProseMirror {
+  outline: none;
+}
+
+/* Resizable Images */
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  display: block;
+  transition: opacity 0.2s ease;
+}
+
+.ProseMirror img:hover {
+  outline: 2px solid rgba(59, 130, 246, 0.3);
+  outline-offset: 2px;
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid rgb(59, 130, 246);
+  outline-offset: 2px;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.ProseMirror pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: "JetBrainsMono", "Courier New", Courier, monospace;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+.ProseMirror pre code {
+  color: inherit;
+  padding: 0;
+  background: none;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.ProseMirror code {
+  background-color: rgba(97, 97, 97, 0.1);
+  border-radius: 0.25rem;
+  color: #616161;
+  font-size: 0.85em;
+  padding: 0.2em 0.4em;
+}
+
+/* Code block images handled separately above */
+
+/* Syntax Highlighting for Code Blocks */
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1em;
+  background: #1e1e1e;
+  color: #d4d4d4;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #6a9955;
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-type {
+  color: #569cd6;
+}
+
+.hljs-string,
+.hljs-title,
+.hljs-name {
+  color: #ce9178;
+}
+
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet {
+  color: #b5cea8;
+}
+
+.hljs-attribute,
+.hljs-variable,
+.hljs-template-variable {
+  color: #9cdcfe;
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  color: #4ec9b0;
+}
+
+.hljs-function {
+  color: #dcdcaa;
+}
+
+.hljs-meta {
+  color: #808080;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}

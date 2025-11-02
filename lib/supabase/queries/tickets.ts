@@ -68,7 +68,7 @@ export async function getTicketComments(supabase: Client, ticketId: string) {
     `
     )
     .eq("ticket_id", ticketId)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: false });
 
   if (error) throw error;
   return data as unknown as TicketComment[];
