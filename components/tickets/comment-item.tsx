@@ -133,106 +133,116 @@ export function CommentItem({
 
   return (
     <>
-      <div className="flex gap-3 group" id={`comment-${comment.id}`}>
+      {/* Bubble-style comment container with proper spacing and rounded corners */}
+      <div className="flex gap-3" id={`comment-${comment.id}`}>
         <UserAvatar
           name={comment.user?.full_name || "Unknown"}
           avatarUrl={comment.user?.avatar_url}
-          className="h-8 w-8 flex-shrink-0"
+          className="h-10 w-10 flex-shrink-0 mt-1"
         />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-sm">
-              {comment.user?.full_name || "Unknown"}
-            </span>
-            <span className="text-xs text-gray-500">
-              {formatRelativeTime(comment.created_at)}
-            </span>
-            {isEdited && (
-              <span className="text-xs text-gray-400 italic">(edited)</span>
-            )}
-            {comment.time_worked_minutes && comment.time_worked_minutes > 0 && (
-              <span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                <Clock className="h-3 w-3" />
-                {comment.time_worked_minutes} min
+          {/* Header section with author info and metadata */}
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-semibold text-sm text-gray-900">
+                {comment.user?.full_name || "Unknown"}
               </span>
+              <span className="text-xs text-gray-500">
+                {formatRelativeTime(comment.created_at)}
+              </span>
+              {isEdited && (
+                <span className="text-xs text-gray-400 italic">(edited)</span>
+              )}
+            </div>
+
+            {/* Edit/Delete buttons - always visible when user owns the comment */}
+            {isOwner && !isEditing && (
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleEdit}
+                  className="h-8 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  aria-label="Edit comment"
+                >
+                  <Edit2 className="h-3.5 w-3.5 mr-1" />
+                  Edit
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="h-8 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                  aria-label="Delete comment"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" />
+                  Delete
+                </Button>
+              </div>
             )}
           </div>
 
-          {isEditing ? (
-            <div className="mt-2 space-y-2">
-              <RichTextEditor
-                content={editedContent}
-                onChange={setEditedContent}
-                onImageUpload={handleImageUpload}
-                placeholder="Edit your comment..."
-                disabled={isSubmitting}
-              />
-              {error && (
-                <p className="text-sm text-red-500" role="alert">
-                  {error}
-                </p>
-              )}
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  onClick={handleSaveEdit}
-                  disabled={isSubmitting || !editedContent.trim()}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    "Save"
-                  )}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleCancelEdit}
+          {/* Comment bubble with background and padding */}
+          <div className="bg-gray-50 rounded-2xl px-4 py-3 border border-gray-100">
+            {isEditing ? (
+              <div className="space-y-3">
+                <RichTextEditor
+                  content={editedContent}
+                  onChange={setEditedContent}
+                  onImageUpload={handleImageUpload}
+                  placeholder="Edit your comment..."
                   disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
+                />
+                {error && (
+                  <p className="text-sm text-red-500" role="alert">
+                    {error}
+                  </p>
+                )}
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={handleSaveEdit}
+                    disabled={isSubmitting || !editedContent.trim()}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCancelEdit}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="mt-1">
+            ) : (
               <div
-                className="prose prose-sm max-w-none text-gray-700"
+                className="prose prose-sm max-w-none text-gray-700 break-words"
                 dangerouslySetInnerHTML={{ __html: comment.content }}
               />
-            </div>
-          )}
+            )}
+          </div>
 
-          {isOwner && !isEditing && (
-            <div className="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleEdit}
-                className="h-7 px-2 text-xs"
-                aria-label="Edit comment"
-              >
-                <Edit2 className="h-3 w-3 mr-1" />
-                Edit
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setShowDeleteDialog(true)}
-                className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                aria-label="Delete comment"
-              >
-                <Trash2 className="h-3 w-3 mr-1" />
-                Delete
-              </Button>
+          {/* Time worked badge - displayed below the bubble */}
+          {comment.time_worked_minutes && comment.time_worked_minutes > 0 && (
+            <div className="mt-2 ml-1">
+              <span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
+                <Clock className="h-3 w-3" />
+                {comment.time_worked_minutes} min worked
+              </span>
             </div>
           )}
 
           {error && !isEditing && (
-            <p className="text-sm text-red-500 mt-2" role="alert">
+            <p className="text-sm text-red-500 mt-2 ml-1" role="alert">
               {error}
             </p>
           )}

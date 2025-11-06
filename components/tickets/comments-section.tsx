@@ -93,10 +93,10 @@ export function CommentsSection({
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="shadow-sm">
+      <CardHeader className="border-b bg-gray-50/50">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
             Comments ({comments.length})
             {isLoading && (
               <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
@@ -106,7 +106,7 @@ export function CommentsSection({
             <Button
               onClick={() => setIsCommentFormOpen(true)}
               size="sm"
-              className="gap-2"
+              className="gap-2 shadow-sm"
             >
               <MessageSquarePlus className="h-4 w-4" />
               Add Comment
@@ -114,9 +114,9 @@ export function CommentsSection({
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="pt-6">
         {isCommentFormOpen && (
-          <div className="pb-4 border-b">
+          <div className="pb-6 mb-6 border-b">
             <CommentForm
               ticketId={ticketId}
               onCommentCreated={handleCommentCreated}
@@ -127,7 +127,7 @@ export function CommentsSection({
 
         {error && (
           <div
-            className="text-sm text-red-500 bg-red-50 p-3 rounded-lg"
+            className="text-sm text-red-500 bg-red-50 p-3 rounded-lg mb-6"
             role="alert"
           >
             {error}
@@ -135,8 +135,8 @@ export function CommentsSection({
         )}
 
         {comments.length > 0 ? (
-          <div className="space-y-4">
-            {comments.map((comment, index) => (
+          <div className="space-y-6">
+            {comments.map((comment) => (
               <div key={comment.id}>
                 <CommentItem
                   comment={comment}
@@ -144,7 +144,6 @@ export function CommentsSection({
                   onCommentUpdated={handleCommentUpdated}
                   onCommentDeleted={handleCommentDeleted}
                 />
-                {index < comments.length - 1 && <Separator className="my-4" />}
               </div>
             ))}
           </div>

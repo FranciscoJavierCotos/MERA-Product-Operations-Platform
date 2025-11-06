@@ -103,7 +103,8 @@ export function CommentForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
+      {/* Comment input section with bubble-style background */}
+      <div className="bg-gray-50 rounded-2xl border border-gray-200 overflow-hidden">
         <Label htmlFor="comment-content" className="sr-only">
           Comment content
         </Label>
@@ -111,15 +112,16 @@ export function CommentForm({
           content={content}
           onChange={handleContentChange}
           onImageUpload={handleImageUpload}
-          placeholder="Write your comment... Use the toolbar for formatting."
+          placeholder="Add a comment..."
           disabled={isSubmitting}
+          className="border-0"
         />
-        {errors.content && (
-          <p className="text-sm text-red-500 mt-1" role="alert">
-            {errors.content.message}
-          </p>
-        )}
       </div>
+      {errors.content && (
+        <p className="text-sm text-red-500 mt-1" role="alert">
+          {errors.content.message}
+        </p>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
