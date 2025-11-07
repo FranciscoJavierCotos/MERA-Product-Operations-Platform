@@ -123,39 +123,6 @@ export function CommentForm({
         </p>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="time_worked" className="text-sm font-medium">
-            Time Worked (minutes)
-          </Label>
-          <Input
-            id="time_worked"
-            type="number"
-            min="0"
-            max="1440"
-            {...register("time_worked_minutes", { valueAsNumber: true })}
-            placeholder="0"
-            disabled={isSubmitting}
-            className="mt-1"
-            aria-describedby={
-              errors.time_worked_minutes ? "time-error" : undefined
-            }
-          />
-          {errors.time_worked_minutes && (
-            <p
-              id="time-error"
-              className="text-sm text-red-500 mt-1"
-              role="alert"
-            >
-              {errors.time_worked_minutes.message}
-            </p>
-          )}
-          <p className="text-xs text-gray-500 mt-1">
-            Optional: Track time spent on this update
-          </p>
-        </div>
-      </div>
-
       {error && (
         <div
           className="text-sm text-red-500 bg-red-50 p-3 rounded-lg"
@@ -165,27 +132,56 @@ export function CommentForm({
         </div>
       )}
 
-      <div className="flex items-center gap-2 justify-end">
-        {onCancel && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSubmitting}
+      <div className="flex items-center gap-3 justify-between flex-wrap">
+        <div className="flex items-center gap-2">
+          <Label
+            htmlFor="time_worked"
+            className="text-sm font-medium whitespace-nowrap"
           >
-            Cancel
-          </Button>
-        )}
-        <Button type="submit" disabled={isSubmitting || !content.trim()}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Posting...
-            </>
-          ) : (
-            "Post Comment"
+            Time Worked (min)
+          </Label>
+          <Input
+            id="time_worked"
+            type="number"
+            min="0"
+            max="999"
+            {...register("time_worked_minutes", { valueAsNumber: true })}
+            placeholder="0"
+            disabled={isSubmitting}
+            className="w-20"
+            aria-describedby={
+              errors.time_worked_minutes ? "time-error" : undefined
+            }
+          />
+          {errors.time_worked_minutes && (
+            <p id="time-error" className="text-sm text-red-500" role="alert">
+              {errors.time_worked_minutes.message}
+            </p>
           )}
-        </Button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+          )}
+          <Button type="submit" disabled={isSubmitting || !content.trim()}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Posting...
+              </>
+            ) : (
+              "Post Comment"
+            )}
+          </Button>
+        </div>
       </div>
     </form>
   );

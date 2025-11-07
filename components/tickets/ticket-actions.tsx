@@ -25,6 +25,8 @@ import { createClient } from "@/lib/supabase/client";
 import { updateTicket, deleteTicket } from "@/lib/supabase/queries/tickets";
 import { Ticket, TicketStatus } from "@/types/ticket.types";
 import { useUnsavedChangesContextOptional } from "@/lib/contexts/unsaved-changes-context";
+import { RichTextEditor } from "./rich-text-editor";
+import { uploadCommentImage } from "@/lib/supabase/queries/comments";
 
 interface DeleteButtonProps {
   ticketId: string;
@@ -248,6 +250,194 @@ export function EditButton({ onClick }: EditButtonProps) {
   );
 }
 
+interface EditableTitleAndDescriptionProps {
+  ticketId: string;
+  initialTitle: string;
+  initialDescription: string;
+  isEditing: boolean;
+  onEditEnd?: () => void;
+}
+
+export function EditableTitleAndDescription({
+  ticketId,
+  initialTitle,
+  initialDescription,
+  isEditing,
+  onEditEnd,
+}: EditableTitleAndDescriptionProps) {
+  const router = useRouter();
+  const supabase = createClient();
+  const unsavedChangesContext = useUnsavedChangesContextOptional();
+  const [title, setTitle] = useState(initialTitle);
+  const [description, setDescription] = useState(initialDescription);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Use refs to keep track of current values for handlers
+  const titleRef = useRef(title);
+  const descriptionRef = useRef(description);
+  const initialTitleRef = useRef(initialTitle);
+  const initialDescriptionRef = useRef(initialDescription);
+
+  useEffect(() => {
+    titleRef.current = title;
+  }, [title]);
+
+  useEffect(() => {
+    descriptionRef.current = description;
+  }, [description]);
+
+  useEffect(() => {
+    initialTitleRef.current = initialTitle;
+  }, [initialTitle]);
+
+  useEffect(() => {
+    initialDescriptionRef.current = initialDescription;
+  }, [initialDescription]);
+
+  // Register handlers when editing starts, unregister when editing ends
+  useEffect(() => {
+    if (!isEditing || !unsavedChangesContext) return;
+
+    // Register save and discard handlers
+    unsavedChangesContext.registerHandlers({
+      onSave: async () => {
+        const currentTitle = titleRef.current;
+        const currentDescription = descriptionRef.current;
+        if (currentTitle.trim() && currentDescription.trim()) {
+          await updateTicket(supabase, ticketId, {
+            title: currentTitle,
+            description: currentDescription,
+          });
+          onEditEnd?.();
+          router.refresh();
+        }
+      },
+      onDiscard: () => {
+        setTitle(initialTitleRef.current);
+        setDescription(initialDescriptionRef.current);
+        onEditEnd?.();
+      },
+    });
+
+    // Set initial state
+    const hasChanges =
+      titleRef.current !== initialTitleRef.current ||
+      descriptionRef.current !== initialDescriptionRef.current;
+    unsavedChangesContext.setHasUnsavedChanges(hasChanges);
+
+    // Cleanup when editing ends
+    return () => {
+      unsavedChangesContext.unregisterHandlers();
+    };
+  }, [isEditing]); // Only depend on isEditing
+
+  // Update hasUnsavedChanges when title or description changes
+  useEffect(() => {
+    if (!isEditing || !unsavedChangesContext) return;
+
+    const hasChanges =
+      title !== initialTitle || description !== initialDescription;
+    if (unsavedChangesContext.hasUnsavedChanges !== hasChanges) {
+      unsavedChangesContext.setHasUnsavedChanges(hasChanges);
+    }
+  }, [title, description]); // Depend on both title and description
+
+  const handleSave = async () => {
+    if (!title.trim() || !description.trim()) return;
+
+    setIsSaving(true);
+    try {
+      await updateTicket(supabase, ticketId, { title, description });
+      if (unsavedChangesContext) {
+        unsavedChangesContext.setHasUnsavedChanges(false);
+      }
+      onEditEnd?.();
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to update ticket:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setTitle(initialTitle);
+    setDescription(initialDescription);
+    if (unsavedChangesContext) {
+      unsavedChangesContext.setHasUnsavedChanges(false);
+    }
+    onEditEnd?.();
+  };
+
+  const handleImageUpload = async (file: File): Promise<string> => {
+    try {
+      const url = await uploadCommentImage(supabase, file, ticketId);
+      return url;
+    } catch (error) {
+      console.error("Failed to upload image:", error);
+      throw error;
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-2 block">
+            Title
+          </label>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="text-base"
+            disabled={isSaving}
+            autoFocus
+            placeholder="Enter ticket title..."
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-2 block">
+            Description
+          </label>
+          <RichTextEditor
+            content={description}
+            onChange={setDescription}
+            onImageUpload={handleImageUpload}
+            placeholder="Enter ticket description..."
+            disabled={isSaving}
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving || !title.trim() || !description.trim()}
+          >
+            <Save className="h-4 w-4 mr-2" />
+            Save Changes
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isSaving}
+          >
+            <X className="h-4 w-4 mr-2" />
+            Cancel
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="prose prose-sm max-w-none"
+      dangerouslySetInnerHTML={{ __html: initialDescription }}
+    />
+  );
+}
+
 interface EditableDescriptionProps {
   ticketId: string;
   initialDescription: string;
@@ -349,15 +539,25 @@ export function EditableDescription({
     onEditEnd?.();
   };
 
+  const handleImageUpload = async (file: File): Promise<string> => {
+    try {
+      const url = await uploadCommentImage(supabase, file, ticketId);
+      return url;
+    } catch (error) {
+      console.error("Failed to upload image:", error);
+      throw error;
+    }
+  };
+
   if (isEditing) {
     return (
       <div className="space-y-2">
-        <Textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={6}
+        <RichTextEditor
+          content={description}
+          onChange={setDescription}
+          onImageUpload={handleImageUpload}
+          placeholder="Enter ticket description..."
           disabled={isSaving}
-          className="resize-none"
         />
         <div className="flex gap-2">
           <Button
@@ -383,7 +583,10 @@ export function EditableDescription({
   }
 
   return (
-    <p className="text-gray-900 whitespace-pre-wrap">{initialDescription}</p>
+    <div
+      className="prose prose-sm max-w-none"
+      dangerouslySetInnerHTML={{ __html: initialDescription }}
+    />
   );
 }
 

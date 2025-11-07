@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { createTicket } from "@/lib/supabase/queries/tickets";
 import { getSupportMembers } from "@/lib/supabase/queries/users";
+import { uploadCommentImage } from "@/lib/supabase/queries/comments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +20,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Profile } from "@/types/user.types";
 import { useUnsavedChangesContext } from "@/lib/contexts/unsaved-changes-context";
+import { RichTextEditor } from "@/components/tickets/rich-text-editor";
 
 export default function NewTicketPage() {
   const [title, setTitle] = useState("");
@@ -129,6 +131,18 @@ export default function NewTicketPage() {
     }
   };
 
+  const handleImageUpload = async (file: File): Promise<string> => {
+    try {
+      // Use a temporary ID for upload path before ticket is created
+      const tempId = "temp-" + Date.now();
+      const url = await uploadCommentImage(supabase, file, tempId);
+      return url;
+    } catch (error) {
+      console.error("Failed to upload image:", error);
+      throw error;
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto">
       <Card>
@@ -157,15 +171,16 @@ export default function NewTicketPage() {
 
             <div className="space-y-2">
               <Label htmlFor="description">Description *</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-                disabled={loading}
+              <RichTextEditor
+                content={description}
+                onChange={setDescription}
+                onImageUpload={handleImageUpload}
                 placeholder="Detailed description of the issue"
-                rows={6}
+                disabled={loading}
               />
+              {!description.trim() && (
+                <p className="text-xs text-red-500">Description is required</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">

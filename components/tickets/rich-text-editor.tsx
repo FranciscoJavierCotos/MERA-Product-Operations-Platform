@@ -4,14 +4,31 @@ import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import Underline from "@tiptap/extension-underline";
+import Strike from "@tiptap/extension-strike";
+import Heading from "@tiptap/extension-heading";
+import Blockquote from "@tiptap/extension-blockquote";
+import HorizontalRule from "@tiptap/extension-horizontal-rule";
+import BulletList from "@tiptap/extension-bullet-list";
+import OrderedList from "@tiptap/extension-ordered-list";
+import ListItem from "@tiptap/extension-list-item";
 import { ResizableImage } from "./tiptap-resizable-image";
 import { createLowlight, common } from "lowlight";
 import {
   Bold,
   Italic,
+  Underline as UnderlineIcon,
+  Strikethrough,
   List,
   ListOrdered,
   Code,
+  Heading1,
+  Heading2,
+  Heading3,
+  Quote,
+  Minus,
+  Undo,
+  Redo,
   Image as ImageIcon,
   Eye,
 } from "lucide-react";
@@ -69,6 +86,32 @@ const MenuBar = ({
 
   return (
     <div className="flex flex-wrap items-center gap-1 border-b border-gray-200 p-2 bg-gray-50">
+      {/* Undo/Redo */}
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().undo().run()}
+        disabled={disabled || !editor.can().chain().focus().undo().run()}
+        className="h-8 w-8 p-0"
+        aria-label="Undo"
+      >
+        <Undo className="h-4 w-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().redo().run()}
+        disabled={disabled || !editor.can().chain().focus().redo().run()}
+        className="h-8 w-8 p-0"
+        aria-label="Redo"
+      >
+        <Redo className="h-4 w-4" />
+      </Button>
+      <div className="w-px h-6 bg-gray-300 mx-1" />
+
+      {/* Text Formatting */}
       <Button
         type="button"
         variant="ghost"
@@ -96,7 +139,95 @@ const MenuBar = ({
       >
         <Italic className="h-4 w-4" />
       </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        disabled={
+          disabled || !editor.can().chain().focus().toggleUnderline().run()
+        }
+        className={cn(
+          "h-8 w-8 p-0",
+          editor.isActive("underline") && "bg-gray-200"
+        )}
+        aria-label="Toggle underline"
+      >
+        <UnderlineIcon className="h-4 w-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        disabled={
+          disabled || !editor.can().chain().focus().toggleStrike().run()
+        }
+        className={cn(
+          "h-8 w-8 p-0",
+          editor.isActive("strike") && "bg-gray-200"
+        )}
+        aria-label="Toggle strikethrough"
+      >
+        <Strikethrough className="h-4 w-4" />
+      </Button>
       <div className="w-px h-6 bg-gray-300 mx-1" />
+
+      {/* Headings */}
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+        disabled={
+          disabled ||
+          !editor.can().chain().focus().toggleHeading({ level: 1 }).run()
+        }
+        className={cn(
+          "h-8 w-8 p-0",
+          editor.isActive("heading", { level: 1 }) && "bg-gray-200"
+        )}
+        aria-label="Heading 1"
+      >
+        <Heading1 className="h-4 w-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        disabled={
+          disabled ||
+          !editor.can().chain().focus().toggleHeading({ level: 2 }).run()
+        }
+        className={cn(
+          "h-8 w-8 p-0",
+          editor.isActive("heading", { level: 2 }) && "bg-gray-200"
+        )}
+        aria-label="Heading 2"
+      >
+        <Heading2 className="h-4 w-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+        disabled={
+          disabled ||
+          !editor.can().chain().focus().toggleHeading({ level: 3 }).run()
+        }
+        className={cn(
+          "h-8 w-8 p-0",
+          editor.isActive("heading", { level: 3 }) && "bg-gray-200"
+        )}
+        aria-label="Heading 3"
+      >
+        <Heading3 className="h-4 w-4" />
+      </Button>
+      <div className="w-px h-6 bg-gray-300 mx-1" />
+
+      {/* Lists */}
       <Button
         type="button"
         variant="ghost"
@@ -130,6 +261,38 @@ const MenuBar = ({
         <ListOrdered className="h-4 w-4" />
       </Button>
       <div className="w-px h-6 bg-gray-300 mx-1" />
+
+      {/* Blockquote & HR */}
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        disabled={
+          disabled || !editor.can().chain().focus().toggleBlockquote().run()
+        }
+        className={cn(
+          "h-8 w-8 p-0",
+          editor.isActive("blockquote") && "bg-gray-200"
+        )}
+        aria-label="Toggle blockquote"
+      >
+        <Quote className="h-4 w-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => editor.chain().focus().setHorizontalRule().run()}
+        disabled={disabled}
+        className="h-8 w-8 p-0"
+        aria-label="Insert horizontal rule"
+      >
+        <Minus className="h-4 w-4" />
+      </Button>
+      <div className="w-px h-6 bg-gray-300 mx-1" />
+
+      {/* Code Block */}
       <Button
         type="button"
         variant="ghost"
@@ -146,6 +309,8 @@ const MenuBar = ({
       >
         <Code className="h-4 w-4" />
       </Button>
+
+      {/* Image Upload */}
       {onImageUpload && (
         <>
           <div className="w-px h-6 bg-gray-300 mx-1" />
@@ -184,8 +349,25 @@ export function RichTextEditor({
     shouldRerenderOnTransaction: false,
     extensions: [
       StarterKit.configure({
-        codeBlock: false,
+        heading: false, // Disable so we can use custom heading extension
+        blockquote: false, // Disable so we can use custom blockquote extension
+        horizontalRule: false, // Disable so we can use custom horizontalRule extension
+        codeBlock: false, // Disable so we can use CodeBlockLowlight
+        strike: false, // Disable so we can use custom strike extension
+        bulletList: false, // Disable so we can use custom bulletList extension
+        orderedList: false, // Disable so we can use custom orderedList extension
+        listItem: false, // Disable so we can use custom listItem extension
       }),
+      Heading.configure({
+        levels: [1, 2, 3],
+      }),
+      Underline,
+      Strike,
+      Blockquote,
+      HorizontalRule,
+      BulletList,
+      OrderedList,
+      ListItem,
       Placeholder.configure({
         placeholder,
       }),
