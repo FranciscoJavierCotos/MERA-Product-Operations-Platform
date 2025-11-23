@@ -21,6 +21,8 @@ import { formatDate } from "@/lib/utils/date";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { useNavigation } from "@/lib/hooks/use-navigation";
+import { useSearchParams } from "next/navigation";
+import { highlightText } from "@/lib/utils/highlight";
 
 export default function SearchPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -29,21 +31,29 @@ export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { savePageState, getPageState } = useNavigation();
   const hasRestoredState = useRef(false);
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams.get("q");
 
-  // Restore search state when returning to page
+  // Restore search state when returning to page or handle URL query
   useEffect(() => {
     // Only restore once when component mounts or pathname changes back to this page
     if (!hasRestoredState.current) {
-      const savedState = getPageState();
-      if (savedState?.searchQuery) {
-        console.log("Restoring search state:", savedState);
-        setSearchQuery(savedState.searchQuery);
-        setTickets(savedState.tickets || []);
-        setHasSearched(savedState.hasSearched || false);
+      // Check if there's a query parameter in the URL
+      if (urlQuery) {
+        console.log("Searching from URL query:", urlQuery);
+        handleSearch(urlQuery);
+      } else {
+        const savedState = getPageState();
+        if (savedState?.searchQuery) {
+          console.log("Restoring search state:", savedState);
+          setSearchQuery(savedState.searchQuery);
+          setTickets(savedState.tickets || []);
+          setHasSearched(savedState.hasSearched || false);
+        }
       }
       hasRestoredState.current = true;
     }
-  }, [getPageState]);
+  }, [getPageState, urlQuery]);
 
   const handleSearch = async (query: string) => {
     setLoading(true);
@@ -143,10 +153,14 @@ export default function SearchPage() {
                           >
                             <div>
                               <p className="font-medium text-gray-900">
-                                #{ticket.ticket_number} {ticket.title}
+                                #{ticket.ticket_number}{" "}
+                                {highlightText(ticket.title, searchQuery)}
                               </p>
                               <p className="text-sm text-gray-500 line-clamp-1">
-                                {ticket.description}
+                                {highlightText(
+                                  ticket.description || "",
+                                  searchQuery
+                                )}
                               </p>
                             </div>
                           </Link>

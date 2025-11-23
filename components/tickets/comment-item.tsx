@@ -202,12 +202,12 @@ export function CommentItem({
               {isEdited && (
                 <span className="text-xs text-gray-400 italic">(edited)</span>
               )}
-              {/* Time worked badge in header */}
+              {/* Time worked text in header */}
               {comment.time_worked_minutes != null &&
                 comment.time_worked_minutes > 0 && (
-                  <span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-xs text-gray-500">
                     <Clock className="h-3 w-3" />
-                    {comment.time_worked_minutes} min
+                    {comment.time_worked_minutes} min worked
                   </span>
                 )}
             </div>

@@ -16,6 +16,7 @@ import { getInitials } from "@/lib/utils/format";
 import { Profile } from "@/types/user.types";
 import { GoBackButton } from "./go-back-button";
 import { useNavigation } from "@/lib/hooks/use-navigation";
+import { NavbarSearch } from "./navbar-search";
 
 interface NavbarProps {
   user: Profile | null;
@@ -40,12 +41,15 @@ export function Navbar({ user }: NavbarProps) {
     <div className="bg-white shadow-sm">
       <div className="ml-0 md:ml-64">
         <div className="flex justify-between h-16 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-1 mr-4">
             <GoBackButton showText={true} />
             <div className="h-6 w-px bg-gray-300 hidden sm:block" />
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-gray-900 whitespace-nowrap">
               Support Ticket System
             </h2>
+            <div className="hidden md:flex flex-1 max-w-2xl mx-4">
+              <NavbarSearch />
+            </div>
           </div>
           <div className="flex items-center">
             <DropdownMenu>

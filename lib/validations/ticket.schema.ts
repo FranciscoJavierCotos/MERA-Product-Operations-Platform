@@ -34,6 +34,7 @@ export const updateTicketSchema = z.object({
     ])
     .optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
+  client_temperature: z.enum(["hot", "warm", "cool"]).optional(),
   assigned_to: z.string().uuid().optional().nullable(),
   tags: z.array(z.string()).optional(),
 });

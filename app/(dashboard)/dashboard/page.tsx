@@ -13,6 +13,7 @@ import {
 import { formatRelativeTime } from "@/lib/utils/date";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { PriorityBadge } from "@/components/shared/priority-badge";
+import { TemperatureBadge } from "@/components/shared/temperature-badge";
 import { formatTicketNumber } from "@/lib/utils/format";
 import Link from "next/link";
 
@@ -109,6 +110,9 @@ export default async function DashboardPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
+                      <TemperatureBadge
+                        temperature={ticket.client_temperature}
+                      />
                       <PriorityBadge priority={ticket.priority} />
                       <StatusBadge status={ticket.status} />
                     </div>

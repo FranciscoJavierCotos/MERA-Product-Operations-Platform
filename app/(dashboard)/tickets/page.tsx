@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { PriorityBadge } from "@/components/shared/priority-badge";
+import { TemperatureBadge } from "@/components/shared/temperature-badge";
 import { formatTicketNumber } from "@/lib/utils/format";
 import { formatRelativeTime } from "@/lib/utils/date";
 
@@ -45,6 +46,7 @@ export default async function TicketsPage() {
               <TableHead>Title</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Priority</TableHead>
+              <TableHead>Temperature</TableHead>
               <TableHead>Assigned To</TableHead>
               <TableHead>Created</TableHead>
             </TableRow>
@@ -76,6 +78,9 @@ export default async function TicketsPage() {
                     <PriorityBadge priority={ticket.priority} />
                   </TableCell>
                   <TableCell>
+                    <TemperatureBadge temperature={ticket.client_temperature} />
+                  </TableCell>
+                  <TableCell>
                     {ticket.assigned_user?.full_name || "Unassigned"}
                   </TableCell>
                   <TableCell className="text-gray-500">
@@ -86,7 +91,7 @@ export default async function TicketsPage() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="text-center text-gray-500 py-8"
                 >
                   No tickets found

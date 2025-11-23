@@ -8,6 +8,7 @@ export type TicketStatus =
   | "resolved"
   | "closed";
 export type TicketPriority = "low" | "medium" | "high" | "urgent";
+export type ClientTemperature = "hot" | "warm" | "cool";
 
 export interface Ticket {
   id: string;
@@ -16,6 +17,7 @@ export interface Ticket {
   description: string;
   status: TicketStatus;
   priority: TicketPriority;
+  client_temperature: ClientTemperature;
   created_by?: string;
   assigned_to?: string;
   team_id?: string;
