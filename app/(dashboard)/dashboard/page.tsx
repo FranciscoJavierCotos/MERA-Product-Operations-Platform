@@ -3,12 +3,14 @@ import {
   getDashboardStats,
   getRecentTickets,
 } from "@/lib/supabase/queries/dashboard";
+import { getUpcomingTasks } from "@/lib/supabase/queries/tasks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   LayoutDashboard,
   Ticket,
   CheckSquare,
   CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
 import { formatRelativeTime } from "@/lib/utils/date";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -16,6 +18,7 @@ import { PriorityBadge } from "@/components/shared/priority-badge";
 import { TemperatureBadge } from "@/components/shared/temperature-badge";
 import { formatTicketNumber } from "@/lib/utils/format";
 import Link from "next/link";
+import { DashboardUpcomingTasks } from "./dashboard-upcoming-tasks";
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -25,8 +28,17 @@ export default async function DashboardPage() {
 
   if (!user) return null;
 
-  const stats = await getDashboardStats(supabase, user.id);
-  const recentTickets = await getRecentTickets(supabase, 5);
+  const [stats, recentTickets, upcomingTasks] = await Promise.all([
+    getDashboardStats(supabase, user.id),
+    getRecentTickets(supabase, 5),
+    getUpcomingTasks(supabase, user.id, 7),
+  ]);
+
+  // Count overdue tasks
+  const now = new Date();
+  const overdueTasks =
+    upcomingTasks?.filter((t) => t.due_date && new Date(t.due_date) < now)
+      .length || 0;
 
   return (
     <div className="space-y-6">
@@ -65,6 +77,12 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.myTasks}</div>
+            {overdueTasks > 0 && (
+              <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
+                <AlertTriangle className="h-3 w-3" />
+                {overdueTasks} overdue
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -112,6 +130,7 @@ export default async function DashboardPage() {
                     <div className="flex items-center gap-2">
                       <TemperatureBadge
                         temperature={ticket.client_temperature}
+                        showLabel={false}
                       />
                       <PriorityBadge priority={ticket.priority} />
                       <StatusBadge status={ticket.status} />
@@ -127,6 +146,12 @@ export default async function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Upcoming Tasks Widget */}
+      <DashboardUpcomingTasks
+        userId={user.id}
+        initialTasks={upcomingTasks || []}
+      />
     </div>
   );
 }

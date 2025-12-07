@@ -64,7 +64,7 @@ export function AssignedUserDropdown({
     setIsUpdating(true);
     try {
       await updateTicket(supabase, ticketId, {
-        assigned_to: newAssignedUserId,
+        assigned_to: newAssignedUserId || undefined,
       });
       router.refresh();
     } catch (error) {

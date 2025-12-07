@@ -5,3 +5,18 @@ export {
   useFormDirtyTracking,
   type UnsavedChangesOptions,
 } from "./use-unsaved-changes";
+
+// Task hooks
+export {
+  useMyTasks,
+  useTicketTasks,
+  useUpcomingTasks,
+  useAllPendingTasks,
+  useTaskStats,
+  useCreateTask,
+  useUpdateTask,
+  useCompleteTask,
+  useReopenTask,
+  useDeleteTask,
+  taskKeys,
+} from "./use-tasks";

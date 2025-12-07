@@ -16,7 +16,7 @@ export function formatDateTime(date: string | Date) {
 }
 
 export function formatTimeWorked(totalMinutes: number): string {
-  if (totalMinutes === 0) return "0m";
+  if (totalMinutes === 0) return "-";
 
   const days = Math.floor(totalMinutes / (24 * 60));
   const hours = Math.floor((totalMinutes % (24 * 60)) / 60);

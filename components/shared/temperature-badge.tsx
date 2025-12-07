@@ -3,6 +3,7 @@ import { ClientTemperature } from "@/types/ticket.types";
 
 interface TemperatureBadgeProps {
   temperature: ClientTemperature;
+  showLabel?: boolean;
 }
 
 const temperatureConfig: Record<
@@ -26,8 +27,15 @@ const temperatureConfig: Record<
   },
 };
 
-export function TemperatureBadge({ temperature }: TemperatureBadgeProps) {
+export function TemperatureBadge({
+  temperature,
+  showLabel = true,
+}: TemperatureBadgeProps) {
   const config = temperatureConfig[temperature];
+
+  if (!showLabel) {
+    return <span title={config.label}>{config.emoji}</span>;
+  }
 
   return (
     <Badge className={config.className}>

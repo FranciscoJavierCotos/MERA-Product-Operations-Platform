@@ -2,7 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2, Save, X } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  Save,
+  X,
+  MoreHorizontal,
+  Link as LinkIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,12 +28,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { updateTicket, deleteTicket } from "@/lib/supabase/queries/tickets";
 import { Ticket, TicketStatus } from "@/types/ticket.types";
 import { useUnsavedChangesContextOptional } from "@/lib/contexts/unsaved-changes-context";
 import { RichTextEditor } from "./rich-text-editor";
 import { uploadCommentImage } from "@/lib/supabase/queries/comments";
+import { useToast } from "@/hooks/use-toast";
 
 interface DeleteButtonProps {
   ticketId: string;
@@ -35,6 +49,7 @@ interface DeleteButtonProps {
 export function DeleteButton({ ticketId }: DeleteButtonProps) {
   const router = useRouter();
   const supabase = createClient();
+  const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,16 +72,52 @@ export function DeleteButton({ ticketId }: DeleteButtonProps) {
     }
   };
 
+  const handleCopyLink = async () => {
+    try {
+      const url = `${window.location.origin}/tickets/${ticketId}`;
+      await navigator.clipboard.writeText(url);
+
+      toast({
+        title: "Link copied",
+        description: "Ticket link has been copied to clipboard.",
+      });
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+      toast({
+        title: "Error",
+        description: "Failed to copy link to clipboard.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
-      <Button
-        variant="destructive"
-        size="icon"
-        className="h-8 w-8"
-        onClick={() => setShowDeleteDialog(true)}
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8"
+            aria-label="Ticket options"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem onClick={handleCopyLink}>
+            <LinkIcon className="mr-2 h-4 w-4" />
+            Copy Link
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => setShowDeleteDialog(true)}
+            className="text-red-600 focus:text-red-600"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>

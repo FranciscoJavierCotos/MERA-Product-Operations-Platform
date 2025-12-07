@@ -78,7 +78,10 @@ export default async function TicketsPage() {
                     <PriorityBadge priority={ticket.priority} />
                   </TableCell>
                   <TableCell>
-                    <TemperatureBadge temperature={ticket.client_temperature} />
+                    <TemperatureBadge
+                      temperature={ticket.client_temperature}
+                      showLabel={false}
+                    />
                   </TableCell>
                   <TableCell>
                     {ticket.assigned_user?.full_name || "Unassigned"}

@@ -73,7 +73,10 @@ export default async function MyTicketsPage() {
                     <PriorityBadge priority={ticket.priority} />
                   </TableCell>
                   <TableCell>
-                    <TemperatureBadge temperature={ticket.client_temperature} />
+                    <TemperatureBadge
+                      temperature={ticket.client_temperature}
+                      showLabel={false}
+                    />
                   </TableCell>
                   <TableCell className="text-gray-500">
                     {formatRelativeTime(ticket.created_at)}

@@ -155,12 +155,25 @@ export interface Database {
           id: string;
           title: string;
           description: string | null;
-          status: "todo" | "in_progress" | "completed";
+          status: "pending" | "completed";
+          priority: "low" | "medium" | "high" | "urgent";
+          action_tag:
+            | "meeting"
+            | "pending_customer"
+            | "for_review"
+            | "send_email"
+            | "follow_up"
+            | "internal_review"
+            | "documentation"
+            | "testing"
+            | "deployment"
+            | "other";
           ticket_id: string | null;
           assigned_to: string;
           created_by: string | null;
           due_date: string | null;
           completed_at: string | null;
+          time_spent_minutes: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -168,12 +181,25 @@ export interface Database {
           id?: string;
           title: string;
           description?: string | null;
-          status?: "todo" | "in_progress" | "completed";
+          status?: "pending" | "completed";
+          priority?: "low" | "medium" | "high" | "urgent";
+          action_tag?:
+            | "meeting"
+            | "pending_customer"
+            | "for_review"
+            | "send_email"
+            | "follow_up"
+            | "internal_review"
+            | "documentation"
+            | "testing"
+            | "deployment"
+            | "other";
           ticket_id?: string | null;
           assigned_to: string;
           created_by?: string | null;
           due_date?: string | null;
           completed_at?: string | null;
+          time_spent_minutes?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -181,12 +207,25 @@ export interface Database {
           id?: string;
           title?: string;
           description?: string | null;
-          status?: "todo" | "in_progress" | "completed";
+          status?: "pending" | "completed";
+          priority?: "low" | "medium" | "high" | "urgent";
+          action_tag?:
+            | "meeting"
+            | "pending_customer"
+            | "for_review"
+            | "send_email"
+            | "follow_up"
+            | "internal_review"
+            | "documentation"
+            | "testing"
+            | "deployment"
+            | "other";
           ticket_id?: string | null;
           assigned_to?: string;
           created_by?: string | null;
           due_date?: string | null;
           completed_at?: string | null;
+          time_spent_minutes?: number | null;
           created_at?: string;
           updated_at?: string;
         };

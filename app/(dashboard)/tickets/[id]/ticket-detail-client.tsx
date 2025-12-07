@@ -3,13 +3,12 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
-  EditableTitleAndDescription,
+  EditableDescription,
   EditButton,
 } from "@/components/tickets/ticket-actions";
 
 interface TicketDetailClientProps {
   ticketId: string;
-  title: string;
   description: string;
   isCreator: boolean;
   isSupportAgent: boolean;
@@ -18,7 +17,6 @@ interface TicketDetailClientProps {
 
 export function TicketDetailClient({
   ticketId,
-  title,
   description,
   isCreator,
   isSupportAgent,
@@ -32,9 +30,7 @@ export function TicketDetailClient({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold">
-            {isEditing ? "Edit Ticket" : title}
-          </h2>
+          <h2 className="text-xl font-semibold">Details</h2>
           {canEdit && !isEditing && (
             <EditButton onClick={() => setIsEditing(true)} />
           )}
@@ -42,9 +38,8 @@ export function TicketDetailClient({
       </CardHeader>
       <CardContent className="space-y-4">
         {canEdit ? (
-          <EditableTitleAndDescription
+          <EditableDescription
             ticketId={ticketId}
-            initialTitle={title}
             initialDescription={description}
             isEditing={isEditing}
             onEditEnd={() => setIsEditing(false)}

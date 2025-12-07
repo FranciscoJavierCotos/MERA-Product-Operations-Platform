@@ -3,7 +3,9 @@ import {
   getTicketById,
   getTicketComments,
 } from "@/lib/supabase/queries/tickets";
-import { getTasksByTicket } from "@/lib/supabase/queries/tasks";
+import { getSupportMembers } from "@/lib/supabase/queries/users";
+
+export const dynamic = "force-dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadgeDropdown } from "@/components/shared/status-badge-dropdown";
@@ -16,6 +18,7 @@ import { DeleteButton } from "@/components/tickets/ticket-actions";
 import { TicketDetailClient } from "./ticket-detail-client";
 import { TimeWorkedButton } from "@/components/tickets/time-worked-button";
 import { CommentsSection } from "@/components/tickets/comments-section";
+import { TicketTasksSection } from "@/components/tasks/ticket-tasks-section";
 import { UserAvatar } from "@/components/shared/user-avatar";
 
 export default async function TicketDetailPage({
@@ -24,9 +27,11 @@ export default async function TicketDetailPage({
   params: { id: string };
 }) {
   const supabase = createClient();
-  const ticket = await getTicketById(supabase, params.id);
-  const comments = await getTicketComments(supabase, params.id);
-  const tasks = await getTasksByTicket(supabase, params.id);
+  const [ticket, comments, supportMembers] = await Promise.all([
+    getTicketById(supabase, params.id),
+    getTicketComments(supabase, params.id),
+    getSupportMembers(supabase),
+  ]);
 
   // Get current user
   const {
@@ -61,10 +66,13 @@ export default async function TicketDetailPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <h1 className="text-3xl font-bold text-gray-900">
             {formatTicketNumber(ticket.ticket_number)}
           </h1>
+          <span className="text-2xl font-semibold text-gray-800">
+            {ticket.title}
+          </span>
           <StatusBadgeDropdown
             ticketId={ticket.id}
             status={ticket.status}
@@ -112,18 +120,9 @@ export default async function TicketDetailPage({
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-700">Created By</h3>
-              <div className="mt-2 flex items-center gap-2">
-                {ticket.creator && ticket.creator.role !== "client" && (
-                  <UserAvatar
-                    name={ticket.creator.full_name}
-                    avatarUrl={ticket.creator.avatar_url}
-                    className="h-5 w-5"
-                  />
-                )}
-                <p className="text-sm">
-                  {ticket.creator?.full_name || "Unknown"}
-                </p>
-              </div>
+              <p className="mt-2 text-sm">
+                {ticket.creator?.full_name || "Unknown"}
+              </p>
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-700">Created</h3>
@@ -161,46 +160,18 @@ export default async function TicketDetailPage({
 
       <TicketDetailClient
         ticketId={ticket.id}
-        title={ticket.title}
         description={ticket.description}
         isCreator={!!isCreator}
         isSupportAgent={!!isSupportAgent}
         isClosed={isClosed}
       />
 
-      {tasks && tasks.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Tasks ({tasks.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {tasks.map((task: any) => (
-                <div
-                  key={task.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <p className="font-medium">{task.title}</p>
-                      <p className="text-sm text-gray-500">
-                        Assigned to {task.assigned_user?.full_name}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge
-                    variant={
-                      task.status === "completed" ? "default" : "outline"
-                    }
-                  >
-                    {task.status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <TicketTasksSection
+        ticketId={ticket.id}
+        users={supportMembers || []}
+        currentUserId={user?.id || ""}
+        isClosed={isClosed}
+      />
 
       <CommentsSection
         ticketId={params.id}

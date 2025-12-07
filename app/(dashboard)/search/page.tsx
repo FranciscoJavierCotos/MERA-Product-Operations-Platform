@@ -105,7 +105,7 @@ export default function SearchPage() {
           <div className="mt-4 text-xs text-gray-500">
             <p>
               💡 <strong>Search tips:</strong> Type normally for fuzzy search,
-              or use "quotes" for exact phrase matching
+              or use &quot;quotes&quot; for exact phrase matching
             </p>
           </div>
 
@@ -118,7 +118,7 @@ export default function SearchPage() {
           {!loading && hasSearched && tickets.length === 0 && (
             <div className="mt-8 text-center text-gray-500 py-12">
               <p className="text-sm">
-                No tickets found matching "{searchQuery}"
+                No tickets found matching &quot;{searchQuery}&quot;
               </p>
               <p className="text-xs mt-2">
                 Try adjusting your search terms or removing quotes for a broader

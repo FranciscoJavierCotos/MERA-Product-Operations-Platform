@@ -90,7 +90,7 @@ export async function createTicket(
 export async function updateTicket(
   supabase: Client,
   id: string,
-  updates: Database["public"]["Tables"]["tickets"]["Update"]
+  updates: Partial<Ticket>
 ) {
   const { data, error } = await (supabase.from("tickets") as any)
     .update(updates)

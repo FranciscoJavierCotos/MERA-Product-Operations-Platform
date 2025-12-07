@@ -267,7 +267,7 @@ export default function NewTicketPage() {
               </Select>
               {!assignedTo && (
                 <p className="text-xs text-gray-500">
-                  Status will be set to "New" for unassigned tickets
+                  Status will be set to &quot;New&quot; for unassigned tickets
                 </p>
               )}
             </div>
