@@ -1,4 +1,5 @@
 import { Profile } from "./user.types";
+import { Team, SupportLevel, TicketCollaborator } from "./team.types";
 
 export type TicketStatus =
   | "new"
@@ -21,6 +22,8 @@ export interface Ticket {
   created_by?: string;
   assigned_to?: string;
   team_id?: string;
+  functional_team_id?: string;
+  support_level?: SupportLevel;
   client_email?: string;
   client_name?: string;
   tags: string[];
@@ -35,6 +38,9 @@ export interface Ticket {
   // Relations
   assigned_user?: Profile;
   creator?: Profile;
+  functional_team?: Team;
+  support_team?: Team;
+  collaborators?: TicketCollaborator[];
 }
 
 export interface TicketComment {

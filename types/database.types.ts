@@ -46,6 +46,12 @@ export interface Database {
           id: string;
           name: string;
           description: string | null;
+          category:
+            | "functional"
+            | "l1_support"
+            | "l2_technical"
+            | "l3_engineering"
+            | null;
           created_at: string;
           updated_at: string;
         };
@@ -53,6 +59,12 @@ export interface Database {
           id?: string;
           name: string;
           description?: string | null;
+          category?:
+            | "functional"
+            | "l1_support"
+            | "l2_technical"
+            | "l3_engineering"
+            | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -60,6 +72,12 @@ export interface Database {
           id?: string;
           name?: string;
           description?: string | null;
+          category?:
+            | "functional"
+            | "l1_support"
+            | "l2_technical"
+            | "l3_engineering"
+            | null;
           created_at?: string;
           updated_at?: string;
         };

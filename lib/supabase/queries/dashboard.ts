@@ -57,7 +57,9 @@ export async function getRecentTickets(supabase: Client, limit: number = 10) {
       `
       *,
       assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email),
-      creator:profiles!tickets_created_by_fkey(id, full_name, email)
+      creator:profiles!tickets_created_by_fkey(id, full_name, email),
+      functional_team:teams!tickets_functional_team_id_fkey(id, name),
+      support_team:teams!tickets_team_id_fkey(id, name)
     `
     )
     .order("created_at", { ascending: false })

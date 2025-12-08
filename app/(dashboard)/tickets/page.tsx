@@ -14,8 +14,10 @@ import {
 import { StatusBadge } from "@/components/shared/status-badge";
 import { PriorityBadge } from "@/components/shared/priority-badge";
 import { TemperatureBadge } from "@/components/shared/temperature-badge";
+import { SupportLevelBadge } from "@/components/shared/support-level-badge";
 import { formatTicketNumber } from "@/lib/utils/format";
 import { formatRelativeTime } from "@/lib/utils/date";
+import { SupportLevel } from "@/types/team.types";
 
 export default async function TicketsPage() {
   const supabase = createClient();
@@ -45,8 +47,11 @@ export default async function TicketsPage() {
               <TableHead>Ticket ID</TableHead>
               <TableHead>Title</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Level</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Temperature</TableHead>
+              <TableHead>Functional Team</TableHead>
+              <TableHead>Support Team</TableHead>
               <TableHead>Assigned To</TableHead>
               <TableHead>Created</TableHead>
             </TableRow>
@@ -75,6 +80,11 @@ export default async function TicketsPage() {
                     <StatusBadge status={ticket.status} />
                   </TableCell>
                   <TableCell>
+                    <SupportLevelBadge
+                      level={(ticket.support_level as SupportLevel) || "L1"}
+                    />
+                  </TableCell>
+                  <TableCell>
                     <PriorityBadge priority={ticket.priority} />
                   </TableCell>
                   <TableCell>
@@ -82,6 +92,12 @@ export default async function TicketsPage() {
                       temperature={ticket.client_temperature}
                       showLabel={false}
                     />
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-600">
+                    {ticket.functional_team?.name || "-"}
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-600">
+                    {ticket.support_team?.name || "-"}
                   </TableCell>
                   <TableCell>
                     {ticket.assigned_user?.full_name || "Unassigned"}
@@ -94,7 +110,7 @@ export default async function TicketsPage() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={10}
                   className="text-center text-gray-500 py-8"
                 >
                   No tickets found

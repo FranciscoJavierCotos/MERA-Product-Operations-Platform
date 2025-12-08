@@ -43,6 +43,8 @@ export default async function MyTicketsPage() {
               <TableHead>Status</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Temperature</TableHead>
+              <TableHead>Functional Team</TableHead>
+              <TableHead>Support Team</TableHead>
               <TableHead>Created</TableHead>
             </TableRow>
           </TableHeader>
@@ -78,6 +80,12 @@ export default async function MyTicketsPage() {
                       showLabel={false}
                     />
                   </TableCell>
+                  <TableCell className="text-sm text-gray-600">
+                    {ticket.functional_team?.name || "-"}
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-600">
+                    {ticket.support_team?.name || "-"}
+                  </TableCell>
                   <TableCell className="text-gray-500">
                     {formatRelativeTime(ticket.created_at)}
                   </TableCell>
@@ -86,7 +94,7 @@ export default async function MyTicketsPage() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={8}
                   className="text-center text-gray-500 py-8"
                 >
                   No tickets assigned to you

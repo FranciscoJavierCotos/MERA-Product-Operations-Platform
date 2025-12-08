@@ -15,6 +15,9 @@ export const ticketSchema = z.object({
     ])
     .optional(),
   assigned_to: z.string().uuid().optional().nullable(),
+  functional_team_id: z.string().uuid(),
+  team_id: z.string().uuid().optional(),
+  support_level: z.enum(["L1", "L2", "L3"]).optional(),
   tags: z.array(z.string()).optional(),
   client_email: z.string().email().optional(),
   client_name: z.string().optional(),
@@ -36,6 +39,9 @@ export const updateTicketSchema = z.object({
   priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
   client_temperature: z.enum(["hot", "warm", "cool"]).optional(),
   assigned_to: z.string().uuid().optional().nullable(),
+  functional_team_id: z.string().uuid().optional(),
+  team_id: z.string().uuid().optional().nullable(),
+  support_level: z.enum(["L1", "L2", "L3"]).optional(),
   tags: z.array(z.string()).optional(),
 });
 

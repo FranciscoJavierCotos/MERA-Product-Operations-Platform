@@ -124,6 +124,21 @@ export default async function DashboardPage() {
                       </div>
                       <p className="text-sm text-gray-600 mt-1">
                         {ticket.assigned_user?.full_name || "Unassigned"} •{" "}
+                        {ticket.functional_team?.name ||
+                        ticket.support_team?.name ? (
+                          <>
+                            {ticket.functional_team?.name && (
+                              <span>{ticket.functional_team.name}</span>
+                            )}
+                            {ticket.functional_team?.name &&
+                              ticket.support_team?.name &&
+                              " / "}
+                            {ticket.support_team?.name && (
+                              <span>{ticket.support_team.name}</span>
+                            )}
+                            {" • "}
+                          </>
+                        ) : null}
                         {formatRelativeTime(ticket.created_at)}
                       </p>
                     </div>

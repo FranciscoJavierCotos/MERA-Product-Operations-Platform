@@ -1,0 +1,129 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { createClient } from "@/lib/supabase/client";
+import { updateTicket } from "@/lib/supabase/queries/tickets";
+import {
+  getFunctionalTeams,
+  addEscalationHistory,
+} from "@/lib/supabase/queries/teams";
+import { Team } from "@/types/team.types";
+import { ChevronDown } from "lucide-react";
+
+interface FunctionalTeamDropdownProps {
+  ticketId: string;
+  currentTeam: Team | null;
+  isSupportAgent: boolean;
+  isClosed: boolean;
+}
+
+export function FunctionalTeamDropdown({
+  ticketId,
+  currentTeam,
+  isSupportAgent,
+  isClosed,
+}: FunctionalTeamDropdownProps) {
+  const router = useRouter();
+  const supabase = createClient();
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadTeams() {
+      if (!isSupportAgent) return;
+
+      setIsLoading(true);
+      try {
+        const functionalTeams = await getFunctionalTeams(supabase);
+        setTeams(functionalTeams);
+      } catch (err) {
+        console.error("Error loading functional teams:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadTeams();
+  }, [isSupportAgent]);
+
+  const handleTeamChange = async (newTeamId: string) => {
+    if (isUpdating || newTeamId === currentTeam?.id) return;
+
+    setIsUpdating(true);
+    try {
+      // Get current user
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      // Update ticket
+      await updateTicket(supabase, ticketId, {
+        functional_team_id: newTeamId,
+      });
+
+      // Log escalation history
+      await addEscalationHistory(supabase, {
+        ticket_id: ticketId,
+        user_id: user?.id,
+        from_functional_team_id: currentTeam?.id,
+        to_functional_team_id: newTeamId,
+      });
+
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to update functional team:", error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // If not a support agent or ticket is closed, show non-interactive badge
+  if (!isSupportAgent || isClosed) {
+    return (
+      <Badge variant="outline" className="whitespace-nowrap">
+        {currentTeam?.name || "Not assigned"}
+      </Badge>
+    );
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-md"
+          disabled={isUpdating || isLoading}
+        >
+          <Badge
+            variant="outline"
+            className="whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
+          >
+            {currentTeam?.name || "Select Department"}
+            <ChevronDown className="h-3 w-3" />
+          </Badge>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-[200px]">
+        {teams.map((team) => (
+          <DropdownMenuItem
+            key={team.id}
+            onClick={() => handleTeamChange(team.id)}
+            className={team.id === currentTeam?.id ? "bg-gray-100" : ""}
+          >
+            <span>{team.name}</span>
+            {team.id === currentTeam?.id && (
+              <span className="ml-auto text-blue-600">✓</span>
+            )}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

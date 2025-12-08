@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { createTicket } from "@/lib/supabase/queries/tickets";
 import { getSupportMembers } from "@/lib/supabase/queries/users";
+import { getFunctionalTeams } from "@/lib/supabase/queries/teams";
 import { uploadCommentImage } from "@/lib/supabase/queries/comments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Profile } from "@/types/user.types";
+import { Team, L1_SUPPORT_DESK_ID } from "@/types/team.types";
 import { useUnsavedChangesContext } from "@/lib/contexts/unsaved-changes-context";
 import { RichTextEditor } from "@/components/tickets/rich-text-editor";
 
@@ -37,6 +39,8 @@ export default function NewTicketPage() {
     | "closed"
   >("new");
   const [assignedTo, setAssignedTo] = useState<string>("");
+  const [functionalTeamId, setFunctionalTeamId] = useState<string>("");
+  const [functionalTeams, setFunctionalTeams] = useState<Team[]>([]);
   const [supportMembers, setSupportMembers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,9 +51,12 @@ export default function NewTicketPage() {
   // Track form dirty state
   const hasUnsavedChanges = useMemo(() => {
     return (
-      title.trim() !== "" || description.trim() !== "" || assignedTo !== ""
+      title.trim() !== "" ||
+      description.trim() !== "" ||
+      assignedTo !== "" ||
+      functionalTeamId !== ""
     );
-  }, [title, description, assignedTo]);
+  }, [title, description, assignedTo, functionalTeamId]);
 
   // Register/unregister with context
   useEffect(() => {
@@ -76,6 +83,7 @@ export default function NewTicketPage() {
       setPriority("medium");
       setStatus("new");
       setAssignedTo("");
+      setFunctionalTeamId("");
     };
 
     unsavedChangesContext.registerHandlers({
@@ -89,15 +97,19 @@ export default function NewTicketPage() {
   }, []); // Empty deps - register once on mount
 
   useEffect(() => {
-    async function loadSupportMembers() {
+    async function loadData() {
       try {
-        const members = await getSupportMembers(supabase);
+        const [members, teams] = await Promise.all([
+          getSupportMembers(supabase),
+          getFunctionalTeams(supabase),
+        ]);
         setSupportMembers(members);
+        setFunctionalTeams(teams);
       } catch (err) {
-        console.error("Error loading support members:", err);
+        console.error("Error loading data:", err);
       }
     }
-    loadSupportMembers();
+    loadData();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,6 +123,13 @@ export default function NewTicketPage() {
       } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
+      // Validate functional team is selected
+      if (!functionalTeamId) {
+        setError("Please select a functional department");
+        setLoading(false);
+        return;
+      }
+
       const ticket = await createTicket(supabase, {
         title,
         description,
@@ -118,6 +137,9 @@ export default function NewTicketPage() {
         status: assignedTo ? status : "new",
         assigned_to: assignedTo || null,
         created_by: session.user.id,
+        functional_team_id: functionalTeamId,
+        team_id: L1_SUPPORT_DESK_ID, // Auto-assign to L1 Support Desk
+        support_level: "L1",
       });
 
       // Clear unsaved changes flag after successful creation
@@ -180,6 +202,36 @@ export default function NewTicketPage() {
               />
               {!description.trim() && (
                 <p className="text-xs text-red-500">Description is required</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="functional-team">Functional Department *</Label>
+              <Select
+                value={functionalTeamId || "none"}
+                onValueChange={(value) =>
+                  setFunctionalTeamId(value === "none" ? "" : value)
+                }
+                disabled={loading}
+              >
+                <SelectTrigger id="functional-team">
+                  <SelectValue placeholder="Select department..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none" disabled>
+                    Select department...
+                  </SelectItem>
+                  {functionalTeams.map((team) => (
+                    <SelectItem key={team.id} value={team.id}>
+                      {team.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!functionalTeamId && (
+                <p className="text-xs text-gray-500">
+                  Select the business area this ticket relates to
+                </p>
               )}
             </div>
 
