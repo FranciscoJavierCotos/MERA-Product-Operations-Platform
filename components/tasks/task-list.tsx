@@ -29,6 +29,7 @@ interface TaskListProps {
   showTicketLinks?: boolean;
   emptyMessage?: string;
   isLoading?: boolean;
+  toolbarActions?: React.ReactNode;
 }
 
 type SortOption = "due_date" | "priority" | "created_at";
@@ -50,6 +51,7 @@ export function TaskList({
   showTicketLinks = true,
   emptyMessage = "No tasks found",
   isLoading,
+  toolbarActions,
 }: TaskListProps) {
   const [taskToComplete, setTaskToComplete] = useState<Task | null>(null);
   const [search, setSearch] = useState("");
@@ -66,7 +68,7 @@ export function TaskList({
       result = result.filter(
         (task) =>
           task.title.toLowerCase().includes(searchLower) ||
-          task.description?.toLowerCase().includes(searchLower)
+          task.description?.toLowerCase().includes(searchLower),
       );
     }
 
@@ -117,7 +119,7 @@ export function TaskList({
 
   const handleCompleteWithTime = (
     taskId: string,
-    timeSpentMinutes?: number
+    timeSpentMinutes?: number,
   ) => {
     onComplete(taskId, timeSpentMinutes);
     setTaskToComplete(null);
@@ -128,7 +130,7 @@ export function TaskList({
 
   return (
     <div className="space-y-4">
-      {showFilters && (
+      {showFilters ? (
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Search */}
           <div className="relative flex-1">
@@ -141,8 +143,8 @@ export function TaskList({
             />
           </div>
 
-          {/* Filters */}
-          <div className="flex items-center gap-2">
+          {/* Filters + actions */}
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             <Filter className="h-4 w-4 text-gray-400" />
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -186,9 +188,15 @@ export function TaskList({
                 <SelectItem value="created_at">Created</SelectItem>
               </SelectContent>
             </Select>
+
+            {toolbarActions ? (
+              <div className="sm:ml-2">{toolbarActions}</div>
+            ) : null}
           </div>
         </div>
-      )}
+      ) : toolbarActions ? (
+        <div className="flex justify-end">{toolbarActions}</div>
+      ) : null}
 
       {/* Task list */}
       <div className="space-y-3">

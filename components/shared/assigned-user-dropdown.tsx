@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
@@ -22,6 +22,7 @@ interface AssignedUserDropdownProps {
     full_name: string;
     avatar_url: string | null;
   } | null;
+  availableSupportMembers?: Profile[];
   isSupportAgent: boolean;
   isClosed: boolean;
 }
@@ -29,31 +30,43 @@ interface AssignedUserDropdownProps {
 export function AssignedUserDropdown({
   ticketId,
   assignedUser,
+  availableSupportMembers,
   isSupportAgent,
   isClosed,
 }: AssignedUserDropdownProps) {
   const router = useRouter();
-  const supabase = createClient();
-  const [supportMembers, setSupportMembers] = useState<Profile[]>([]);
+  const supabase = useMemo(() => createClient(), []);
+  const [supportMembers, setSupportMembers] = useState<Profile[]>(
+    availableSupportMembers ?? [],
+  );
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const didInitFromProps = useRef(false);
 
   useEffect(() => {
-    async function loadSupportMembers() {
-      if (!isSupportAgent) return;
-
-      setIsLoading(true);
-      try {
-        const members = await getSupportMembers(supabase);
-        setSupportMembers(members);
-      } catch (err) {
-        console.error("Error loading support members:", err);
-      } finally {
-        setIsLoading(false);
-      }
+    if (didInitFromProps.current) return;
+    if (availableSupportMembers) {
+      didInitFromProps.current = true;
+      setSupportMembers(availableSupportMembers);
+      return;
     }
-    loadSupportMembers();
-  }, [isSupportAgent]);
+  }, [availableSupportMembers]);
+
+  const ensureMembersLoaded = async () => {
+    if (!isSupportAgent) return;
+    if (availableSupportMembers) return;
+    if (supportMembers.length > 0 || isLoading) return;
+
+    setIsLoading(true);
+    try {
+      const members = await getSupportMembers(supabase);
+      setSupportMembers(members);
+    } catch (err) {
+      console.error("Error loading support members:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleAssignmentChange = async (newAssignedUserId: string | null) => {
     if (isUpdating) return;
@@ -95,7 +108,7 @@ export function AssignedUserDropdown({
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={(open) => open && void ensureMembersLoaded()}>
       <DropdownMenuTrigger asChild>
         <button
           className="mt-2 flex items-center gap-2 hover:bg-gray-50 rounded-md px-2 py-1 -ml-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -24,6 +24,7 @@ interface SupportTeamDropdownProps {
   ticketId: string;
   currentTeam: Team | null;
   currentLevel: SupportLevel;
+  availableTeams?: Team[];
   isSupportAgent: boolean;
   isClosed: boolean;
 }
@@ -32,31 +33,41 @@ export function SupportTeamDropdown({
   ticketId,
   currentTeam,
   currentLevel,
+  availableTeams,
   isSupportAgent,
   isClosed,
 }: SupportTeamDropdownProps) {
   const router = useRouter();
-  const supabase = createClient();
-  const [teams, setTeams] = useState<Team[]>([]);
+  const supabase = useMemo(() => createClient(), []);
+  const [teams, setTeams] = useState<Team[]>(availableTeams ?? []);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const didInitFromProps = useRef(false);
 
   useEffect(() => {
-    async function loadTeams() {
-      if (!isSupportAgent) return;
-
-      setIsLoading(true);
-      try {
-        const supportTeams = await getAllSupportTeams(supabase);
-        setTeams(supportTeams);
-      } catch (err) {
-        console.error("Error loading support teams:", err);
-      } finally {
-        setIsLoading(false);
-      }
+    if (didInitFromProps.current) return;
+    if (availableTeams) {
+      didInitFromProps.current = true;
+      setTeams(availableTeams);
+      return;
     }
-    loadTeams();
-  }, [isSupportAgent]);
+  }, [availableTeams]);
+
+  const ensureTeamsLoaded = async () => {
+    if (!isSupportAgent) return;
+    if (availableTeams) return;
+    if (teams.length > 0 || isLoading) return;
+
+    setIsLoading(true);
+    try {
+      const supportTeams = await getAllSupportTeams(supabase);
+      setTeams(supportTeams);
+    } catch (err) {
+      console.error("Error loading support teams:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getCategoryLevel = (category?: string): SupportLevel => {
     if (category === "l1_support") return "L1";
@@ -124,7 +135,7 @@ export function SupportTeamDropdown({
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={(open) => open && void ensureTeamsLoaded()}>
       <DropdownMenuTrigger asChild>
         <button
           className="flex items-center gap-2 hover:bg-gray-50 rounded-md px-2 py-1 -ml-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"

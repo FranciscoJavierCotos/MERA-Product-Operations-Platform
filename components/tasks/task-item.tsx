@@ -104,7 +104,9 @@ export function TaskItem({
     <div
       className={cn(
         "group flex items-center gap-3 px-3 py-2.5 border rounded-lg transition-colors",
-        isCompleted ? "bg-gray-50 border-gray-200" : "bg-white hover:bg-gray-50"
+        isCompleted
+          ? "bg-gray-50 border-gray-200"
+          : "bg-white hover:bg-gray-50",
       )}
     >
       {/* Checkbox */}
@@ -116,7 +118,7 @@ export function TaskItem({
           disabled={isCompleted}
           className={cn(
             "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500",
-            isCompleted && "cursor-not-allowed opacity-50"
+            isCompleted && "cursor-not-allowed opacity-50",
           )}
           aria-label={`Mark "${task.title}" as ${
             isCompleted ? "incomplete" : "complete"
@@ -131,7 +133,7 @@ export function TaskItem({
           <h3
             className={cn(
               "text-sm font-medium truncate",
-              isCompleted ? "text-gray-500 line-through" : "text-gray-900"
+              isCompleted ? "text-gray-500 line-through" : "text-gray-900",
             )}
           >
             {task.title}
@@ -142,7 +144,7 @@ export function TaskItem({
               <span
                 className={cn(
                   "text-sm truncate",
-                  isCompleted ? "text-gray-400" : "text-gray-500"
+                  isCompleted ? "text-gray-400" : "text-gray-500",
                 )}
               >
                 {task.description}
@@ -170,10 +172,10 @@ export function TaskItem({
                 isCompleted
                   ? "text-gray-400"
                   : dueDateInfo.isOverdue
-                  ? "text-red-600"
-                  : dueDateInfo.isDueSoon
-                  ? "text-amber-600"
-                  : "text-gray-500"
+                    ? "text-red-600"
+                    : dueDateInfo.isDueSoon
+                      ? "text-amber-600"
+                      : "text-gray-500",
               )}
             >
               <Calendar className="h-3 w-3" />
@@ -191,7 +193,7 @@ export function TaskItem({
               <UserAvatar
                 name={task.assigned_user.full_name}
                 avatarUrl={task.assigned_user.avatar_url}
-                className="h-4 w-4"
+                className="h-5 w-5"
               />
               <span className="text-xs text-gray-500">
                 {task.assigned_user.full_name.split(" ")[0]}

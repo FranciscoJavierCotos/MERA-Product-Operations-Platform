@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,6 +21,7 @@ import { ChevronDown } from "lucide-react";
 interface FunctionalTeamDropdownProps {
   ticketId: string;
   currentTeam: Team | null;
+  availableTeams?: Team[];
   isSupportAgent: boolean;
   isClosed: boolean;
 }
@@ -28,31 +29,41 @@ interface FunctionalTeamDropdownProps {
 export function FunctionalTeamDropdown({
   ticketId,
   currentTeam,
+  availableTeams,
   isSupportAgent,
   isClosed,
 }: FunctionalTeamDropdownProps) {
   const router = useRouter();
-  const supabase = createClient();
-  const [teams, setTeams] = useState<Team[]>([]);
+  const supabase = useMemo(() => createClient(), []);
+  const [teams, setTeams] = useState<Team[]>(availableTeams ?? []);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const didInitFromProps = useRef(false);
 
   useEffect(() => {
-    async function loadTeams() {
-      if (!isSupportAgent) return;
-
-      setIsLoading(true);
-      try {
-        const functionalTeams = await getFunctionalTeams(supabase);
-        setTeams(functionalTeams);
-      } catch (err) {
-        console.error("Error loading functional teams:", err);
-      } finally {
-        setIsLoading(false);
-      }
+    if (didInitFromProps.current) return;
+    if (availableTeams) {
+      didInitFromProps.current = true;
+      setTeams(availableTeams);
+      return;
     }
-    loadTeams();
-  }, [isSupportAgent]);
+  }, [availableTeams]);
+
+  const ensureTeamsLoaded = async () => {
+    if (!isSupportAgent) return;
+    if (availableTeams) return;
+    if (teams.length > 0 || isLoading) return;
+
+    setIsLoading(true);
+    try {
+      const functionalTeams = await getFunctionalTeams(supabase);
+      setTeams(functionalTeams);
+    } catch (err) {
+      console.error("Error loading functional teams:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleTeamChange = async (newTeamId: string) => {
     if (isUpdating || newTeamId === currentTeam?.id) return;
@@ -95,7 +106,7 @@ export function FunctionalTeamDropdown({
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={(open) => open && void ensureTeamsLoaded()}>
       <DropdownMenuTrigger asChild>
         <button
           className="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-md"

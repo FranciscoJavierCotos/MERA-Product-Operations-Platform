@@ -4,7 +4,12 @@ import {
   getTicketComments,
 } from "@/lib/supabase/queries/tickets";
 import { getSupportMembers } from "@/lib/supabase/queries/users";
-import { getTeamById } from "@/lib/supabase/queries/teams";
+import {
+  getAllSupportTeams,
+  getEscalationHistory,
+  getFunctionalTeams,
+  getTicketCollaborators,
+} from "@/lib/supabase/queries/teams";
 
 export const dynamic = "force-dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,11 +38,11 @@ export default async function TicketDetailPage({
   params: { id: string };
 }) {
   const supabase = createClient();
-  const [ticket, comments, supportMembers] = await Promise.all([
-    getTicketById(supabase, params.id),
-    getTicketComments(supabase, params.id),
-    getSupportMembers(supabase),
-  ]);
+
+  const ticketPromise = getTicketById(supabase, params.id);
+  const commentsPromise = getTicketComments(supabase, params.id);
+  const collaboratorsPromise = getTicketCollaborators(supabase, params.id);
+  const escalationHistoryPromise = getEscalationHistory(supabase, params.id);
 
   // Get current user
   const {
@@ -58,34 +63,31 @@ export default async function TicketDetailPage({
     profile = data as ProfileRole | null;
   }
 
+  const isSupportAgent =
+    profile &&
+    ["admin", "support_lead", "support_member"].includes(profile.role);
+
+  const [ticket, comments, collaborators, escalationHistory] =
+    await Promise.all([
+      ticketPromise,
+      commentsPromise,
+      collaboratorsPromise,
+      escalationHistoryPromise,
+    ]);
+
+  const [supportMembers, functionalTeams, supportTeams] = isSupportAgent
+    ? await Promise.all([
+        getSupportMembers(supabase),
+        getFunctionalTeams(supabase),
+        getAllSupportTeams(supabase),
+      ])
+    : [[], [], []];
+
   if (!ticket) {
     return <div>Ticket not found</div>;
   }
 
-  // Fetch functional team and support team if they exist
-  let functionalTeam: Team | null = null;
-  let supportTeam: Team | null = null;
-
-  if (ticket.functional_team_id) {
-    try {
-      functionalTeam = await getTeamById(supabase, ticket.functional_team_id);
-    } catch (err) {
-      console.error("Error loading functional team:", err);
-    }
-  }
-
-  if (ticket.team_id) {
-    try {
-      supportTeam = await getTeamById(supabase, ticket.team_id);
-    } catch (err) {
-      console.error("Error loading support team:", err);
-    }
-  }
-
   const isCreator = user && ticket.created_by === user.id;
-  const isSupportAgent =
-    profile &&
-    ["admin", "support_lead", "support_member"].includes(profile.role);
   const isAssignedUser = user && ticket.assigned_to === user.id;
   const isClosed = ticket.status === "closed";
   const currentSupportLevel: SupportLevel =
@@ -101,24 +103,6 @@ export default async function TicketDetailPage({
           <span className="text-2xl font-semibold text-gray-800">
             {ticket.title}
           </span>
-          <StatusBadgeDropdown
-            ticketId={ticket.id}
-            status={ticket.status}
-            isSupportAgent={!!isSupportAgent}
-            isClosed={isClosed}
-          />
-          <PriorityBadgeDropdown
-            ticketId={ticket.id}
-            priority={ticket.priority}
-            isSupportAgent={!!isSupportAgent}
-            isClosed={isClosed}
-          />
-          <TemperatureBadgeDropdown
-            ticketId={ticket.id}
-            temperature={ticket.client_temperature}
-            isAssignedUser={!!isAssignedUser}
-            isClosed={isClosed}
-          />
         </div>
         {isCreator && <DeleteButton ticketId={ticket.id} />}
       </div>
@@ -128,87 +112,161 @@ export default async function TicketDetailPage({
           <CardTitle>Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <h3 className="text-sm font-medium text-gray-700">
-                Functional Department
-              </h3>
-              <div className="mt-2">
-                <FunctionalTeamDropdown
-                  ticketId={ticket.id}
-                  currentTeam={functionalTeam}
-                  isSupportAgent={!!isSupportAgent}
-                  isClosed={isClosed}
-                />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* First column */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-700">
+                  Functional Department
+                </h3>
+                <div className="mt-2">
+                  <FunctionalTeamDropdown
+                    ticketId={ticket.id}
+                    currentTeam={
+                      (ticket.functional_team as Team | undefined) || null
+                    }
+                    availableTeams={functionalTeams}
+                    isSupportAgent={!!isSupportAgent}
+                    isClosed={isClosed}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-700">
+                  Support Team
+                </h3>
+                <div className="mt-2">
+                  <SupportTeamDropdown
+                    ticketId={ticket.id}
+                    currentTeam={
+                      (ticket.support_team as Team | undefined) || null
+                    }
+                    currentLevel={currentSupportLevel}
+                    availableTeams={supportTeams}
+                    isSupportAgent={!!isSupportAgent}
+                    isClosed={isClosed}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-700">
+                  Assigned To
+                </h3>
+                <div className="mt-2">
+                  <AssignedUserDropdown
+                    ticketId={ticket.id}
+                    assignedUser={
+                      ticket.assigned_user
+                        ? {
+                            id: ticket.assigned_user.id,
+                            full_name: ticket.assigned_user.full_name,
+                            avatar_url: ticket.assigned_user.avatar_url || null,
+                          }
+                        : null
+                    }
+                    availableSupportMembers={supportMembers}
+                    isSupportAgent={!!isSupportAgent}
+                    isClosed={isClosed}
+                  />
+                </div>
               </div>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-700">
-                Support Team
-              </h3>
-              <div className="mt-2">
-                <SupportTeamDropdown
-                  ticketId={ticket.id}
-                  currentTeam={supportTeam}
-                  currentLevel={currentSupportLevel}
-                  isSupportAgent={!!isSupportAgent}
-                  isClosed={isClosed}
-                />
+
+            {/* Second column */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-700">
+                  Ticket Status
+                </h3>
+                <div className="mt-2">
+                  <StatusBadgeDropdown
+                    ticketId={ticket.id}
+                    status={ticket.status}
+                    isSupportAgent={!!isSupportAgent}
+                    isClosed={isClosed}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-700">
+                  Ticket Priority
+                </h3>
+                <div className="mt-2">
+                  <PriorityBadgeDropdown
+                    ticketId={ticket.id}
+                    priority={ticket.priority}
+                    isSupportAgent={!!isSupportAgent}
+                    isClosed={isClosed}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-700">
+                  Client Temperature
+                </h3>
+                <div className="mt-2">
+                  <TemperatureBadgeDropdown
+                    ticketId={ticket.id}
+                    temperature={ticket.client_temperature}
+                    isAssignedUser={!!isAssignedUser}
+                    isClosed={isClosed}
+                  />
+                </div>
               </div>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-700">Assigned To</h3>
-              <AssignedUserDropdown
+
+            {/* Third column */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-700">
+                  Created By
+                </h3>
+                <p className="mt-2 text-sm">
+                  {ticket.creator?.full_name || "Unknown"}
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-700">Created</h3>
+                <p className="mt-2 text-sm">
+                  {formatDateTime(ticket.created_at)} (
+                  {formatRelativeTime(ticket.created_at)})
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-700">
+                  Time Worked
+                </h3>
+                <div className="mt-2">
+                  <TimeWorkedButton
+                    ticketId={ticket.id}
+                    timeWorkedMinutes={ticket.time_worked_minutes}
+                    isClosed={isClosed}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Fourth column */}
+            <div className="space-y-4">
+              <CollaboratorsSection
                 ticketId={ticket.id}
-                assignedUser={
-                  ticket.assigned_user
-                    ? {
-                        id: ticket.assigned_user.id,
-                        full_name: ticket.assigned_user.full_name,
-                        avatar_url: ticket.assigned_user.avatar_url || null,
-                      }
-                    : null
-                }
+                initialCollaborators={collaborators}
+                availableFunctionalTeams={functionalTeams}
+                availableSupportTeams={supportTeams}
                 isSupportAgent={!!isSupportAgent}
                 isClosed={isClosed}
               />
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-700">Created By</h3>
-              <p className="mt-2 text-sm">
-                {ticket.creator?.full_name || "Unknown"}
-              </p>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-700">Created</h3>
-              <p className="mt-2 text-sm">
-                {formatDateTime(ticket.created_at)} (
-                {formatRelativeTime(ticket.created_at)})
-              </p>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-700">Time Worked</h3>
-              <div className="mt-2">
-                <TimeWorkedButton
-                  ticketId={ticket.id}
-                  timeWorkedMinutes={ticket.time_worked_minutes}
-                  isClosed={isClosed}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Collaborators Section */}
-          <div className="pt-4 border-t">
-            <CollaboratorsSection
-              ticketId={ticket.id}
-              isSupportAgent={!!isSupportAgent}
-              isClosed={isClosed}
-            />
           </div>
 
           {ticket.tags && ticket.tags.length > 0 && (
-            <div>
+            <div className="pt-4 border-t">
               <h3 className="text-sm font-medium text-gray-700 mb-2">Tags</h3>
               <div className="flex flex-wrap gap-2">
                 {ticket.tags.map((tag) => (
@@ -244,7 +302,10 @@ export default async function TicketDetailPage({
       />
 
       {/* Escalation History - only show if there's history */}
-      <EscalationHistory ticketId={ticket.id} />
+      <EscalationHistory
+        ticketId={ticket.id}
+        initialHistory={escalationHistory}
+      />
     </div>
   );
 }

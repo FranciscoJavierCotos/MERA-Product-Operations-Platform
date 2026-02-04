@@ -108,17 +108,11 @@ export function TasksPageClient({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Tasks</h1>
-          <p className="mt-2 text-sm text-gray-700">
-            Manage your tasks and track your progress
-          </p>
-        </div>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Task
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">My Tasks</h1>
+        <p className="mt-2 text-sm text-gray-700">
+          Manage your tasks and track your progress
+        </p>
       </div>
 
       {/* Stats */}
@@ -142,12 +136,18 @@ export function TasksPageClient({
             onDelete={handleDelete}
             onReopen={handleReopen}
             showFilters={activeTab === "all"}
+            toolbarActions={
+              <Button onClick={() => setIsFormOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Task
+              </Button>
+            }
             emptyMessage={
               activeTab === "pending"
                 ? "No pending tasks - great job!"
                 : activeTab === "completed"
-                ? "No completed tasks yet"
-                : "No tasks found. Create your first task to get started."
+                  ? "No completed tasks yet"
+                  : "No tasks found. Create your first task to get started."
             }
             isLoading={completeTask.isPending}
           />

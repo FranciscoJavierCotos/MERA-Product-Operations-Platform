@@ -39,7 +39,7 @@ export function Navbar({ user }: NavbarProps) {
 
   return (
     <div className="bg-white shadow-sm">
-      <div className="ml-0 md:ml-64">
+      <div className="w-full">
         <div className="flex justify-between h-16 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 flex-1 mr-4">
             <GoBackButton showText={true} />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,25 @@ export function CommentsSection({
   const [error, setError] = useState<string | null>(null);
   const [isCommentFormOpen, setIsCommentFormOpen] = useState(false);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+
+  useEffect(() => {
+    setComments(initialComments);
+  }, [initialComments]);
+
+  const refreshComments = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const updatedComments = await getCommentsByTicket(supabase, ticketId);
+      setComments(updatedComments);
+    } catch (err) {
+      console.error("Failed to refresh comments:", err);
+      setError("Failed to load comments");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [supabase, ticketId]);
 
   // Set up real-time subscription for new comments
   useEffect(() => {
@@ -52,28 +70,14 @@ export function CommentsSection({
             // Remove the comment from the list
             setComments((prev) => prev.filter((c) => c.id !== payload.old.id));
           }
-        }
+        },
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [ticketId, supabase]);
-
-  const refreshComments = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const updatedComments = await getCommentsByTicket(supabase, ticketId);
-      setComments(updatedComments);
-    } catch (err) {
-      console.error("Failed to refresh comments:", err);
-      setError("Failed to load comments");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [refreshComments, supabase, ticketId]);
 
   const handleCommentCreated = async () => {
     await refreshComments();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,23 +38,36 @@ import { Plus, X, Users } from "lucide-react";
 
 interface CollaboratorsSectionProps {
   ticketId: string;
+  initialCollaborators?: TicketCollaborator[];
+  availableFunctionalTeams?: Team[];
+  availableSupportTeams?: Team[];
   isSupportAgent: boolean;
   isClosed: boolean;
 }
 
 export function CollaboratorsSection({
   ticketId,
+  initialCollaborators,
+  availableFunctionalTeams,
+  availableSupportTeams,
   isSupportAgent,
   isClosed,
 }: CollaboratorsSectionProps) {
   const router = useRouter();
-  const supabase = createClient();
-  const [collaborators, setCollaborators] = useState<TicketCollaborator[]>([]);
-  const [functionalTeams, setFunctionalTeams] = useState<Team[]>([]);
-  const [supportTeams, setSupportTeams] = useState<Team[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const supabase = useMemo(() => createClient(), []);
+  const [collaborators, setCollaborators] = useState<TicketCollaborator[]>(
+    initialCollaborators ?? [],
+  );
+  const [functionalTeams, setFunctionalTeams] = useState<Team[]>(
+    availableFunctionalTeams ?? [],
+  );
+  const [supportTeams, setSupportTeams] = useState<Team[]>(
+    availableSupportTeams ?? [],
+  );
+  const [isLoading, setIsLoading] = useState(!initialCollaborators);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  const didInitFromProps = useRef(false);
 
   // Form state
   const [collaboratorType, setCollaboratorType] = useState<
@@ -64,26 +77,61 @@ export function CollaboratorsSection({
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
-    loadData();
-  }, [ticketId]);
+    if (didInitFromProps.current) return;
+    didInitFromProps.current = true;
 
-  async function loadData() {
-    setIsLoading(true);
+    if (initialCollaborators) setCollaborators(initialCollaborators);
+    if (availableFunctionalTeams) setFunctionalTeams(availableFunctionalTeams);
+    if (availableSupportTeams) setSupportTeams(availableSupportTeams);
+    setIsLoading(false);
+  }, [initialCollaborators, availableFunctionalTeams, availableSupportTeams]);
+
+  useEffect(() => {
+    if (initialCollaborators) return;
+
+    async function loadCollaborators() {
+      setIsLoading(true);
+      try {
+        const collabs = await getTicketCollaborators(supabase, ticketId);
+        setCollaborators(collabs);
+      } catch (err) {
+        console.error("Error loading collaborators:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    void loadCollaborators();
+  }, [initialCollaborators, supabase, ticketId]);
+
+  const ensureTeamOptionsLoaded = async () => {
+    if (!isSupportAgent) return;
+    if (functionalTeams.length > 0 && supportTeams.length > 0) return;
+
     try {
-      const [collabs, funcTeams, supTeams] = await Promise.all([
-        getTicketCollaborators(supabase, ticketId),
-        getFunctionalTeams(supabase),
-        getAllSupportTeams(supabase),
+      const [funcTeams, supTeams] = await Promise.all([
+        functionalTeams.length > 0
+          ? Promise.resolve(functionalTeams)
+          : getFunctionalTeams(supabase),
+        supportTeams.length > 0
+          ? Promise.resolve(supportTeams)
+          : getAllSupportTeams(supabase),
       ]);
-      setCollaborators(collabs);
       setFunctionalTeams(funcTeams);
       setSupportTeams(supTeams);
     } catch (err) {
-      console.error("Error loading collaborators:", err);
-    } finally {
-      setIsLoading(false);
+      console.error("Error loading team options:", err);
     }
-  }
+  };
+
+  const refreshCollaborators = async () => {
+    try {
+      const collabs = await getTicketCollaborators(supabase, ticketId);
+      setCollaborators(collabs);
+    } catch (err) {
+      console.error("Error refreshing collaborators:", err);
+    }
+  };
 
   const getSupportLevel = (teamId: string): SupportLevel | undefined => {
     const team = supportTeams.find((t) => t.id === teamId);
@@ -124,7 +172,7 @@ export function CollaboratorsSection({
       setIsDialogOpen(false);
 
       // Reload data
-      await loadData();
+      await refreshCollaborators();
       router.refresh();
     } catch (error) {
       console.error("Failed to add collaborator:", error);
@@ -136,7 +184,7 @@ export function CollaboratorsSection({
   const handleRemoveCollaborator = async (collaboratorId: string) => {
     try {
       await removeTicketCollaborator(supabase, collaboratorId);
-      await loadData();
+      await refreshCollaborators();
       router.refresh();
     } catch (error) {
       console.error("Failed to remove collaborator:", error);
@@ -170,7 +218,13 @@ export function CollaboratorsSection({
           </Badge>
         </div>
         {isSupportAgent && !isClosed && (
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (open) void ensureTeamOptionsLoaded();
+            }}
+          >
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
                 <Plus className="h-3 w-3 mr-1" />

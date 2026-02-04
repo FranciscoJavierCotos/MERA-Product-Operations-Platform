@@ -10,7 +10,7 @@ export async function getTickets(
     status?: string;
     priority?: string;
     assigned_to?: string;
-  }
+  },
 ) {
   let query = supabase
     .from("tickets")
@@ -21,7 +21,7 @@ export async function getTickets(
       creator:profiles!tickets_created_by_fkey(id, full_name, email),
       functional_team:teams!tickets_functional_team_id_fkey(id, name),
       support_team:teams!tickets_team_id_fkey(id, name)
-    `
+    `,
     )
     .order("created_at", { ascending: false });
 
@@ -50,8 +50,10 @@ export async function getTicketById(supabase: Client, id: string) {
       `
       *,
       assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email, avatar_url, role),
-      creator:profiles!tickets_created_by_fkey(id, full_name, email)
-    `
+      creator:profiles!tickets_created_by_fkey(id, full_name, email),
+      functional_team:teams!tickets_functional_team_id_fkey(id, name, category),
+      support_team:teams!tickets_team_id_fkey(id, name, category)
+    `,
     )
     .eq("id", id)
     .single();
@@ -67,7 +69,7 @@ export async function getTicketComments(supabase: Client, ticketId: string) {
       `
       *,
       user:profiles(id, full_name, email, avatar_url)
-    `
+    `,
     )
     .eq("ticket_id", ticketId)
     .order("created_at", { ascending: false });
@@ -78,7 +80,7 @@ export async function getTicketComments(supabase: Client, ticketId: string) {
 
 export async function createTicket(
   supabase: Client,
-  ticket: Database["public"]["Tables"]["tickets"]["Insert"]
+  ticket: Database["public"]["Tables"]["tickets"]["Insert"],
 ) {
   const { data, error } = await (supabase.from("tickets") as any)
     .insert([ticket])
@@ -92,7 +94,7 @@ export async function createTicket(
 export async function updateTicket(
   supabase: Client,
   id: string,
-  updates: Partial<Ticket>
+  updates: Partial<Ticket>,
 ) {
   const { data, error } = await (supabase.from("tickets") as any)
     .update(updates)
@@ -106,7 +108,7 @@ export async function updateTicket(
 
 export async function createComment(
   supabase: Client,
-  comment: Database["public"]["Tables"]["ticket_comments"]["Insert"]
+  comment: Database["public"]["Tables"]["ticket_comments"]["Insert"],
 ) {
   const { data, error } = await (supabase.from("ticket_comments") as any)
     .insert([comment])
@@ -127,7 +129,7 @@ export async function getMyTickets(supabase: Client, userId: string) {
       creator:profiles!tickets_created_by_fkey(id, full_name, email),
       functional_team:teams!tickets_functional_team_id_fkey(id, name),
       support_team:teams!tickets_team_id_fkey(id, name)
-    `
+    `,
     )
     .eq("assigned_to", userId)
     .order("created_at", { ascending: false });
@@ -152,7 +154,7 @@ export async function searchTickets(supabase: Client, query: string) {
         creator:profiles!tickets_created_by_fkey(id, full_name, email),
         functional_team:teams!tickets_functional_team_id_fkey(id, name),
         support_team:teams!tickets_team_id_fkey(id, name)
-      `
+      `,
       )
       .or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
       .order("created_at", { ascending: false });
@@ -170,7 +172,7 @@ export async function searchTickets(supabase: Client, query: string) {
         creator:profiles!tickets_created_by_fkey(id, full_name, email),
         functional_team:teams!tickets_functional_team_id_fkey(id, name),
         support_team:teams!tickets_team_id_fkey(id, name)
-      `
+      `,
       )
       .textSearch("search_vector", searchTerm, {
         type: "websearch",
@@ -193,7 +195,7 @@ export async function deleteTicket(supabase: Client, id: string) {
 export async function updateTimeWorked(
   supabase: Client,
   ticketId: string,
-  timeWorkedMinutes: number
+  timeWorkedMinutes: number,
 ) {
   const { data, error } = await (supabase.from("tickets") as any)
     .update({ time_worked_minutes: timeWorkedMinutes })

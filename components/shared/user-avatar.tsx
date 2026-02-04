@@ -11,7 +11,7 @@ export function UserAvatar({ name, avatarUrl, className }: UserAvatarProps) {
   return (
     <Avatar className={className}>
       {avatarUrl && <AvatarImage src={avatarUrl} alt={name} />}
-      <AvatarFallback className="bg-primary text-white text-xs">
+      <AvatarFallback className="bg-primary text-white text-xs leading-none">
         {getInitials(name)}
       </AvatarFallback>
     </Avatar>

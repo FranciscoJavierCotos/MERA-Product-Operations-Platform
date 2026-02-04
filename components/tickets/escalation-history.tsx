@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -15,14 +15,32 @@ import { ArrowRight, History } from "lucide-react";
 
 interface EscalationHistoryProps {
   ticketId: string;
+  initialHistory?: EscalationHistoryType[];
 }
 
-export function EscalationHistory({ ticketId }: EscalationHistoryProps) {
-  const supabase = createClient();
-  const [history, setHistory] = useState<EscalationHistoryType[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export function EscalationHistory({
+  ticketId,
+  initialHistory,
+}: EscalationHistoryProps) {
+  const supabase = useMemo(() => createClient(), []);
+  const [history, setHistory] = useState<EscalationHistoryType[]>(
+    initialHistory ?? [],
+  );
+  const [isLoading, setIsLoading] = useState(!initialHistory);
+  const didInitFromProps = useRef(false);
 
   useEffect(() => {
+    if (didInitFromProps.current) return;
+    didInitFromProps.current = true;
+    if (initialHistory) {
+      setHistory(initialHistory);
+      setIsLoading(false);
+    }
+  }, [initialHistory]);
+
+  useEffect(() => {
+    if (initialHistory) return;
+
     async function loadHistory() {
       setIsLoading(true);
       try {
@@ -35,7 +53,7 @@ export function EscalationHistory({ ticketId }: EscalationHistoryProps) {
       }
     }
     loadHistory();
-  }, [ticketId]);
+  }, [initialHistory, supabase, ticketId]);
 
   if (isLoading) {
     return (
