@@ -1,6 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database.types";
-import { Ticket, TicketComment } from "@/types/ticket.types";
+import type { Ticket, TicketComment } from "@/types/ticket.types";
 
 type Client = SupabaseClient<Database>;
 
@@ -43,7 +43,10 @@ export async function getTickets(
   return data as unknown as Ticket[];
 }
 
-export async function getTicketById(supabase: Client, id: string) {
+export async function getTicketById(
+  supabase: Client,
+  id: string,
+): Promise<Ticket | null> {
   const { data, error } = await supabase
     .from("tickets")
     .select(
@@ -56,9 +59,10 @@ export async function getTicketById(supabase: Client, id: string) {
     `,
     )
     .eq("id", id)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
+  if (!data) return null;
   return data as unknown as Ticket;
 }
 
@@ -80,7 +84,11 @@ export async function getTicketComments(supabase: Client, ticketId: string) {
 
 export async function createTicket(
   supabase: Client,
-  ticket: Database["public"]["Tables"]["tickets"]["Insert"],
+  ticket: Database["public"]["Tables"]["tickets"]["Insert"] & {
+    functional_team_id?: string | null;
+    support_level?: "L1" | "L2" | "L3" | null;
+    client_temperature?: "hot" | "warm" | "cool" | null;
+  },
 ) {
   const { data, error } = await (supabase.from("tickets") as any)
     .insert([ticket])

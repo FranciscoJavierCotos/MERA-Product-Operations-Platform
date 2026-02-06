@@ -16,14 +16,14 @@ import { formatTicketNumber } from "@/lib/utils/format";
 import { formatRelativeTime } from "@/lib/utils/date";
 
 export default async function MyTicketsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session) return null;
+  if (!user) return null;
 
-  const tickets = await getMyTickets(supabase, session.user.id);
+  const tickets = await getMyTickets(supabase, user.id);
 
   return (
     <div className="space-y-6">

@@ -46,6 +46,28 @@ export function CommentItem({
   onCommentUpdated,
   onCommentDeleted,
 }: CommentItemProps) {
+  const stripHtmlToText = (html: string): string => {
+    const withoutScripts = html
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ");
+
+    const withSpaces = withoutScripts.replace(
+      /<(br\s*\/?>|\/p>|\/div>|\/li>|\/h\d>)/gi,
+      " ",
+    );
+
+    const withoutTags = withSpaces.replace(/<[^>]+>/g, " ");
+    return withoutTags
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/gi, "'")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
   const [isEditing, setIsEditing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [editedContent, setEditedContent] = useState(comment.content);
@@ -61,17 +83,17 @@ export function CommentItem({
     new Date(comment.updated_at).getTime() >
     new Date(comment.created_at).getTime() + 1000;
 
+  const shouldShowReadMore = (() => {
+    if (isExpanded) return false;
+    if (comment.content.includes("<img")) return true;
+
+    const text = stripHtmlToText(comment.content);
+    return text.length > 220;
+  })();
+
   // Helper to strip images from content for preview
   const getPreviewContent = (htmlContent: string): string => {
-    // Create a temporary div to parse HTML
-    const temp = document.createElement("div");
-    temp.innerHTML = htmlContent;
-
-    // Remove all img tags
-    const images = temp.querySelectorAll("img");
-    images.forEach((img) => img.remove());
-
-    return temp.innerHTML;
+    return htmlContent.replace(/<img\b[^>]*>/gi, "");
   };
 
   const handleImageUpload = async (file: File): Promise<string> => {
@@ -294,7 +316,7 @@ export function CommentItem({
             <div className="relative">
               <div
                 className={`prose prose-sm max-w-none text-gray-700 break-words ${
-                  !isExpanded ? "line-clamp-1" : ""
+                  !isExpanded ? "line-clamp-3" : ""
                 }`}
                 dangerouslySetInnerHTML={{
                   __html: isExpanded
@@ -303,13 +325,13 @@ export function CommentItem({
                 }}
               />
               {/* LinkedIn-style show more/less */}
-              {!isExpanded && (
+              {shouldShowReadMore && (
                 <button
                   onClick={() => setIsExpanded(true)}
-                  className="text-sm text-gray-600 hover:text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
+                  className="-mt-1 text-sm text-gray-600 hover:text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
                   aria-label="Show full comment"
                 >
-                  ...more
+                  ...Read more
                 </button>
               )}
               {isExpanded && (
@@ -318,7 +340,7 @@ export function CommentItem({
                   className="mt-1 text-sm text-gray-600 hover:text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1 rounded"
                   aria-label="Show less"
                 >
-                  ...less
+                  ...Read less
                 </button>
               )}
             </div>

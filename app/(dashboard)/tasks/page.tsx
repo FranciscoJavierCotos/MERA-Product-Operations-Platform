@@ -4,14 +4,14 @@ import { getSupportMembers } from "@/lib/supabase/queries/users";
 import { TasksPageClient } from "./tasks-page-client";
 
 export default async function TasksPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session) return null;
+  if (!user) return null;
 
-  const userId = session.user.id;
+  const userId = user.id;
 
   // Fetch initial data server-side
   const [tasks, stats, users] = await Promise.all([

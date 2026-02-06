@@ -20,7 +20,7 @@ import { formatRelativeTime } from "@/lib/utils/date";
 import { SupportLevel } from "@/types/team.types";
 
 export default async function TicketsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const tickets = await getTickets(supabase);
 
   return (

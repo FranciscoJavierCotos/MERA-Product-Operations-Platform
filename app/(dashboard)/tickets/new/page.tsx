@@ -119,9 +119,9 @@ export default function NewTicketPage() {
 
     try {
       const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
       // Validate functional team is selected
       if (!functionalTeamId) {
@@ -136,7 +136,7 @@ export default function NewTicketPage() {
         priority,
         status: assignedTo ? status : "new",
         assigned_to: assignedTo || null,
-        created_by: session.user.id,
+        created_by: user.id,
         functional_team_id: functionalTeamId,
         team_id: L1_SUPPORT_DESK_ID, // Auto-assign to L1 Support Desk
         support_level: "L1",
@@ -269,7 +269,7 @@ export default function NewTicketPage() {
                         | "pending_internal"
                         | "escalated"
                         | "resolved"
-                        | "closed"
+                        | "closed",
                     )
                   }
                   disabled={loading || !assignedTo}

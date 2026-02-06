@@ -56,6 +56,8 @@ export function StatusBadgeDropdown({
   const [isUpdating, setIsUpdating] = useState(false);
   const config = statusConfig[status];
 
+  const canChangeStatus = isSupportAgent || isClosed;
+
   const handleStatusChange = async (newStatus: TicketStatus) => {
     if (newStatus === status || isUpdating) return;
 
@@ -70,8 +72,9 @@ export function StatusBadgeDropdown({
     }
   };
 
-  // If not a support agent or ticket is closed, show non-interactive badge
-  if (!isSupportAgent || isClosed) {
+  // If ticket is open, only support agents can change status.
+  // If ticket is closed, anyone who can view it may reopen by selecting a new status.
+  if (!canChangeStatus) {
     return (
       <Badge variant={config.variant} className="whitespace-nowrap">
         {config.label}

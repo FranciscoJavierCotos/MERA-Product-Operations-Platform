@@ -46,7 +46,7 @@ export function TicketDetailClient({
           />
         ) : (
           <div
-            className="prose prose-sm max-w-none"
+            className="prose prose-sm max-w-none break-words"
             dangerouslySetInnerHTML={{ __html: description }}
           />
         )}

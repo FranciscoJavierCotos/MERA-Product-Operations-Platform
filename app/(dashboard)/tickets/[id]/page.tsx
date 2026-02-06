@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
 import {
   getTicketById,
   getTicketComments,
@@ -31,18 +32,22 @@ import { CollaboratorsSection } from "@/components/tickets/collaborators-section
 import { EscalationHistory } from "@/components/tickets/escalation-history";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Team, SupportLevel } from "@/types/team.types";
+import { isUuid } from "@/lib/utils/uuid";
 
 export default async function TicketDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: { id: string } | Promise<{ id: string }>;
 }) {
-  const supabase = createClient();
+  const { id } = await Promise.resolve(params);
+  if (!isUuid(id)) notFound();
 
-  const ticketPromise = getTicketById(supabase, params.id);
-  const commentsPromise = getTicketComments(supabase, params.id);
-  const collaboratorsPromise = getTicketCollaborators(supabase, params.id);
-  const escalationHistoryPromise = getEscalationHistory(supabase, params.id);
+  const supabase = await createClient();
+
+  const ticketPromise = getTicketById(supabase, id);
+  const commentsPromise = getTicketComments(supabase, id);
+  const collaboratorsPromise = getTicketCollaborators(supabase, id);
+  const escalationHistoryPromise = getEscalationHistory(supabase, id);
 
   // Get current user
   const {
@@ -67,13 +72,22 @@ export default async function TicketDetailPage({
     profile &&
     ["admin", "support_lead", "support_member"].includes(profile.role);
 
-  const [ticket, comments, collaborators, escalationHistory] =
-    await Promise.all([
+  let ticket = null;
+  let comments = null;
+  let collaborators = null;
+  let escalationHistory = null;
+  try {
+    [ticket, comments, collaborators, escalationHistory] = await Promise.all([
       ticketPromise,
       commentsPromise,
       collaboratorsPromise,
       escalationHistoryPromise,
     ]);
+  } catch (error: unknown) {
+    const maybeCode = (error as { code?: string } | null)?.code;
+    if (maybeCode === "22P02") notFound();
+    throw error;
+  }
 
   const [supportMembers, functionalTeams, supportTeams] = isSupportAgent
     ? await Promise.all([
@@ -280,26 +294,32 @@ export default async function TicketDetailPage({
         </CardContent>
       </Card>
 
-      <TicketDetailClient
-        ticketId={ticket.id}
-        description={ticket.description}
-        isCreator={!!isCreator}
-        isSupportAgent={!!isSupportAgent}
-        isClosed={isClosed}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <div className="min-w-0 space-y-6">
+          <TicketDetailClient
+            ticketId={ticket.id}
+            description={ticket.description}
+            isCreator={!!isCreator}
+            isSupportAgent={!!isSupportAgent}
+            isClosed={isClosed}
+          />
 
-      <TicketTasksSection
-        ticketId={ticket.id}
-        users={supportMembers || []}
-        currentUserId={user?.id || ""}
-        isClosed={isClosed}
-      />
+          <TicketTasksSection
+            ticketId={ticket.id}
+            users={supportMembers || []}
+            currentUserId={user?.id || ""}
+            isClosed={isClosed}
+          />
+        </div>
 
-      <CommentsSection
-        ticketId={params.id}
-        initialComments={comments || []}
-        currentUserId={user?.id}
-      />
+        <div className="min-w-0 lg:col-start-2 lg:row-start-1 lg:row-span-2">
+          <CommentsSection
+            ticketId={ticket.id}
+            initialComments={comments || []}
+            currentUserId={user?.id}
+          />
+        </div>
+      </div>
 
       {/* Escalation History - only show if there's history */}
       <EscalationHistory
