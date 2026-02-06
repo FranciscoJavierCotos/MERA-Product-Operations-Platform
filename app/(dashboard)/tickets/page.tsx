@@ -19,6 +19,13 @@ import { formatTicketNumber } from "@/lib/utils/format";
 import { formatRelativeTime } from "@/lib/utils/date";
 import { SupportLevel } from "@/types/team.types";
 
+const categoryLabel: Record<string, string> = {
+  bug: "Bug",
+  feature_request: "Feature Request",
+  question: "Question",
+  configuration_request: "Configuration Request",
+};
+
 export default async function TicketsPage() {
   const supabase = await createClient();
   const tickets = await getTickets(supabase);
@@ -46,6 +53,7 @@ export default async function TicketsPage() {
             <TableRow>
               <TableHead>Ticket ID</TableHead>
               <TableHead>Title</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Level</TableHead>
               <TableHead>Priority</TableHead>
@@ -53,7 +61,9 @@ export default async function TicketsPage() {
               <TableHead>Functional Team</TableHead>
               <TableHead>Support Team</TableHead>
               <TableHead>Assigned To</TableHead>
+              <TableHead>CC</TableHead>
               <TableHead>Created</TableHead>
+              <TableHead>Updated</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -75,6 +85,9 @@ export default async function TicketsPage() {
                     >
                       {ticket.title}
                     </Link>
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-600">
+                    {ticket.category ? categoryLabel[ticket.category] : "-"}
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={ticket.status} />
@@ -102,15 +115,24 @@ export default async function TicketsPage() {
                   <TableCell>
                     {ticket.assigned_user?.full_name || "Unassigned"}
                   </TableCell>
+                  <TableCell
+                    className="text-sm text-gray-600 max-w-[220px] truncate"
+                    title={ticket.cc_email || ""}
+                  >
+                    {ticket.cc_email || "-"}
+                  </TableCell>
                   <TableCell className="text-gray-500">
                     {formatRelativeTime(ticket.created_at)}
+                  </TableCell>
+                  <TableCell className="text-gray-500">
+                    {formatRelativeTime(ticket.updated_at)}
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={10}
+                  colSpan={13}
                   className="text-center text-gray-500 py-8"
                 >
                   No tickets found

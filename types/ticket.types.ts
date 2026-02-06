@@ -10,6 +10,11 @@ export type TicketStatus =
   | "closed";
 export type TicketPriority = "low" | "medium" | "high" | "urgent";
 export type ClientTemperature = "hot" | "warm" | "cool";
+export type TicketCategory =
+  | "bug"
+  | "feature_request"
+  | "question"
+  | "configuration_request";
 
 export interface Ticket {
   id: string;
@@ -19,6 +24,7 @@ export interface Ticket {
   status: TicketStatus;
   priority: TicketPriority;
   client_temperature: ClientTemperature;
+  category?: TicketCategory | null;
   created_by?: string;
   assigned_to?: string;
   team_id?: string;
@@ -26,6 +32,7 @@ export interface Ticket {
   support_level?: SupportLevel;
   client_email?: string;
   client_name?: string;
+  cc_email?: string | null;
   tags: string[];
   attachments?: any[];
   custom_fields?: Record<string, any>;

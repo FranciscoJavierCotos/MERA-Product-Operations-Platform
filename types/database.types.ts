@@ -88,6 +88,13 @@ export interface Database {
           ticket_number: number;
           title: string;
           description: string;
+          cc_email: string | null;
+          category:
+            | "bug"
+            | "feature_request"
+            | "question"
+            | "configuration_request"
+            | null;
           status:
             | "new"
             | "pending_customer"
@@ -116,6 +123,13 @@ export interface Database {
           ticket_number?: number;
           title: string;
           description: string;
+          cc_email?: string | null;
+          category?:
+            | "bug"
+            | "feature_request"
+            | "question"
+            | "configuration_request"
+            | null;
           status?:
             | "new"
             | "pending_customer"
@@ -144,6 +158,13 @@ export interface Database {
           ticket_number?: number;
           title?: string;
           description?: string;
+          cc_email?: string | null;
+          category?:
+            | "bug"
+            | "feature_request"
+            | "question"
+            | "configuration_request"
+            | null;
           status?:
             | "new"
             | "pending_customer"

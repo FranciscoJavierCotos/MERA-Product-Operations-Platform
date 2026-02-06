@@ -15,6 +15,13 @@ import { TemperatureBadge } from "@/components/shared/temperature-badge";
 import { formatTicketNumber } from "@/lib/utils/format";
 import { formatRelativeTime } from "@/lib/utils/date";
 
+const categoryLabel: Record<string, string> = {
+  bug: "Bug",
+  feature_request: "Feature Request",
+  question: "Question",
+  configuration_request: "Configuration Request",
+};
+
 export default async function MyTicketsPage() {
   const supabase = await createClient();
   const {
@@ -40,12 +47,15 @@ export default async function MyTicketsPage() {
             <TableRow>
               <TableHead>Ticket ID</TableHead>
               <TableHead>Title</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Priority</TableHead>
               <TableHead>Temperature</TableHead>
               <TableHead>Functional Team</TableHead>
               <TableHead>Support Team</TableHead>
+              <TableHead>CC</TableHead>
               <TableHead>Created</TableHead>
+              <TableHead>Updated</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -68,6 +78,9 @@ export default async function MyTicketsPage() {
                       {ticket.title}
                     </Link>
                   </TableCell>
+                  <TableCell className="text-sm text-gray-600">
+                    {ticket.category ? categoryLabel[ticket.category] : "-"}
+                  </TableCell>
                   <TableCell>
                     <StatusBadge status={ticket.status} />
                   </TableCell>
@@ -86,15 +99,24 @@ export default async function MyTicketsPage() {
                   <TableCell className="text-sm text-gray-600">
                     {ticket.support_team?.name || "-"}
                   </TableCell>
+                  <TableCell
+                    className="text-sm text-gray-600 max-w-[220px] truncate"
+                    title={ticket.cc_email || ""}
+                  >
+                    {ticket.cc_email || "-"}
+                  </TableCell>
                   <TableCell className="text-gray-500">
                     {formatRelativeTime(ticket.created_at)}
+                  </TableCell>
+                  <TableCell className="text-gray-500">
+                    {formatRelativeTime(ticket.updated_at)}
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={8}
+                  colSpan={11}
                   className="text-center text-gray-500 py-8"
                 >
                   No tickets assigned to you

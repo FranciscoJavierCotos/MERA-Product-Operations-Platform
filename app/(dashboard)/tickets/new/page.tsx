@@ -25,8 +25,16 @@ import { useUnsavedChangesContext } from "@/lib/contexts/unsaved-changes-context
 import { RichTextEditor } from "@/components/tickets/rich-text-editor";
 
 export default function NewTicketPage() {
+  type TicketCategory =
+    | "bug"
+    | "feature_request"
+    | "question"
+    | "configuration_request";
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState<TicketCategory | "">("");
+  const [ccEmail, setCcEmail] = useState("");
   const [priority, setPriority] = useState<
     "low" | "medium" | "high" | "urgent"
   >("medium");
@@ -53,10 +61,12 @@ export default function NewTicketPage() {
     return (
       title.trim() !== "" ||
       description.trim() !== "" ||
+      category !== "" ||
+      ccEmail.trim() !== "" ||
       assignedTo !== "" ||
       functionalTeamId !== ""
     );
-  }, [title, description, assignedTo, functionalTeamId]);
+  }, [title, description, category, ccEmail, assignedTo, functionalTeamId]);
 
   // Register/unregister with context
   useEffect(() => {
@@ -80,6 +90,8 @@ export default function NewTicketPage() {
     const handleDiscard = () => {
       setTitle("");
       setDescription("");
+      setCategory("");
+      setCcEmail("");
       setPriority("medium");
       setStatus("new");
       setAssignedTo("");
@@ -130,9 +142,17 @@ export default function NewTicketPage() {
         return;
       }
 
+      if (!category) {
+        setError("Please select a category");
+        setLoading(false);
+        return;
+      }
+
       const ticket = await createTicket(supabase, {
         title,
         description,
+        category,
+        cc_email: ccEmail.trim() ? ccEmail.trim().toLowerCase() : null,
         priority,
         status: assignedTo ? status : "new",
         assigned_to: assignedTo || null,
@@ -233,6 +253,50 @@ export default function NewTicketPage() {
                   Select the business area this ticket relates to
                 </p>
               )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="category">Category *</Label>
+                <Select
+                  value={category || "none"}
+                  onValueChange={(value) =>
+                    setCategory(
+                      value === "none" ? "" : (value as TicketCategory),
+                    )
+                  }
+                  disabled={loading}
+                >
+                  <SelectTrigger id="category">
+                    <SelectValue placeholder="Select category..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" disabled>
+                      Select category...
+                    </SelectItem>
+                    <SelectItem value="bug">Bug</SelectItem>
+                    <SelectItem value="feature_request">
+                      Feature Request
+                    </SelectItem>
+                    <SelectItem value="question">Question</SelectItem>
+                    <SelectItem value="configuration_request">
+                      Configuration Request
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cc">CC</Label>
+                <Input
+                  id="cc"
+                  type="email"
+                  value={ccEmail}
+                  onChange={(e) => setCcEmail(e.target.value)}
+                  disabled={loading}
+                  placeholder="name@company.com"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

@@ -21,6 +21,8 @@ import { PriorityBadgeDropdown } from "@/components/shared/priority-badge-dropdo
 import { TemperatureBadgeDropdown } from "@/components/shared/temperature-badge-dropdown";
 import { FunctionalTeamDropdown } from "@/components/shared/functional-team-dropdown";
 import { SupportTeamDropdown } from "@/components/shared/support-team-dropdown";
+import { TicketCategoryDropdown } from "@/components/shared/ticket-category-dropdown";
+import { CcEmailInput } from "@/components/shared/cc-email-input";
 import { formatTicketNumber } from "@/lib/utils/format";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils/date";
 import { DeleteButton } from "@/components/tickets/ticket-actions";
@@ -126,7 +128,7 @@ export default async function TicketDetailPage({
           <CardTitle>Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             {/* First column */}
             <div className="space-y-4">
               <div>
@@ -253,6 +255,41 @@ export default async function TicketDetailPage({
               </div>
 
               <div>
+                <h3 className="text-sm font-medium text-gray-700">Updated</h3>
+                <p className="mt-2 text-sm">
+                  {formatDateTime(ticket.updated_at)} (
+                  {formatRelativeTime(ticket.updated_at)})
+                </p>
+              </div>
+            </div>
+
+            {/* Fourth column */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-700">Category</h3>
+                <div className="mt-2">
+                  <TicketCategoryDropdown
+                    ticketId={ticket.id}
+                    category={ticket.category}
+                    isSupportAgent={!!isSupportAgent}
+                    isClosed={isClosed}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-700">CC</h3>
+                <div className="mt-2">
+                  <CcEmailInput
+                    ticketId={ticket.id}
+                    ccEmail={ticket.cc_email}
+                    isSupportAgent={!!isSupportAgent}
+                    isClosed={isClosed}
+                  />
+                </div>
+              </div>
+
+              <div>
                 <h3 className="text-sm font-medium text-gray-700">
                   Time Worked
                 </h3>
@@ -266,7 +303,7 @@ export default async function TicketDetailPage({
               </div>
             </div>
 
-            {/* Fourth column */}
+            {/* Fifth column */}
             <div className="space-y-4">
               <CollaboratorsSection
                 ticketId={ticket.id}

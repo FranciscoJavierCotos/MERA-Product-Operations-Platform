@@ -3,6 +3,12 @@ import { z } from "zod";
 export const ticketSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters").max(200),
   description: z.string().min(10, "Description must be at least 10 characters"),
+  category: z.enum([
+    "bug",
+    "feature_request",
+    "question",
+    "configuration_request",
+  ]),
   priority: z.enum(["low", "medium", "high", "urgent"]),
   status: z
     .enum([
@@ -20,6 +26,7 @@ export const ticketSchema = z.object({
   support_level: z.enum(["L1", "L2", "L3"]).optional(),
   tags: z.array(z.string()).optional(),
   client_email: z.string().email().optional(),
+  cc_email: z.string().email().optional(),
   client_name: z.string().optional(),
 });
 
@@ -36,6 +43,9 @@ export const updateTicketSchema = z.object({
       "closed",
     ])
     .optional(),
+  category: z
+    .enum(["bug", "feature_request", "question", "configuration_request"])
+    .optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
   client_temperature: z.enum(["hot", "warm", "cool"]).optional(),
   assigned_to: z.string().uuid().optional().nullable(),
@@ -43,6 +53,7 @@ export const updateTicketSchema = z.object({
   team_id: z.string().uuid().optional().nullable(),
   support_level: z.enum(["L1", "L2", "L3"]).optional(),
   tags: z.array(z.string()).optional(),
+  cc_email: z.string().email().optional().nullable(),
 });
 
 export const commentSchema = z.object({
