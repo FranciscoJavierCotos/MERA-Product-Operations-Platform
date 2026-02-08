@@ -18,6 +18,7 @@ import { SupportLevelBadge } from "@/components/shared/support-level-badge";
 import { formatTicketNumber } from "@/lib/utils/format";
 import { formatRelativeTime } from "@/lib/utils/date";
 import { SupportLevel } from "@/types/team.types";
+import { sortTicketsForList } from "@/lib/utils/ticketSort";
 
 const categoryLabel: Record<string, string> = {
   bug: "Bug",
@@ -28,7 +29,7 @@ const categoryLabel: Record<string, string> = {
 
 export default async function TicketsPage() {
   const supabase = await createClient();
-  const tickets = await getTickets(supabase);
+  const tickets = sortTicketsForList((await getTickets(supabase)) ?? []);
 
   return (
     <div className="space-y-6">

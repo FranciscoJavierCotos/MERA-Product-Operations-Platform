@@ -23,6 +23,7 @@ import { Loader2 } from "lucide-react";
 import { useNavigation } from "@/lib/hooks/use-navigation";
 import { useSearchParams } from "next/navigation";
 import { highlightText } from "@/lib/utils/highlight";
+import { sortTicketsForList } from "@/lib/utils/ticketSort";
 
 export default function SearchPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -62,12 +63,12 @@ export default function SearchPage() {
     try {
       const supabase = createClient();
       const results = await searchTickets(supabase, query);
-      setTickets(results);
+      setTickets(sortTicketsForList(results ?? []));
 
       // Save search state for when user returns
       savePageState({
         searchQuery: query,
-        tickets: results,
+        tickets: sortTicketsForList(results ?? []),
         hasSearched: true,
       });
     } catch (error) {
@@ -161,7 +162,7 @@ export default function SearchPage() {
                               <p className="text-sm text-gray-500 line-clamp-1">
                                 {highlightText(
                                   ticket.description || "",
-                                  searchQuery
+                                  searchQuery,
                                 )}
                               </p>
                             </div>

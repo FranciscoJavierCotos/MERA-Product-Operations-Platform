@@ -12,7 +12,7 @@ export interface DashboardStats {
 
 export async function getDashboardStats(
   supabase: Client,
-  userId: string
+  userId: string,
 ): Promise<DashboardStats> {
   // Get total tickets count
   const { count: totalTickets } = await supabase
@@ -60,9 +60,10 @@ export async function getRecentTickets(supabase: Client, limit: number = 10) {
       creator:profiles!tickets_created_by_fkey(id, full_name, email),
       functional_team:teams!tickets_functional_team_id_fkey(id, name),
       support_team:teams!tickets_team_id_fkey(id, name)
-    `
+    `,
     )
     .order("created_at", { ascending: false })
+    .order("ticket_number", { ascending: false })
     .limit(limit);
 
   if (error) throw error;

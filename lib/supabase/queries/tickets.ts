@@ -23,7 +23,8 @@ export async function getTickets(
       support_team:teams!tickets_team_id_fkey(id, name)
     `,
     )
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("ticket_number", { ascending: false });
 
   if (filters?.status) {
     query = query.eq("status", filters.status);
@@ -140,7 +141,8 @@ export async function getMyTickets(supabase: Client, userId: string) {
     `,
     )
     .eq("assigned_to", userId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("ticket_number", { ascending: false });
 
   if (error) throw error;
   return data as unknown as Ticket[];
@@ -165,7 +167,8 @@ export async function searchTickets(supabase: Client, query: string) {
       `,
       )
       .or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .order("ticket_number", { ascending: false });
 
     if (error) throw error;
     return data as unknown as Ticket[];
@@ -186,7 +189,8 @@ export async function searchTickets(supabase: Client, query: string) {
         type: "websearch",
         config: "english",
       })
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .order("ticket_number", { ascending: false });
 
     if (error) throw error;
     return data as unknown as Ticket[];

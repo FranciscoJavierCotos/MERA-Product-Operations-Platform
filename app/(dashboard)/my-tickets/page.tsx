@@ -14,6 +14,7 @@ import { PriorityBadge } from "@/components/shared/priority-badge";
 import { TemperatureBadge } from "@/components/shared/temperature-badge";
 import { formatTicketNumber } from "@/lib/utils/format";
 import { formatRelativeTime } from "@/lib/utils/date";
+import { sortTicketsForList } from "@/lib/utils/ticketSort";
 
 const categoryLabel: Record<string, string> = {
   bug: "Bug",
@@ -30,7 +31,9 @@ export default async function MyTicketsPage() {
 
   if (!user) return null;
 
-  const tickets = await getMyTickets(supabase, user.id);
+  const tickets = sortTicketsForList(
+    (await getMyTickets(supabase, user.id)) ?? [],
+  );
 
   return (
     <div className="space-y-6">

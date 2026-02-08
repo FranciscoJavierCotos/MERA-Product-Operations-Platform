@@ -17,6 +17,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { PriorityBadge } from "@/components/shared/priority-badge";
 import { TemperatureBadge } from "@/components/shared/temperature-badge";
 import { formatTicketNumber } from "@/lib/utils/format";
+import { sortTicketsForList } from "@/lib/utils/ticketSort";
 import Link from "next/link";
 import { DashboardUpcomingTasks } from "./dashboard-upcoming-tasks";
 
@@ -33,6 +34,8 @@ export default async function DashboardPage() {
     getRecentTickets(supabase, 5),
     getUpcomingTasks(supabase, user.id, 7),
   ]);
+
+  const recentTicketsSorted = sortTicketsForList(recentTickets ?? []);
 
   // Count overdue tasks
   const now = new Date();
@@ -106,7 +109,7 @@ export default async function DashboardPage() {
         <CardContent>
           <div className="space-y-4">
             {recentTickets && recentTickets.length > 0 ? (
-              recentTickets.map((ticket: any) => (
+              recentTicketsSorted.map((ticket: any) => (
                 <Link
                   key={ticket.id}
                   href={`/tickets/${ticket.id}`}
