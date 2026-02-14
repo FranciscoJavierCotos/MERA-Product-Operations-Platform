@@ -11,10 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { updateTicket } from "@/lib/supabase/queries/tickets";
-import {
-  getFunctionalTeams,
-  addEscalationHistory,
-} from "@/lib/supabase/queries/teams";
+import { getFunctionalTeams } from "@/lib/supabase/queries/teams";
 import { Team } from "@/types/team.types";
 import { ChevronDown } from "lucide-react";
 
@@ -70,24 +67,10 @@ export function FunctionalTeamDropdown({
 
     setIsUpdating(true);
     try {
-      // Get current user
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
       // Update ticket
       await updateTicket(supabase, ticketId, {
         functional_team_id: newTeamId,
       });
-
-      // Log escalation history
-      await addEscalationHistory(supabase, {
-        ticket_id: ticketId,
-        user_id: user?.id,
-        from_functional_team_id: currentTeam?.id,
-        to_functional_team_id: newTeamId,
-      });
-
       router.refresh();
     } catch (error) {
       console.error("Failed to update functional team:", error);

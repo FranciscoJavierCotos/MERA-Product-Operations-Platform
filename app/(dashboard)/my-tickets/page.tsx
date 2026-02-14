@@ -9,12 +9,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { StatusBadge } from "@/components/shared/status-badge";
-import { PriorityBadge } from "@/components/shared/priority-badge";
-import { TemperatureBadge } from "@/components/shared/temperature-badge";
 import { formatTicketNumber } from "@/lib/utils/format";
 import { formatRelativeTime } from "@/lib/utils/date";
 import { sortTicketsForList } from "@/lib/utils/ticketSort";
+import { TicketCategoryDropdown } from "@/components/shared/ticket-category-dropdown";
+import { StatusBadgeDropdown } from "@/components/shared/status-badge-dropdown";
+import { PriorityBadgeDropdown } from "@/components/shared/priority-badge-dropdown";
+import { TemperatureBadgeDropdown } from "@/components/shared/temperature-badge-dropdown";
+import { FunctionalTeamDropdown } from "@/components/shared/functional-team-dropdown";
+import { SupportTeamDropdown } from "@/components/shared/support-team-dropdown";
+import { SupportLevel, Team } from "@/types/team.types";
+
+export const dynamic = "force-dynamic";
 
 const categoryLabel: Record<string, string> = {
   bug: "Bug",
@@ -30,6 +36,19 @@ export default async function MyTicketsPage() {
   } = await supabase.auth.getUser();
 
   if (!user) return null;
+
+  type ProfileRole = {
+    role: "admin" | "support_lead" | "support_member" | "client";
+  };
+  const { data: profileData } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  const profile = profileData as ProfileRole | null;
+  const isSupportAgent =
+    profile &&
+    ["admin", "support_lead", "support_member"].includes(profile.role);
 
   const tickets = sortTicketsForList(
     (await getMyTickets(supabase, user.id)) ?? [],
@@ -65,54 +84,107 @@ export default async function MyTicketsPage() {
             {tickets && tickets.length > 0 ? (
               tickets.map((ticket) => (
                 <TableRow key={ticket.id} className="cursor-pointer">
-                  <TableCell>
+                  <TableCell className="p-0">
                     <Link
                       href={`/tickets/${ticket.id}`}
-                      className="text-blue-600 hover:underline"
+                      className="block px-4 py-4 text-blue-600 hover:underline"
                     >
                       {formatTicketNumber(ticket.ticket_number)}
                     </Link>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="p-0">
                     <Link
                       href={`/tickets/${ticket.id}`}
-                      className="hover:underline"
+                      className="block px-4 py-4 hover:underline"
                     >
                       {ticket.title}
                     </Link>
                   </TableCell>
-                  <TableCell className="text-sm text-gray-600">
-                    {ticket.category ? categoryLabel[ticket.category] : "-"}
-                  </TableCell>
+
+                  {/* Dropdown fields (do not navigate) */}
                   <TableCell>
-                    <StatusBadge status={ticket.status} />
-                  </TableCell>
-                  <TableCell>
-                    <PriorityBadge priority={ticket.priority} />
-                  </TableCell>
-                  <TableCell>
-                    <TemperatureBadge
-                      temperature={ticket.client_temperature}
-                      showLabel={false}
+                    <TicketCategoryDropdown
+                      ticketId={ticket.id}
+                      category={ticket.category}
+                      isSupportAgent={!!isSupportAgent}
+                      isClosed={ticket.status === "closed"}
                     />
                   </TableCell>
-                  <TableCell className="text-sm text-gray-600">
-                    {ticket.functional_team?.name || "-"}
+                  <TableCell>
+                    <StatusBadgeDropdown
+                      ticketId={ticket.id}
+                      status={ticket.status}
+                      isSupportAgent={!!isSupportAgent}
+                      isClosed={ticket.status === "closed"}
+                    />
                   </TableCell>
-                  <TableCell className="text-sm text-gray-600">
-                    {ticket.support_team?.name || "-"}
+                  <TableCell>
+                    <PriorityBadgeDropdown
+                      ticketId={ticket.id}
+                      priority={ticket.priority}
+                      isSupportAgent={!!isSupportAgent}
+                      isClosed={ticket.status === "closed"}
+                    />
                   </TableCell>
+                  <TableCell>
+                    <TemperatureBadgeDropdown
+                      ticketId={ticket.id}
+                      temperature={ticket.client_temperature}
+                      isAssignedUser={ticket.assigned_to === user.id}
+                      isClosed={ticket.status === "closed"}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <FunctionalTeamDropdown
+                      ticketId={ticket.id}
+                      currentTeam={
+                        (ticket.functional_team as Team | undefined) || null
+                      }
+                      isSupportAgent={!!isSupportAgent}
+                      isClosed={ticket.status === "closed"}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <SupportTeamDropdown
+                      ticketId={ticket.id}
+                      currentTeam={
+                        (ticket.support_team as Team | undefined) || null
+                      }
+                      currentLevel={
+                        (ticket.support_level as SupportLevel) || "L1"
+                      }
+                      isSupportAgent={!!isSupportAgent}
+                      isClosed={ticket.status === "closed"}
+                    />
+                  </TableCell>
+
+                  {/* Non-dropdown fields (navigate) */}
                   <TableCell
-                    className="text-sm text-gray-600 max-w-[220px] truncate"
+                    className="p-0 max-w-[220px] truncate"
                     title={ticket.cc_email || ""}
                   >
-                    {ticket.cc_email || "-"}
+                    <Link
+                      href={`/tickets/${ticket.id}`}
+                      className="block px-4 py-4 text-sm text-gray-600"
+                    >
+                      {ticket.cc_email || "-"}
+                    </Link>
                   </TableCell>
-                  <TableCell className="text-gray-500">
-                    {formatRelativeTime(ticket.created_at)}
+                  <TableCell className="p-0">
+                    <Link
+                      href={`/tickets/${ticket.id}`}
+                      className="block px-4 py-4 text-gray-500"
+                    >
+                      {formatRelativeTime(ticket.created_at)}
+                    </Link>
                   </TableCell>
-                  <TableCell className="text-gray-500">
-                    {formatRelativeTime(ticket.updated_at)}
+                  <TableCell className="p-0">
+                    <Link
+                      href={`/tickets/${ticket.id}`}
+                      className="block px-4 py-4 text-gray-500"
+                    >
+                      {formatRelativeTime(ticket.updated_at)}
+                    </Link>
                   </TableCell>
                 </TableRow>
               ))

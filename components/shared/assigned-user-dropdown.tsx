@@ -25,6 +25,7 @@ interface AssignedUserDropdownProps {
   availableSupportMembers?: Profile[];
   isSupportAgent: boolean;
   isClosed: boolean;
+  compact?: boolean;
 }
 
 export function AssignedUserDropdown({
@@ -33,6 +34,7 @@ export function AssignedUserDropdown({
   availableSupportMembers,
   isSupportAgent,
   isClosed,
+  compact = false,
 }: AssignedUserDropdownProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -90,13 +92,13 @@ export function AssignedUserDropdown({
   // If not a support agent or ticket is closed, show non-interactive display
   if (!isSupportAgent || isClosed) {
     return (
-      <div className="mt-2 flex items-center gap-2">
+      <div className={`${compact ? "" : "mt-2 "}flex items-center gap-2`}>
         {assignedUser ? (
           <>
             <UserAvatar
               name={assignedUser.full_name}
               avatarUrl={assignedUser.avatar_url || undefined}
-              className="h-6 w-6"
+              className={compact ? "h-5 w-5" : "h-6 w-6"}
             />
             <span className="text-sm">{assignedUser.full_name}</span>
           </>
@@ -111,7 +113,7 @@ export function AssignedUserDropdown({
     <DropdownMenu onOpenChange={(open) => open && void ensureMembersLoaded()}>
       <DropdownMenuTrigger asChild>
         <button
-          className="mt-2 flex items-center gap-2 hover:bg-gray-50 rounded-md px-2 py-1 -ml-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className={`${compact ? "" : "mt-2 "}flex items-center gap-2 hover:bg-gray-50 rounded-md px-2 py-1 -ml-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
           disabled={isUpdating || isLoading}
         >
           {assignedUser ? (
@@ -119,7 +121,7 @@ export function AssignedUserDropdown({
               <UserAvatar
                 name={assignedUser.full_name}
                 avatarUrl={assignedUser.avatar_url || undefined}
-                className="h-6 w-6"
+                className={compact ? "h-5 w-5" : "h-6 w-6"}
               />
               <span className="text-sm">{assignedUser.full_name}</span>
             </>

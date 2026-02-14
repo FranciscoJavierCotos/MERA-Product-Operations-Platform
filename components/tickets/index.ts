@@ -11,4 +11,4 @@ export { CommentForm } from "./comment-form";
 export { CommentItem } from "./comment-item";
 export { RichTextEditor } from "./rich-text-editor";
 export { CollaboratorsSection } from "./collaborators-section";
-export { EscalationHistory } from "./escalation-history";
+export { TicketHistory } from "./ticket-history";

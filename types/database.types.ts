@@ -308,6 +308,12 @@ export interface Database {
           user_id: string | null;
           action: string;
           changes: Json;
+          field_name: string | null;
+          old_value: string | null;
+          new_value: string | null;
+          source_table: string;
+          source_id: string | null;
+          metadata: Json;
           created_at: string;
         };
         Insert: {
@@ -316,6 +322,12 @@ export interface Database {
           user_id?: string | null;
           action: string;
           changes: Json;
+          field_name?: string | null;
+          old_value?: string | null;
+          new_value?: string | null;
+          source_table?: string;
+          source_id?: string | null;
+          metadata?: Json;
           created_at?: string;
         };
         Update: {
@@ -324,6 +336,12 @@ export interface Database {
           user_id?: string | null;
           action?: string;
           changes?: Json;
+          field_name?: string | null;
+          old_value?: string | null;
+          new_value?: string | null;
+          source_table?: string;
+          source_id?: string | null;
+          metadata?: Json;
           created_at?: string;
         };
       };

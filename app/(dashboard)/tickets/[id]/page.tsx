@@ -3,11 +3,11 @@ import { notFound } from "next/navigation";
 import {
   getTicketById,
   getTicketComments,
+  getTicketHistory,
 } from "@/lib/supabase/queries/tickets";
 import { getSupportMembers } from "@/lib/supabase/queries/users";
 import {
   getAllSupportTeams,
-  getEscalationHistory,
   getFunctionalTeams,
   getTicketCollaborators,
 } from "@/lib/supabase/queries/teams";
@@ -31,7 +31,7 @@ import { TimeWorkedButton } from "@/components/tickets/time-worked-button";
 import { CommentsSection } from "@/components/tickets/comments-section";
 import { TicketTasksSection } from "@/components/tasks/ticket-tasks-section";
 import { CollaboratorsSection } from "@/components/tickets/collaborators-section";
-import { EscalationHistory } from "@/components/tickets/escalation-history";
+import { TicketHistory } from "@/components/tickets/ticket-history";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Team, SupportLevel } from "@/types/team.types";
 import { isUuid } from "@/lib/utils/uuid";
@@ -49,7 +49,7 @@ export default async function TicketDetailPage({
   const ticketPromise = getTicketById(supabase, id);
   const commentsPromise = getTicketComments(supabase, id);
   const collaboratorsPromise = getTicketCollaborators(supabase, id);
-  const escalationHistoryPromise = getEscalationHistory(supabase, id);
+  const ticketHistoryPromise = getTicketHistory(supabase, id);
 
   // Get current user
   const {
@@ -77,13 +77,13 @@ export default async function TicketDetailPage({
   let ticket = null;
   let comments = null;
   let collaborators = null;
-  let escalationHistory = null;
+  let ticketHistory = null;
   try {
-    [ticket, comments, collaborators, escalationHistory] = await Promise.all([
+    [ticket, comments, collaborators, ticketHistory] = await Promise.all([
       ticketPromise,
       commentsPromise,
       collaboratorsPromise,
-      escalationHistoryPromise,
+      ticketHistoryPromise,
     ]);
   } catch (error: unknown) {
     const maybeCode = (error as { code?: string } | null)?.code;
@@ -358,11 +358,8 @@ export default async function TicketDetailPage({
         </div>
       </div>
 
-      {/* Escalation History - only show if there's history */}
-      <EscalationHistory
-        ticketId={ticket.id}
-        initialHistory={escalationHistory}
-      />
+      {/* Ticket History - only show if there's history */}
+      <TicketHistory ticketId={ticket.id} initialHistory={ticketHistory} />
     </div>
   );
 }

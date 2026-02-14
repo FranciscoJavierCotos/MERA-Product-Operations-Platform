@@ -1,6 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database.types";
-import type { Ticket, TicketComment } from "@/types/ticket.types";
+import type { Ticket, TicketComment, TicketHistory } from "@/types/ticket.types";
 
 type Client = SupabaseClient<Database>;
 
@@ -81,6 +81,22 @@ export async function getTicketComments(supabase: Client, ticketId: string) {
 
   if (error) throw error;
   return data as unknown as TicketComment[];
+}
+
+export async function getTicketHistory(supabase: Client, ticketId: string) {
+  const { data, error } = await supabase
+    .from("ticket_history")
+    .select(
+      `
+      *,
+      user:profiles(id, full_name, avatar_url)
+    `,
+    )
+    .eq("ticket_id", ticketId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data as unknown as TicketHistory[];
 }
 
 export async function createTicket(

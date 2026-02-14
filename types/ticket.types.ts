@@ -71,6 +71,12 @@ export interface TicketHistory {
   user_id?: string;
   action: string;
   changes: Record<string, any>;
+  field_name?: string | null;
+  old_value?: string | null;
+  new_value?: string | null;
+  source_table?: string | null;
+  source_id?: string | null;
+  metadata?: Record<string, any> | null;
   created_at: string;
 
   // Relations

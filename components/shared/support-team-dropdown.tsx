@@ -13,10 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { updateTicket } from "@/lib/supabase/queries/tickets";
-import {
-  getAllSupportTeams,
-  addEscalationHistory,
-} from "@/lib/supabase/queries/teams";
+import { getAllSupportTeams } from "@/lib/supabase/queries/teams";
 import { Team, SupportLevel, SUPPORT_LEVEL_CONFIG } from "@/types/team.types";
 import { ChevronDown } from "lucide-react";
 
@@ -27,6 +24,7 @@ interface SupportTeamDropdownProps {
   availableTeams?: Team[];
   isSupportAgent: boolean;
   isClosed: boolean;
+  showLevelBadge?: boolean;
 }
 
 export function SupportTeamDropdown({
@@ -36,6 +34,7 @@ export function SupportTeamDropdown({
   availableTeams,
   isSupportAgent,
   isClosed,
+  showLevelBadge = true,
 }: SupportTeamDropdownProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -83,27 +82,11 @@ export function SupportTeamDropdown({
 
     setIsUpdating(true);
     try {
-      // Get current user
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
       // Update ticket with new team and level
       await updateTicket(supabase, ticketId, {
         team_id: team.id,
         support_level: newLevel,
       });
-
-      // Log escalation history
-      await addEscalationHistory(supabase, {
-        ticket_id: ticketId,
-        user_id: user?.id,
-        from_support_level: currentLevel,
-        to_support_level: newLevel,
-        from_team_id: currentTeam?.id,
-        to_team_id: team.id,
-      });
-
       router.refresh();
     } catch (error) {
       console.error("Failed to update support team:", error);
@@ -121,12 +104,14 @@ export function SupportTeamDropdown({
   if (!isSupportAgent || isClosed) {
     return (
       <div className="flex items-center gap-2">
-        <Badge
-          variant="secondary"
-          className={`whitespace-nowrap ${SUPPORT_LEVEL_CONFIG[currentLevel].color}`}
-        >
-          {SUPPORT_LEVEL_CONFIG[currentLevel].label}
-        </Badge>
+        {showLevelBadge && (
+          <Badge
+            variant="secondary"
+            className={`whitespace-nowrap ${SUPPORT_LEVEL_CONFIG[currentLevel].color}`}
+          >
+            {SUPPORT_LEVEL_CONFIG[currentLevel].label}
+          </Badge>
+        )}
         <span className="text-sm text-gray-600">
           {currentTeam?.name || "Support Desk"}
         </span>
@@ -141,12 +126,14 @@ export function SupportTeamDropdown({
           className="flex items-center gap-2 hover:bg-gray-50 rounded-md px-2 py-1 -ml-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           disabled={isUpdating || isLoading}
         >
-          <Badge
-            variant="secondary"
-            className={`whitespace-nowrap ${SUPPORT_LEVEL_CONFIG[currentLevel].color}`}
-          >
-            {SUPPORT_LEVEL_CONFIG[currentLevel].label}
-          </Badge>
+          {showLevelBadge && (
+            <Badge
+              variant="secondary"
+              className={`whitespace-nowrap ${SUPPORT_LEVEL_CONFIG[currentLevel].color}`}
+            >
+              {SUPPORT_LEVEL_CONFIG[currentLevel].label}
+            </Badge>
+          )}
           <span className="text-sm text-gray-600">
             {currentTeam?.name || "Support Desk"}
           </span>
