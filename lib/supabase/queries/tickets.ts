@@ -1,6 +1,10 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database.types";
-import type { Ticket, TicketComment, TicketHistory } from "@/types/ticket.types";
+import type {
+  Ticket,
+  TicketComment,
+  TicketHistory,
+} from "@/types/ticket.types";
 
 type Client = SupabaseClient<Database>;
 

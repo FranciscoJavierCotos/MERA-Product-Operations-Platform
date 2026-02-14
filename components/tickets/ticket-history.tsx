@@ -30,7 +30,6 @@ const FIELD_LABELS: Record<string, string> = {
   tags: "Tags",
 };
 
-
 const normalizeValue = (value: unknown) => {
   if (value === null || value === undefined || value === "") return "None";
   if (Array.isArray(value)) return value.length ? value.join(", ") : "None";
@@ -38,23 +37,17 @@ const normalizeValue = (value: unknown) => {
   return String(value);
 };
 
-const resolveValue = (
-  value?: string | null,
-  label?: string | null,
-) => {
+const resolveValue = (value?: string | null, label?: string | null) => {
   if (label && label.length > 0) return label;
   return normalizeValue(value);
 };
-
 
 export function TicketHistory({
   ticketId,
   initialHistory,
 }: TicketHistoryProps) {
   const supabase = useMemo(() => createClient(), []);
-  const [history, setHistory] = useState<TicketHistory[]>(
-    initialHistory ?? [],
-  );
+  const [history, setHistory] = useState<TicketHistory[]>(initialHistory ?? []);
   const [isLoading, setIsLoading] = useState(!initialHistory);
   const didInitFromProps = useRef(false);
 
@@ -165,7 +158,6 @@ export function TicketHistory({
                         </span>
                       )}
                     </div>
-
                   </div>
                 </div>
               </div>
