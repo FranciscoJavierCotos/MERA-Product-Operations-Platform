@@ -30,7 +30,7 @@ export function TicketDetailClient({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold">Details</h2>
+          <h2 className="text-xl font-semibold">Description</h2>
           {canEdit && !isEditing && (
             <EditButton onClick={() => setIsEditing(true)} />
           )}

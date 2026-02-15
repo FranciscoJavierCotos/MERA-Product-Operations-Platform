@@ -8,6 +8,12 @@ import type {
 
 type Client = SupabaseClient<Database>;
 
+interface MyTicketNavigation {
+  firstTicketId: string | null;
+  previousTicketId: string | null;
+  nextTicketId: string | null;
+}
+
 export async function getTickets(
   supabase: Client,
   filters?: {
@@ -166,6 +172,44 @@ export async function getMyTickets(supabase: Client, userId: string) {
 
   if (error) throw error;
   return data as unknown as Ticket[];
+}
+
+export async function getMyTicketNavigation(
+  supabase: Client,
+  userId: string,
+  currentTicketId: string,
+): Promise<MyTicketNavigation> {
+  const { data, error } = await supabase
+    .from("tickets")
+    .select("id, ticket_number")
+    .eq("assigned_to", userId)
+    .order("ticket_number", { ascending: true });
+
+  if (error) throw error;
+
+  if (!data || data.length === 0) {
+    return {
+      firstTicketId: null,
+      previousTicketId: null,
+      nextTicketId: null,
+    };
+  }
+
+  const currentIndex = data.findIndex((row) => row.id === currentTicketId);
+
+  if (currentIndex === -1) {
+    return {
+      firstTicketId: data[0]?.id ?? null,
+      previousTicketId: null,
+      nextTicketId: null,
+    };
+  }
+
+  return {
+    firstTicketId: data[0]?.id ?? null,
+    previousTicketId: data[currentIndex - 1]?.id ?? null,
+    nextTicketId: data[currentIndex + 1]?.id ?? null,
+  };
 }
 
 export async function searchTickets(supabase: Client, query: string) {

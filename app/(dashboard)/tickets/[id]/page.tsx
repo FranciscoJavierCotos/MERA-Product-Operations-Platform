@@ -4,6 +4,7 @@ import {
   getTicketById,
   getTicketComments,
   getTicketHistory,
+  getMyTicketNavigation,
 } from "@/lib/supabase/queries/tickets";
 import { getSupportMembers } from "@/lib/supabase/queries/users";
 import {
@@ -28,13 +29,12 @@ import { formatDateTime, formatRelativeTime } from "@/lib/utils/date";
 import { DeleteButton } from "@/components/tickets/ticket-actions";
 import { TicketDetailClient } from "./ticket-detail-client";
 import { TimeWorkedButton } from "@/components/tickets/time-worked-button";
-import { CommentsSection } from "@/components/tickets/comments-section";
 import { TicketTasksSection } from "@/components/tasks/ticket-tasks-section";
 import { CollaboratorsSection } from "@/components/tickets/collaborators-section";
-import { TicketHistory } from "@/components/tickets/ticket-history";
-import { UserAvatar } from "@/components/shared/user-avatar";
+import { CommentsActivitySection } from "@/components/tickets/comments-activity-section";
 import { Team, SupportLevel } from "@/types/team.types";
 import { isUuid } from "@/lib/utils/uuid";
+import { TicketNavigationButtons } from "@/components/tickets/ticket-navigation-buttons";
 
 export default async function TicketDetailPage({
   params,
@@ -78,13 +78,23 @@ export default async function TicketDetailPage({
   let comments = null;
   let collaborators = null;
   let ticketHistory = null;
+  let myTicketNavigation = {
+    firstTicketId: null,
+    previousTicketId: null,
+    nextTicketId: null,
+  };
+
   try {
-    [ticket, comments, collaborators, ticketHistory] = await Promise.all([
-      ticketPromise,
-      commentsPromise,
-      collaboratorsPromise,
-      ticketHistoryPromise,
-    ]);
+    [ticket, comments, collaborators, ticketHistory, myTicketNavigation] =
+      await Promise.all([
+        ticketPromise,
+        commentsPromise,
+        collaboratorsPromise,
+        ticketHistoryPromise,
+        user
+          ? getMyTicketNavigation(supabase, user.id, id)
+          : Promise.resolve(myTicketNavigation),
+      ]);
   } catch (error: unknown) {
     const maybeCode = (error as { code?: string } | null)?.code;
     if (maybeCode === "22P02") notFound();
@@ -120,7 +130,14 @@ export default async function TicketDetailPage({
             {ticket.title}
           </span>
         </div>
-        {isCreator && <DeleteButton ticketId={ticket.id} />}
+        <div className="flex items-center gap-1">
+          <TicketNavigationButtons
+            firstTicketId={myTicketNavigation.firstTicketId}
+            previousTicketId={myTicketNavigation.previousTicketId}
+            nextTicketId={myTicketNavigation.nextTicketId}
+          />
+          {isCreator && <DeleteButton ticketId={ticket.id} />}
+        </div>
       </div>
 
       <Card>
@@ -332,7 +349,7 @@ export default async function TicketDetailPage({
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        <div className="min-w-0 space-y-6">
+        <div className="min-w-0">
           <TicketDetailClient
             ticketId={ticket.id}
             description={ticket.description}
@@ -340,7 +357,9 @@ export default async function TicketDetailPage({
             isSupportAgent={!!isSupportAgent}
             isClosed={isClosed}
           />
+        </div>
 
+        <div className="min-w-0">
           <TicketTasksSection
             ticketId={ticket.id}
             users={supportMembers || []}
@@ -348,18 +367,14 @@ export default async function TicketDetailPage({
             isClosed={isClosed}
           />
         </div>
-
-        <div className="min-w-0 lg:col-start-2 lg:row-start-1 lg:row-span-2">
-          <CommentsSection
-            ticketId={ticket.id}
-            initialComments={comments || []}
-            currentUserId={user?.id}
-          />
-        </div>
       </div>
 
-      {/* Ticket History - only show if there's history */}
-      <TicketHistory ticketId={ticket.id} initialHistory={ticketHistory} />
+      <CommentsActivitySection
+        ticketId={ticket.id}
+        initialComments={comments || []}
+        initialHistory={ticketHistory || []}
+        currentUserId={user?.id}
+      />
     </div>
   );
 }
