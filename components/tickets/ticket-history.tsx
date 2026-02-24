@@ -15,6 +15,7 @@ interface TicketHistoryProps {
 }
 
 const FIELD_LABELS: Record<string, string> = {
+  task: "Task",
   title: "Title",
   description: "Description",
   status: "Status",
@@ -30,6 +31,13 @@ const FIELD_LABELS: Record<string, string> = {
   tags: "Tags",
 };
 
+const ACTION_LABELS: Record<string, string> = {
+  task_added: "added",
+  task_removed: "removed",
+  task_edited: "edited",
+  task_completed: "completed",
+};
+
 const normalizeValue = (value: unknown) => {
   if (value === null || value === undefined || value === "") return "None";
   if (Array.isArray(value)) return value.length ? value.join(", ") : "None";
@@ -40,6 +48,21 @@ const normalizeValue = (value: unknown) => {
 const resolveValue = (value?: string | null, label?: string | null) => {
   if (label && label.length > 0) return label;
   return normalizeValue(value);
+};
+
+const formatTaskDueDate = (dueDate?: string | null) => {
+  if (!dueDate) return "No due date";
+
+  const parsedDate = new Date(dueDate);
+  if (Number.isNaN(parsedDate.getTime())) return dueDate;
+
+  return parsedDate.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
 export function TicketHistory({
@@ -119,6 +142,17 @@ export function TicketHistory({
               : "Ticket";
             const oldLabel = entry.metadata?.old_label as string | undefined;
             const newLabel = entry.metadata?.new_label as string | undefined;
+            const actionLabel = ACTION_LABELS[entry.action];
+            const taskTitle =
+              (entry.metadata?.task_title as string | undefined) ||
+              (entry.metadata?.old_task_title as string | undefined);
+            const taskPriority =
+              (entry.metadata?.task_priority as string | undefined) ||
+              (entry.metadata?.old_task_priority as string | undefined);
+            const taskDueDate =
+              (entry.metadata?.task_due_date as string | undefined) ||
+              (entry.metadata?.old_task_due_date as string | undefined);
+            const isTaskEntry = entry.source_table === "tasks";
 
             return (
               <div key={entry.id} className="py-4">
@@ -146,6 +180,13 @@ export function TicketHistory({
                       </span>
                       {entry.action === "ticket_created" ? (
                         <span className="ml-2 text-slate-500">created</span>
+                      ) : actionLabel && entry.action !== "task_edited" ? (
+                        <span className="ml-2 inline-flex flex-wrap items-center gap-2">
+                          <span className="text-slate-500">{actionLabel}</span>
+                          <span className="rounded-md bg-slate-900 px-2 py-1 text-xs text-white">
+                            {resolveValue(entry.new_value || entry.old_value)}
+                          </span>
+                        </span>
                       ) : (
                         <span className="ml-2 inline-flex flex-wrap items-center gap-2">
                           <span className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600">
@@ -158,6 +199,14 @@ export function TicketHistory({
                         </span>
                       )}
                     </div>
+
+                    {isTaskEntry && (
+                      <div className="mt-2 text-xs text-slate-500">
+                        Task: {normalizeValue(taskTitle)} · Priority:{" "}
+                        {normalizeValue(taskPriority)} · Due:{" "}
+                        {formatTaskDueDate(taskDueDate)}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

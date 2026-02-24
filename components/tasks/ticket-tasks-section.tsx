@@ -80,7 +80,7 @@ export function TicketTasksSection({
 
   const handleCompleteWithTime = (
     taskId: string,
-    timeSpentMinutes?: number
+    timeSpentMinutes?: number,
   ) => {
     completeTask.mutate({ id: taskId, timeSpentMinutes });
     setTaskToComplete(null);
@@ -100,7 +100,7 @@ export function TicketTasksSection({
   const completedTasks = tasks.filter((t) => t.status === "completed");
 
   return (
-    <Card>
+    <Card className={tasks.length <= 1 ? "min-h-[280px]" : undefined}>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <ListTodo className="h-5 w-5" />
@@ -164,15 +164,15 @@ export function TicketTasksSection({
             )}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
-            <ListTodo className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-            <p>No tasks for this ticket</p>
+          <div className="text-center py-2 text-gray-500">
+            <ListTodo className="h-6 w-6 mx-auto mb-1 text-gray-300" />
+            <p className="text-sm">No tasks for this ticket</p>
             {!isClosed && (
               <Button
                 variant="link"
                 size="sm"
                 onClick={() => setIsFormOpen(true)}
-                className="mt-2"
+                className="mt-1 h-auto p-0"
               >
                 Add the first task
               </Button>

@@ -27,7 +27,7 @@ export function TicketDetailClient({
   const canEdit = (isCreator || isSupportAgent) && !isClosed;
 
   return (
-    <Card>
+    <Card className="min-h-[280px]">
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-xl font-semibold">Description</h2>
