@@ -9,7 +9,7 @@
 
 ---
 <p align="center">
-  <img src="./ticket-page.jpg" width="1000" />
+  <img src="./ticket-page.jpg" width="1200" />
 </p>
 
 ---
