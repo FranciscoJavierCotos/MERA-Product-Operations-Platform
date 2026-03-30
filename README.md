@@ -1,6 +1,6 @@
 # Support Ticket Management System
 
-> Production-minded support operations platform built with **Next.js**, **TypeScript**, and **Supabase**.
+> A support operations platform that brings visibility, ownership, and accountability to customer ticket workflows.
 
 ![Next.js](https://img.shields.io/badge/Next.js-App_Router-black?style=flat-square)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square)
