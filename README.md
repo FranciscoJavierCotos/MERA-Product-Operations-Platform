@@ -8,6 +8,11 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-06B6D4?style=flat-square)
 
 ---
+<p align="center">
+  <img src="./ticket-page.jpg" width="1000" />
+</p>
+
+---
 
 ## Problems This Solves
 
@@ -17,6 +22,11 @@
 | **Slow resolution** | Unclear ownership, missed follow-ups, and messy handoffs slow every cycle |
 | **Weak accountability** | No audit trail of what changed, by whom, and when |
 | **Fragmented collaboration** | Comments, tasks, and context are scattered across disconnected tools |
+
+---
+<p align="center">
+  <img src="./my-tickets-page.jpg" width="1000" />
+</p>
 
 ---
 
