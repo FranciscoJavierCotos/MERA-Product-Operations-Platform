@@ -1,51 +1,78 @@
 # Support Ticket Management System
 
-Production-minded support operations platform built with Next.js, TypeScript, and Supabase.
+> Production-minded support operations platform built with **Next.js**, **TypeScript**, and **Supabase**.
 
-## 💼 Problems This Solves for Companies
+![Next.js](https://img.shields.io/badge/Next.js-App_Router-black?style=flat-square)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square)
+![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat-square)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-06B6D4?style=flat-square)
 
-- 🔍 **Low visibility:** Leaders cannot quickly see ticket load, risk, or team performance.
-- 🕒 **Slow resolution:** Ownership is unclear, follow-ups are missed, and handoffs are messy.
-- 🧾 **Weak accountability:** Teams lack an audit trail of what changed, by whom, and when.
-- 🤝 **Fragmented collaboration:** Comments, tasks, and ticket context are spread across tools.
+---
 
-## 🚀 Business Value Deliver
+## Problems This Solves
 
-- ✅ **Faster support operations:** Structured ticket-task workflows reduce response and resolution time.
-- ✅ **Safer execution:** Role-based access + row-level security patterns protect sensitive data.
-- ✅ **Decision-ready reporting:** Dashboard and status tracking enable operational oversight.
-- ✅ **Scalable foundations:** Typed architecture and modular components support rapid feature delivery.
+| Pain Point | Impact |
+|---|---|
+| **Low visibility** | Leaders can't quickly assess ticket load, risk, or team performance |
+| **Slow resolution** | Unclear ownership, missed follow-ups, and messy handoffs slow every cycle |
+| **Weak accountability** | No audit trail of what changed, by whom, and when |
+| **Fragmented collaboration** | Comments, tasks, and context are scattered across disconnected tools |
 
-## 🛠️ What I Built
+---
 
-- **End-to-end ticket lifecycle:** create, assign, prioritize, track, and close support tickets.
-- **Task orchestration:** actionable tasks linked directly to tickets for execution clarity.
-- **Collaboration layer:** ticket comments and history for cross-team coordination.
-- **Role-aware platform:** admin, lead, support member, and client access boundaries.
-- **Production-grade stack:** Next.js App Router, Supabase, React Query, Zod, Tailwind.
+## Business Value Delivered
 
-## 🧠 Data Modeling (Why It Works)
+- **Faster support operations** — structured ticket-task workflows reduce response and resolution time
+- **Safer execution** — role-based access and row-level security patterns protect sensitive data
+- **Decision-ready reporting** — dashboard and status tracking enable real-time operational oversight
+- **Scalable foundations** — typed architecture and modular components support rapid feature delivery
+
+---
+
+## What I Built
+
+### Core Features
+- **End-to-end ticket lifecycle** — create, assign, prioritize, track, and close support tickets
+- **Task orchestration** — actionable tasks linked directly to tickets for execution clarity
+- **Collaboration layer** — ticket comments and history for cross-team coordination
+- **Role-aware platform** — admin, lead, support member, and client access boundaries
+
+### Stack
+```
+Next.js App Router · Supabase · React Query · Zod · Tailwind CSS
+```
+
+---
+
+## Data Model
 
 Core entities are designed around operational flow and accountability:
 
-- 👤 `profiles`: user identity + role metadata.
-- 🧑‍🤝‍🧑 `teams`: support team ownership model.
-- 🎫 `tickets`: core support case, status, priority, assignment, and search content.
-- ✅ `tasks`: executable work units connected to a ticket.
-- 💬 `ticket_comments`: collaboration and context continuity.
-- 🕘 `ticket_history`: immutable audit trail for compliance and root-cause analysis.
-- 🔌 `integrations`: external system connection points.
+| Entity | Purpose |
+|---|---|
+| `profiles` | User identity and role metadata |
+| `teams` | Support team ownership model |
+| `tickets` | Core support case — status, priority, assignment, and search content |
+| `tasks` | Executable work units connected to a ticket |
+| `ticket_comments` | Collaboration and context continuity |
+| `ticket_history` | Immutable audit trail for compliance and root-cause analysis |
+| `integrations` | External system connection points |
 
-Relationship design:
+**Relationship design:**
+```
+profiles  (1) → (many)  tickets / tasks
+tickets   (1) → (many)  tasks, ticket_comments, ticket_history
+teams     (1) → (many)  profiles / tickets
+```
 
-- `profiles` (1) → (many) `tickets` / `tasks`
-- `tickets` (1) → (many) `tasks`, `ticket_comments`, `ticket_history`
-- `teams` (1) → (many) `profiles` / `tickets`
+> A model that supports **traceability, team ownership, and operational reporting** without sacrificing delivery speed.
 
-Result: a model that supports **traceability, team ownership, and operational reporting** without sacrificing delivery speed.
+---
 
-## 🎯This project demonstrates I can:
+## What This Demonstrates
 
-- turn business pain points into product and data architecture,
-- build secure and maintainable full-stack systems,
-- ship practical features that improve service reliability and team efficiency.
+This project shows I can:
+
+1. **Turn business pain points into product and data architecture** — starting from real operational problems, not just technical requirements
+2. **Build secure and maintainable full-stack systems** — with typed, modular, production-grade code
+3. **Ship practical features** — that improve service reliability and team efficiency
