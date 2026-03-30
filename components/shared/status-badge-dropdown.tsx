@@ -54,7 +54,10 @@ export function StatusBadgeDropdown({
   const router = useRouter();
   const supabase = createClient();
   const [isUpdating, setIsUpdating] = useState(false);
-  const config = statusConfig[status];
+  const config = statusConfig[status] ?? {
+    label: status ?? "Unknown",
+    variant: "secondary" as const,
+  };
 
   const canChangeStatus = isSupportAgent || isClosed;
 

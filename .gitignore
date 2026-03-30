@@ -31,6 +31,10 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*
+!.env.example
+!.env.sample
+!.env.template
 
 # vercel
 .vercel
@@ -51,6 +55,23 @@ Thumbs.db
 
 # Supabase
 .supabase
+supabase/.temp/
+supabase/.branches/
+
+# secret and certificate material
+.envrc
+.direnv/
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.jks
+*.keystore
+*.p8
+*.ovpn
+kubeconfig
+.kube/
 
 # yarn
 .yarn/install-state.gz
