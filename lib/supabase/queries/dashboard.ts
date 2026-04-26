@@ -19,11 +19,11 @@ export async function getDashboardStats(
     .from("tickets")
     .select("*", { count: "exact", head: true });
 
-  // Get open tickets count
+  // Get open tickets count (anything not yet resolved or closed)
   const { count: openTickets } = await supabase
     .from("tickets")
     .select("*", { count: "exact", head: true })
-    .in("status", ["open", "in_progress"]);
+    .in("status", ["new", "pending_customer", "pending_internal", "escalated"]);
 
   // Get user's tasks count
   const { count: myTasks } = await supabase

@@ -15,7 +15,7 @@ export function SupportLevelBadge({
   const config = SUPPORT_LEVEL_CONFIG[level];
 
   return (
-    <Badge variant="secondary" className={`whitespace-nowrap ${config.color}`}>
+    <Badge variant="secondary" className="whitespace-nowrap">
       {config.label}
       {showDescription && ` - ${config.description}`}
     </Badge>

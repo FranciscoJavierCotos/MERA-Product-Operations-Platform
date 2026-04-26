@@ -29,11 +29,11 @@ const statusConfig: Record<
   }
 > = {
   new: { label: "New", variant: "default" },
-  pending_customer: { label: "Pending Customer Side", variant: "outline" },
+  pending_customer: { label: "Pending Customer Side", variant: "secondary" },
   pending_internal: { label: "Pending Our Side", variant: "secondary" },
-  escalated: { label: "Escalated", variant: "destructive" },
+  escalated: { label: "Escalated", variant: "secondary" },
   resolved: { label: "Resolved", variant: "secondary" },
-  closed: { label: "Closed", variant: "outline" },
+  closed: { label: "Closed", variant: "secondary" },
 };
 
 const statusOptions: { value: TicketStatus; label: string }[] = [

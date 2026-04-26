@@ -54,6 +54,91 @@ export async function getTickets(
   return data as unknown as Ticket[];
 }
 
+export interface PaginatedTickets {
+  data: Ticket[];
+  totalCount: number;
+}
+
+export async function getTicketsPaginated(
+  supabase: Client,
+  page: number,
+  pageSize: number,
+  filters?: {
+    status?: string;
+    priority?: string;
+    assigned_to?: string;
+  },
+): Promise<PaginatedTickets> {
+  const safePage = Math.max(1, Math.floor(page));
+  const safeSize = Math.max(1, Math.floor(pageSize));
+  const from = (safePage - 1) * safeSize;
+  const to = from + safeSize - 1;
+
+  let query = supabase
+    .from("tickets")
+    .select(
+      `
+      *,
+      assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email, avatar_url),
+      creator:profiles!tickets_created_by_fkey(id, full_name, email),
+      functional_team:teams!tickets_functional_team_id_fkey(id, name),
+      support_team:teams!tickets_team_id_fkey(id, name)
+    `,
+      { count: "exact" },
+    )
+    .order("created_at", { ascending: false })
+    .order("ticket_number", { ascending: false })
+    .range(from, to);
+
+  if (filters?.status) query = query.eq("status", filters.status);
+  if (filters?.priority) query = query.eq("priority", filters.priority);
+  if (filters?.assigned_to) query = query.eq("assigned_to", filters.assigned_to);
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  return {
+    data: (data ?? []) as unknown as Ticket[],
+    totalCount: count ?? 0,
+  };
+}
+
+export async function getMyTicketsPaginated(
+  supabase: Client,
+  userId: string,
+  page: number,
+  pageSize: number,
+): Promise<PaginatedTickets> {
+  const safePage = Math.max(1, Math.floor(page));
+  const safeSize = Math.max(1, Math.floor(pageSize));
+  const from = (safePage - 1) * safeSize;
+  const to = from + safeSize - 1;
+
+  const { data, error, count } = await supabase
+    .from("tickets")
+    .select(
+      `
+      *,
+      assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email, avatar_url),
+      creator:profiles!tickets_created_by_fkey(id, full_name, email),
+      functional_team:teams!tickets_functional_team_id_fkey(id, name),
+      support_team:teams!tickets_team_id_fkey(id, name)
+    `,
+      { count: "exact" },
+    )
+    .eq("assigned_to", userId)
+    .order("created_at", { ascending: false })
+    .order("ticket_number", { ascending: false })
+    .range(from, to);
+
+  if (error) throw error;
+
+  return {
+    data: (data ?? []) as unknown as Ticket[],
+    totalCount: count ?? 0,
+  };
+}
+
 export async function getTicketById(
   supabase: Client,
   id: string,

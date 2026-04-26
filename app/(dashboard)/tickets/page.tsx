@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getTickets } from "@/lib/supabase/queries/tickets";
+import { getTicketsPaginated } from "@/lib/supabase/queries/tickets";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { formatTicketNumber } from "@/lib/utils/format";
 import { formatRelativeTime } from "@/lib/utils/date";
-import { sortTicketsForList } from "@/lib/utils/ticketSort";
+import { Pagination } from "@/components/shared/pagination";
 import { TicketCategoryDropdown } from "@/components/shared/ticket-category-dropdown";
 import { StatusBadgeDropdown } from "@/components/shared/status-badge-dropdown";
 import { SupportLevelDropdown } from "@/components/shared/support-level-dropdown";
@@ -26,6 +26,8 @@ import { SupportLevel, Team } from "@/types/team.types";
 
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 10;
+
 const categoryLabel: Record<string, string> = {
   bug: "Bug",
   feature_request: "Feature Request",
@@ -33,9 +35,26 @@ const categoryLabel: Record<string, string> = {
   configuration_request: "Configuration Request",
 };
 
-export default async function TicketsPage() {
+interface TicketsPageProps {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function TicketsPage({ searchParams }: TicketsPageProps) {
   const supabase = await createClient();
-  const tickets = sortTicketsForList((await getTickets(supabase)) ?? []);
+
+  const params = await searchParams;
+  const parsedPage = parseInt(params?.page ?? "1", 10);
+  const requestedPage =
+    Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+
+  const { data: tickets, totalCount } = await getTicketsPaginated(
+    supabase,
+    requestedPage,
+    PAGE_SIZE,
+  );
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const currentPage = Math.min(requestedPage, totalPages);
 
   const {
     data: { user },
@@ -75,7 +94,7 @@ export default async function TicketsPage() {
         </Link>
       </div>
 
-      <div className="bg-white shadow rounded-lg">
+      <div className="bg-white shadow rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -89,7 +108,6 @@ export default async function TicketsPage() {
               <TableHead>Functional Team</TableHead>
               <TableHead>Support Team</TableHead>
               <TableHead>Assigned To</TableHead>
-              <TableHead>CC</TableHead>
               <TableHead>Created</TableHead>
               <TableHead>Updated</TableHead>
             </TableRow>
@@ -202,17 +220,6 @@ export default async function TicketsPage() {
                   </TableCell>
 
                   {/* Non-dropdown fields (navigate) */}
-                  <TableCell
-                    className="p-0 max-w-[220px] truncate"
-                    title={ticket.cc_email || ""}
-                  >
-                    <Link
-                      href={`/tickets/${ticket.id}`}
-                      className="block px-4 py-4 text-sm text-gray-600"
-                    >
-                      {ticket.cc_email || "-"}
-                    </Link>
-                  </TableCell>
                   <TableCell className="p-0">
                     <Link
                       href={`/tickets/${ticket.id}`}
@@ -234,7 +241,7 @@ export default async function TicketsPage() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={13}
+                  colSpan={12}
                   className="text-center text-gray-500 py-8"
                 >
                   No tickets found
@@ -243,6 +250,12 @@ export default async function TicketsPage() {
             )}
           </TableBody>
         </Table>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          pageSize={PAGE_SIZE}
+        />
       </div>
     </div>
   );

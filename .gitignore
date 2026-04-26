@@ -76,4 +76,5 @@ kubeconfig
 # yarn
 .yarn/install-state.gz
 
-.github/instructions/PROJECT_INSTRUCTIONS.md.instructions.md
+.github
+.claude

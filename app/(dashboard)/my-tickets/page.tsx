@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getMyTickets } from "@/lib/supabase/queries/tickets";
+import { getMyTicketsPaginated } from "@/lib/supabase/queries/tickets";
 import Link from "next/link";
 import {
   Table,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { formatTicketNumber } from "@/lib/utils/format";
 import { formatRelativeTime } from "@/lib/utils/date";
-import { sortTicketsForList } from "@/lib/utils/ticketSort";
+import { Pagination } from "@/components/shared/pagination";
 import { TicketCategoryDropdown } from "@/components/shared/ticket-category-dropdown";
 import { StatusBadgeDropdown } from "@/components/shared/status-badge-dropdown";
 import { PriorityBadgeDropdown } from "@/components/shared/priority-badge-dropdown";
@@ -22,6 +22,8 @@ import { SupportLevel, Team } from "@/types/team.types";
 
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 10;
+
 const categoryLabel: Record<string, string> = {
   bug: "Bug",
   feature_request: "Feature Request",
@@ -29,7 +31,13 @@ const categoryLabel: Record<string, string> = {
   configuration_request: "Configuration Request",
 };
 
-export default async function MyTicketsPage() {
+interface MyTicketsPageProps {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function MyTicketsPage({
+  searchParams,
+}: MyTicketsPageProps) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -50,20 +58,31 @@ export default async function MyTicketsPage() {
     profile &&
     ["admin", "support_lead", "support_member"].includes(profile.role);
 
-  const tickets = sortTicketsForList(
-    (await getMyTickets(supabase, user.id)) ?? [],
+  const params = await searchParams;
+  const parsedPage = parseInt(params?.page ?? "1", 10);
+  const requestedPage =
+    Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+
+  const { data: tickets, totalCount } = await getMyTicketsPaginated(
+    supabase,
+    user.id,
+    requestedPage,
+    PAGE_SIZE,
   );
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const currentPage = Math.min(requestedPage, totalPages);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">My Tickets</h1>
         <p className="mt-2 text-sm text-gray-700">
-          Tickets assigned to you ({tickets?.length || 0})
+          Tickets assigned to you ({totalCount})
         </p>
       </div>
 
-      <div className="bg-white shadow rounded-lg">
+      <div className="bg-white shadow rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -75,7 +94,6 @@ export default async function MyTicketsPage() {
               <TableHead>Temperature</TableHead>
               <TableHead>Functional Team</TableHead>
               <TableHead>Support Team</TableHead>
-              <TableHead>CC</TableHead>
               <TableHead>Created</TableHead>
               <TableHead>Updated</TableHead>
             </TableRow>
@@ -159,17 +177,6 @@ export default async function MyTicketsPage() {
                   </TableCell>
 
                   {/* Non-dropdown fields (navigate) */}
-                  <TableCell
-                    className="p-0 max-w-[220px] truncate"
-                    title={ticket.cc_email || ""}
-                  >
-                    <Link
-                      href={`/tickets/${ticket.id}`}
-                      className="block px-4 py-4 text-sm text-gray-600"
-                    >
-                      {ticket.cc_email || "-"}
-                    </Link>
-                  </TableCell>
                   <TableCell className="p-0">
                     <Link
                       href={`/tickets/${ticket.id}`}
@@ -191,7 +198,7 @@ export default async function MyTicketsPage() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={11}
+                  colSpan={10}
                   className="text-center text-gray-500 py-8"
                 >
                   No tickets assigned to you
@@ -200,6 +207,12 @@ export default async function MyTicketsPage() {
             )}
           </TableBody>
         </Table>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          pageSize={PAGE_SIZE}
+        />
       </div>
     </div>
   );
