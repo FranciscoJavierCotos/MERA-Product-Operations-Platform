@@ -106,6 +106,9 @@ export interface Database {
           created_by: string | null;
           assigned_to: string | null;
           team_id: string | null;
+          functional_team_id: string | null;
+          support_level: "L1" | "L2" | "L3" | null;
+          client_temperature: "hot" | "warm" | "cool" | null;
           client_email: string | null;
           client_name: string | null;
           tags: string[];
@@ -141,6 +144,9 @@ export interface Database {
           created_by?: string | null;
           assigned_to?: string | null;
           team_id?: string | null;
+          functional_team_id?: string | null;
+          support_level?: "L1" | "L2" | "L3" | null;
+          client_temperature?: "hot" | "warm" | "cool" | null;
           client_email?: string | null;
           client_name?: string | null;
           tags?: string[];
@@ -176,6 +182,9 @@ export interface Database {
           created_by?: string | null;
           assigned_to?: string | null;
           team_id?: string | null;
+          functional_team_id?: string | null;
+          support_level?: "L1" | "L2" | "L3" | null;
+          client_temperature?: "hot" | "warm" | "cool" | null;
           client_email?: string | null;
           client_name?: string | null;
           tags?: string[];
@@ -370,6 +379,76 @@ export interface Database {
           service?: string;
           config?: Json;
           is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      sla_policies: {
+        Row: {
+          id: string;
+          name: string;
+          priority: "low" | "medium" | "high" | "urgent";
+          response_time_minutes: number;
+          resolution_time_minutes: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          priority: "low" | "medium" | "high" | "urgent";
+          response_time_minutes: number;
+          resolution_time_minutes: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          priority?: "low" | "medium" | "high" | "urgent";
+          response_time_minutes?: number;
+          resolution_time_minutes?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      sla_instances: {
+        Row: {
+          id: string;
+          ticket_id: string;
+          policy_id: string;
+          response_due_at: string;
+          resolution_due_at: string;
+          responded_at: string | null;
+          paused_at: string | null;
+          total_paused_minutes: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          ticket_id: string;
+          policy_id: string;
+          response_due_at: string;
+          resolution_due_at: string;
+          responded_at?: string | null;
+          paused_at?: string | null;
+          total_paused_minutes?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          ticket_id?: string;
+          policy_id?: string;
+          response_due_at?: string;
+          resolution_due_at?: string;
+          responded_at?: string | null;
+          paused_at?: string | null;
+          total_paused_minutes?: number;
           created_at?: string;
           updated_at?: string;
         };

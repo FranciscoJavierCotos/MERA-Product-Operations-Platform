@@ -30,7 +30,8 @@ export async function getTickets(
       assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email, avatar_url),
       creator:profiles!tickets_created_by_fkey(id, full_name, email),
       functional_team:teams!tickets_functional_team_id_fkey(id, name),
-      support_team:teams!tickets_team_id_fkey(id, name)
+      support_team:teams!tickets_team_id_fkey(id, name),
+      sla_instance:sla_instances(id, response_due_at, resolution_due_at, responded_at, paused_at, total_paused_minutes, policy:sla_policies(name, priority, response_time_minutes, resolution_time_minutes))
     `,
     )
     .order("created_at", { ascending: false })
@@ -82,7 +83,8 @@ export async function getTicketsPaginated(
       assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email, avatar_url),
       creator:profiles!tickets_created_by_fkey(id, full_name, email),
       functional_team:teams!tickets_functional_team_id_fkey(id, name),
-      support_team:teams!tickets_team_id_fkey(id, name)
+      support_team:teams!tickets_team_id_fkey(id, name),
+      sla_instance:sla_instances(id, response_due_at, resolution_due_at, responded_at, paused_at, total_paused_minutes, policy:sla_policies(name, priority, response_time_minutes, resolution_time_minutes))
     `,
       { count: "exact" },
     )
@@ -122,7 +124,8 @@ export async function getMyTicketsPaginated(
       assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email, avatar_url),
       creator:profiles!tickets_created_by_fkey(id, full_name, email),
       functional_team:teams!tickets_functional_team_id_fkey(id, name),
-      support_team:teams!tickets_team_id_fkey(id, name)
+      support_team:teams!tickets_team_id_fkey(id, name),
+      sla_instance:sla_instances(id, response_due_at, resolution_due_at, responded_at, paused_at, total_paused_minutes, policy:sla_policies(name, priority, response_time_minutes, resolution_time_minutes))
     `,
       { count: "exact" },
     )
@@ -151,7 +154,8 @@ export async function getTicketById(
       assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email, avatar_url, role),
       creator:profiles!tickets_created_by_fkey(id, full_name, email),
       functional_team:teams!tickets_functional_team_id_fkey(id, name, category),
-      support_team:teams!tickets_team_id_fkey(id, name, category)
+      support_team:teams!tickets_team_id_fkey(id, name, category),
+      sla_instance:sla_instances(id, response_due_at, resolution_due_at, responded_at, paused_at, total_paused_minutes, policy:sla_policies(name, priority, response_time_minutes, resolution_time_minutes))
     `,
     )
     .eq("id", id)
@@ -196,13 +200,10 @@ export async function getTicketHistory(supabase: Client, ticketId: string) {
 
 export async function createTicket(
   supabase: Client,
-  ticket: Database["public"]["Tables"]["tickets"]["Insert"] & {
-    functional_team_id?: string | null;
-    support_level?: "L1" | "L2" | "L3" | null;
-    client_temperature?: "hot" | "warm" | "cool" | null;
-  },
+  ticket: Database["public"]["Tables"]["tickets"]["Insert"],
 ) {
-  const { data, error } = await (supabase.from("tickets") as any)
+  const { data, error } = await supabase
+    .from("tickets")
     .insert([ticket])
     .select()
     .single();

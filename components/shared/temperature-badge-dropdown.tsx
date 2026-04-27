@@ -37,12 +37,14 @@ const temperatureConfig: Record<
   warm: {
     label: "Warm",
     emoji: "🟡",
-    className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
+    className:
+      "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
   },
   cool: {
     label: "Good",
     emoji: "🟢",
-    className: "bg-green-100 text-green-800 hover:bg-green-100",
+    className:
+      "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
   },
 };
 

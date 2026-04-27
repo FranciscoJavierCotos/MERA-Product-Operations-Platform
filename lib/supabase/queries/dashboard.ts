@@ -1,5 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database.types";
+export { getSlaStats, getMostUrgentSlaTickets } from "./slas";
 
 type Client = SupabaseClient<Database>;
 

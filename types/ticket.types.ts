@@ -1,5 +1,6 @@
 import { Profile } from "./user.types";
 import { Team, SupportLevel, TicketCollaborator } from "./team.types";
+import type { SlaInstance } from "./sla.types";
 
 export type TicketStatus =
   | "new"
@@ -48,6 +49,7 @@ export interface Ticket {
   functional_team?: Team;
   support_team?: Team;
   collaborators?: TicketCollaborator[];
+  sla_instance?: SlaInstance | SlaInstance[] | null;
 }
 
 export interface TicketComment {

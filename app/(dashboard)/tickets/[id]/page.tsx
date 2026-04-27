@@ -12,6 +12,7 @@ import {
   getFunctionalTeams,
   getTicketCollaborators,
 } from "@/lib/supabase/queries/teams";
+import { getSlaInstance } from "@/lib/supabase/queries/slas";
 
 export const dynamic = "force-dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +36,7 @@ import { CommentsActivitySection } from "@/components/tickets/comments-activity-
 import { Team, SupportLevel } from "@/types/team.types";
 import { isUuid } from "@/lib/utils/uuid";
 import { TicketNavigationButtons } from "@/components/tickets/ticket-navigation-buttons";
+import { SlaDetailBlock } from "@/components/tickets/sla-detail-block";
 
 export default async function TicketDetailPage({
   params,
@@ -50,6 +52,7 @@ export default async function TicketDetailPage({
   const commentsPromise = getTicketComments(supabase, id);
   const collaboratorsPromise = getTicketCollaborators(supabase, id);
   const ticketHistoryPromise = getTicketHistory(supabase, id);
+  const slaInstancePromise = getSlaInstance(supabase, id);
 
   // Get current user
   const {
@@ -78,6 +81,7 @@ export default async function TicketDetailPage({
   let comments = null;
   let collaborators = null;
   let ticketHistory = null;
+  let slaInstance = null;
   let myTicketNavigation = {
     firstTicketId: null,
     previousTicketId: null,
@@ -85,12 +89,13 @@ export default async function TicketDetailPage({
   };
 
   try {
-    [ticket, comments, collaborators, ticketHistory, myTicketNavigation] =
+    [ticket, comments, collaborators, ticketHistory, slaInstance, myTicketNavigation] =
       await Promise.all([
         ticketPromise,
         commentsPromise,
         collaboratorsPromise,
         ticketHistoryPromise,
+        slaInstancePromise,
         user
           ? getMyTicketNavigation(supabase, user.id, id)
           : Promise.resolve(myTicketNavigation),
@@ -145,8 +150,18 @@ export default async function TicketDetailPage({
           <CardTitle>Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            {/* First column */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
+            {/* First column — SLA */}
+            <div className="space-y-4">
+              <SlaDetailBlock
+                instance={slaInstance}
+                ticketStatus={ticket.status}
+                resolvedAt={ticket.resolved_at}
+                createdAt={ticket.created_at}
+              />
+            </div>
+
+            {/* Second column */}
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-medium text-gray-700">
@@ -207,7 +222,7 @@ export default async function TicketDetailPage({
               </div>
             </div>
 
-            {/* Second column */}
+            {/* Third column */}
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-medium text-gray-700">
@@ -252,7 +267,7 @@ export default async function TicketDetailPage({
               </div>
             </div>
 
-            {/* Third column */}
+            {/* Fourth column */}
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-medium text-gray-700">
@@ -280,7 +295,7 @@ export default async function TicketDetailPage({
               </div>
             </div>
 
-            {/* Fourth column */}
+            {/* Fifth column — Category, CC, Time Worked */}
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-medium text-gray-700">Category</h3>
@@ -320,7 +335,7 @@ export default async function TicketDetailPage({
               </div>
             </div>
 
-            {/* Fifth column */}
+            {/* Sixth column — Collaborators */}
             <div className="space-y-4">
               <CollaboratorsSection
                 ticketId={ticket.id}

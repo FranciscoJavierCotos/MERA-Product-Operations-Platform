@@ -20,6 +20,7 @@ import { formatTicketNumber } from "@/lib/utils/format";
 import { sortTicketsForList } from "@/lib/utils/ticketSort";
 import Link from "next/link";
 import { DashboardUpcomingTasks } from "./dashboard-upcoming-tasks";
+import { SlaSummaryWidget } from "./sla-summary-widget";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -164,6 +165,9 @@ export default async function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* SLA Overview Widget */}
+      <SlaSummaryWidget />
 
       {/* Upcoming Tasks Widget */}
       <DashboardUpcomingTasks
