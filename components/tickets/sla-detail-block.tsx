@@ -33,26 +33,6 @@ const responseStatusLabel: Record<string, string> = {
   pending: "Pending",
 };
 
-function ProgressBar({ minutesRemaining, totalMinutes }: { minutesRemaining: number; totalMinutes: number }) {
-  const isBreached = minutesRemaining < 0;
-  const isAtRisk = minutesRemaining >= 0 && minutesRemaining <= 60;
-  // Show elapsed time: bar fills 0→100% as the deadline approaches
-  const pct = isBreached
-    ? 100
-    : Math.max(0, Math.min(100, ((totalMinutes - minutesRemaining) / totalMinutes) * 100));
-
-  return (
-    <div className="mt-1 h-[3px] w-full rounded-full bg-gray-200 overflow-hidden">
-      <div
-        className={cn(
-          "h-full rounded-full transition-all",
-          isBreached ? "bg-red-500" : isAtRisk ? "bg-amber-400" : "bg-green-500",
-        )}
-        style={{ width: `${pct}%` }}
-      />
-    </div>
-  );
-}
 
 export function SlaDetailBlock({
   instance,
@@ -88,9 +68,6 @@ export function SlaDetailBlock({
 
   const policy = instance.policy;
   const isTerminal = ticketStatus === "resolved" || ticketStatus === "closed";
-  const resolutionTotalMinutes = policy?.resolution_time_minutes ?? 60;
-  const responseTotalMinutes = policy?.response_time_minutes ?? 60;
-
   return (
     <div>
       <h3 className="text-sm font-medium text-gray-700">SLA</h3>
@@ -132,12 +109,6 @@ export function SlaDetailBlock({
               Due by {formatDateTime(info.responseDueAt)}
             </p>
           )}
-          {!info.respondedAt && !isTerminal && info.responseStatus !== "breached" && (
-            <ProgressBar
-              minutesRemaining={info.responseMinutesRemaining}
-              totalMinutes={responseTotalMinutes}
-            />
-          )}
         </div>
 
         {/* Resolution SLA row */}
@@ -175,12 +146,6 @@ export function SlaDetailBlock({
                   : `${formatSlaMinutes(Math.abs(info.resolutionMinutesRemaining))} late`
                 : formatSlaCountdown(info.resolutionMinutesRemaining)}
           </p>
-          {!isTerminal && (
-            <ProgressBar
-              minutesRemaining={info.resolutionMinutesRemaining}
-              totalMinutes={resolutionTotalMinutes}
-            />
-          )}
         </div>
       </div>
     </div>

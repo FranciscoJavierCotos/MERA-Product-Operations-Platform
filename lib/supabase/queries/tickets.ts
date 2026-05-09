@@ -14,6 +14,32 @@ interface MyTicketNavigation {
   nextTicketId: string | null;
 }
 
+export interface TicketFilters {
+  search?: string;
+  status?: string;
+  priority?: string;
+  category?: string;
+  temperature?: string;
+  functional_team_id?: string;
+  support_team_id?: string;
+  assigned_to?: string;
+  created_from?: string;
+  created_to?: string;
+  sort_column?: string;
+  sort_dir?: string;
+}
+
+const SORTABLE_COLUMNS = new Set([
+  "ticket_number",
+  "title",
+  "category",
+  "status",
+  "priority",
+  "client_temperature",
+  "created_at",
+  "updated_at",
+]);
+
 export async function getTickets(
   supabase: Client,
   filters?: {
@@ -64,11 +90,62 @@ export async function getTicketsPaginated(
   supabase: Client,
   page: number,
   pageSize: number,
-  filters?: {
-    status?: string;
-    priority?: string;
-    assigned_to?: string;
-  },
+  filters?: TicketFilters,
+): Promise<PaginatedTickets> {
+  const safePage = Math.max(1, Math.floor(page));
+  const safeSize = Math.max(1, Math.floor(pageSize));
+  const from = (safePage - 1) * safeSize;
+  const to = from + safeSize - 1;
+
+  let query = supabase
+    .from("tickets")
+    .select(
+      `
+      *,
+      assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email, avatar_url),
+      creator:profiles!tickets_created_by_fkey(id, full_name, email),
+      functional_team:teams!tickets_functional_team_id_fkey(id, name),
+      support_team:teams!tickets_team_id_fkey(id, name),
+      sla_instance:sla_instances(id, response_due_at, resolution_due_at, responded_at, paused_at, total_paused_minutes, policy:sla_policies(name, priority, response_time_minutes, resolution_time_minutes))
+    `,
+      { count: "exact" },
+    );
+
+  if (filters?.search) query = query.ilike("title", `%${filters.search}%`);
+  if (filters?.status) query = query.eq("status", filters.status);
+  if (filters?.priority) query = query.eq("priority", filters.priority);
+  if (filters?.category) query = query.eq("category", filters.category);
+  if (filters?.temperature) query = query.eq("client_temperature", filters.temperature);
+  if (filters?.functional_team_id) query = query.eq("functional_team_id", filters.functional_team_id);
+  if (filters?.support_team_id) query = query.eq("team_id", filters.support_team_id);
+  if (filters?.assigned_to) query = query.eq("assigned_to", filters.assigned_to);
+  if (filters?.created_from) query = query.gte("created_at", `${filters.created_from}T00:00:00.000Z`);
+  if (filters?.created_to) query = query.lte("created_at", `${filters.created_to}T23:59:59.999Z`);
+
+  const col = filters?.sort_column;
+  const ascending = filters?.sort_dir === "asc";
+  if (col && SORTABLE_COLUMNS.has(col)) {
+    query = query.order(col, { ascending });
+    if (col !== "ticket_number") query = query.order("ticket_number", { ascending: false });
+  } else {
+    query = query.order("created_at", { ascending: false }).order("ticket_number", { ascending: false });
+  }
+
+  const { data, error, count } = await query.range(from, to);
+  if (error) throw error;
+
+  return {
+    data: (data ?? []) as unknown as Ticket[],
+    totalCount: count ?? 0,
+  };
+}
+
+export async function getMyTicketsPaginated(
+  supabase: Client,
+  userId: string,
+  page: number,
+  pageSize: number,
+  filters?: Omit<TicketFilters, "assigned_to">,
 ): Promise<PaginatedTickets> {
   const safePage = Math.max(1, Math.floor(page));
   const safeSize = Math.max(1, Math.floor(pageSize));
@@ -88,52 +165,28 @@ export async function getTicketsPaginated(
     `,
       { count: "exact" },
     )
-    .order("created_at", { ascending: false })
-    .order("ticket_number", { ascending: false })
-    .range(from, to);
+    .eq("assigned_to", userId);
 
+  if (filters?.search) query = query.ilike("title", `%${filters.search}%`);
   if (filters?.status) query = query.eq("status", filters.status);
   if (filters?.priority) query = query.eq("priority", filters.priority);
-  if (filters?.assigned_to) query = query.eq("assigned_to", filters.assigned_to);
+  if (filters?.category) query = query.eq("category", filters.category);
+  if (filters?.temperature) query = query.eq("client_temperature", filters.temperature);
+  if (filters?.functional_team_id) query = query.eq("functional_team_id", filters.functional_team_id);
+  if (filters?.support_team_id) query = query.eq("team_id", filters.support_team_id);
+  if (filters?.created_from) query = query.gte("created_at", `${filters.created_from}T00:00:00.000Z`);
+  if (filters?.created_to) query = query.lte("created_at", `${filters.created_to}T23:59:59.999Z`);
 
-  const { data, error, count } = await query;
-  if (error) throw error;
+  const col = filters?.sort_column;
+  const ascending = filters?.sort_dir === "asc";
+  if (col && SORTABLE_COLUMNS.has(col)) {
+    query = query.order(col, { ascending });
+    if (col !== "ticket_number") query = query.order("ticket_number", { ascending: false });
+  } else {
+    query = query.order("created_at", { ascending: false }).order("ticket_number", { ascending: false });
+  }
 
-  return {
-    data: (data ?? []) as unknown as Ticket[],
-    totalCount: count ?? 0,
-  };
-}
-
-export async function getMyTicketsPaginated(
-  supabase: Client,
-  userId: string,
-  page: number,
-  pageSize: number,
-): Promise<PaginatedTickets> {
-  const safePage = Math.max(1, Math.floor(page));
-  const safeSize = Math.max(1, Math.floor(pageSize));
-  const from = (safePage - 1) * safeSize;
-  const to = from + safeSize - 1;
-
-  const { data, error, count } = await supabase
-    .from("tickets")
-    .select(
-      `
-      *,
-      assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email, avatar_url),
-      creator:profiles!tickets_created_by_fkey(id, full_name, email),
-      functional_team:teams!tickets_functional_team_id_fkey(id, name),
-      support_team:teams!tickets_team_id_fkey(id, name),
-      sla_instance:sla_instances(id, response_due_at, resolution_due_at, responded_at, paused_at, total_paused_minutes, policy:sla_policies(name, priority, response_time_minutes, resolution_time_minutes))
-    `,
-      { count: "exact" },
-    )
-    .eq("assigned_to", userId)
-    .order("created_at", { ascending: false })
-    .order("ticket_number", { ascending: false })
-    .range(from, to);
-
+  const { data, error, count } = await query.range(from, to);
   if (error) throw error;
 
   return {

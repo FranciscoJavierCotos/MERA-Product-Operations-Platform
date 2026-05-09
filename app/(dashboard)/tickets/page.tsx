@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getTicketsPaginated } from "@/lib/supabase/queries/tickets";
+import { getFunctionalTeams, getAllSupportTeams } from "@/lib/supabase/queries/teams";
+import { getSupportMembers } from "@/lib/supabase/queries/users";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -29,20 +31,29 @@ import { FunctionalTeamDropdown } from "@/components/shared/functional-team-drop
 import { SupportTeamDropdown } from "@/components/shared/support-team-dropdown";
 import { AssignedUserDropdown } from "@/components/shared/assigned-user-dropdown";
 import { SupportLevel, Team } from "@/types/team.types";
+import { TicketFilterBar } from "@/components/tickets/ticket-filter-bar";
+import { SortableTableHead } from "@/components/tickets/sortable-table-head";
 
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 10;
 
-const categoryLabel: Record<string, string> = {
-  bug: "Bug",
-  feature_request: "Feature Request",
-  question: "Question",
-  configuration_request: "Configuration Request",
-};
-
 interface TicketsPageProps {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    search?: string;
+    status?: string;
+    priority?: string;
+    category?: string;
+    temperature?: string;
+    functional_team?: string;
+    support_team?: string;
+    assigned_to?: string;
+    created_from?: string;
+    created_to?: string;
+    sort?: string;
+    dir?: string;
+  }>;
 }
 
 export default async function TicketsPage({ searchParams }: TicketsPageProps) {
@@ -53,18 +64,37 @@ export default async function TicketsPage({ searchParams }: TicketsPageProps) {
   const requestedPage =
     Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
-  const { data: tickets, totalCount } = await getTicketsPaginated(
-    supabase,
-    requestedPage,
-    PAGE_SIZE,
-  );
+  const [
+    { data: tickets, totalCount },
+    functionalTeams,
+    supportTeams,
+    supportMembers,
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
+    getTicketsPaginated(supabase, requestedPage, PAGE_SIZE, {
+      search: params.search,
+      status: params.status,
+      priority: params.priority,
+      category: params.category,
+      temperature: params.temperature,
+      functional_team_id: params.functional_team,
+      support_team_id: params.support_team,
+      assigned_to: params.assigned_to,
+      created_from: params.created_from,
+      created_to: params.created_to,
+      sort_column: params.sort,
+      sort_dir: params.dir as "asc" | "desc" | undefined,
+    }),
+    getFunctionalTeams(supabase),
+    getAllSupportTeams(supabase),
+    getSupportMembers(supabase),
+    supabase.auth.getUser(),
+  ]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const currentPage = Math.min(requestedPage, totalPages);
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   type ProfileRole = {
     role: "admin" | "support_lead" | "support_member" | "client";
@@ -84,7 +114,7 @@ export default async function TicketsPage({ searchParams }: TicketsPageProps) {
     ["admin", "support_lead", "support_member"].includes(profile.role);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">All Tickets</h1>
@@ -100,23 +130,33 @@ export default async function TicketsPage({ searchParams }: TicketsPageProps) {
         </Link>
       </div>
 
+      <TicketFilterBar
+        functionalTeams={functionalTeams.map((t) => ({ value: t.id, label: t.name }))}
+        supportTeams={supportTeams.map((t) => ({ value: t.id, label: t.name }))}
+        supportMembers={supportMembers.map((m) => ({
+          value: m.id,
+          label: m.full_name ?? m.email,
+        }))}
+        showAssignedTo
+      />
+
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Ticket ID</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Priority</TableHead>
+              <SortableTableHead column="ticket_number">Ticket ID</SortableTableHead>
+              <SortableTableHead column="title">Title</SortableTableHead>
+              <SortableTableHead column="category">Category</SortableTableHead>
+              <SortableTableHead column="status">Status</SortableTableHead>
+              <SortableTableHead column="priority">Priority</SortableTableHead>
               <TableHead>SLA Response Time</TableHead>
               <TableHead>SLA Resolution Time</TableHead>
-              <TableHead>Temperature</TableHead>
+              <SortableTableHead column="client_temperature">Temperature</SortableTableHead>
               <TableHead>Functional Team</TableHead>
               <TableHead>Support Team</TableHead>
               <TableHead>Assigned To</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Updated</TableHead>
+              <SortableTableHead column="created_at">Created</SortableTableHead>
+              <SortableTableHead column="updated_at">Updated</SortableTableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -152,7 +192,6 @@ export default async function TicketsPage({ searchParams }: TicketsPageProps) {
                       </Link>
                     </TableCell>
 
-                    {/* Dropdown fields (do not navigate) */}
                     <TableCell>
                       <TicketCategoryDropdown
                         ticketId={ticket.id}
@@ -294,8 +333,6 @@ export default async function TicketsPage({ searchParams }: TicketsPageProps) {
                         compact
                       />
                     </TableCell>
-
-                    {/* Non-dropdown fields (navigate) */}
                     <TableCell className="p-0">
                       <Link
                         href={`/tickets/${ticket.id}`}

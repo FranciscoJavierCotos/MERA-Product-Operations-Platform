@@ -85,14 +85,9 @@ export function TemperatureBadgeDropdown({
     }
   };
 
-  // If not assigned user or ticket is closed, show non-interactive badge
+  // If not assigned user or ticket is closed, show non-interactive emoji
   if (!isAssignedUser || isClosed) {
-    return (
-      <Badge className={config.className}>
-        <span className="mr-1">{config.emoji}</span>
-        {config.label}
-      </Badge>
-    );
+    return <span>{config.emoji}</span>;
   }
 
   return (
@@ -106,7 +101,6 @@ export function TemperatureBadgeDropdown({
             className={`${config.className} whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1`}
           >
             <span>{config.emoji}</span>
-            {config.label}
             <ChevronDown className="h-3 w-3" />
           </Badge>
         </button>
@@ -118,8 +112,7 @@ export function TemperatureBadgeDropdown({
             onClick={() => handleTemperatureChange(option.value)}
             className={temperature === option.value ? "bg-gray-100" : ""}
           >
-            <span className="mr-2">{option.emoji}</span>
-            {option.label}
+            <span>{option.emoji}</span>
             {temperature === option.value && (
               <span className="ml-auto text-blue-600">✓</span>
             )}

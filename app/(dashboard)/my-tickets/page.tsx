@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getMyTicketsPaginated } from "@/lib/supabase/queries/tickets";
+import { getFunctionalTeams, getAllSupportTeams } from "@/lib/supabase/queries/teams";
 import Link from "next/link";
 import {
   Table,
@@ -26,20 +27,28 @@ import { TemperatureBadgeDropdown } from "@/components/shared/temperature-badge-
 import { FunctionalTeamDropdown } from "@/components/shared/functional-team-dropdown";
 import { SupportTeamDropdown } from "@/components/shared/support-team-dropdown";
 import { SupportLevel, Team } from "@/types/team.types";
+import { TicketFilterBar } from "@/components/tickets/ticket-filter-bar";
+import { SortableTableHead } from "@/components/tickets/sortable-table-head";
 
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 10;
 
-const categoryLabel: Record<string, string> = {
-  bug: "Bug",
-  feature_request: "Feature Request",
-  question: "Question",
-  configuration_request: "Configuration Request",
-};
-
 interface MyTicketsPageProps {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    search?: string;
+    status?: string;
+    priority?: string;
+    category?: string;
+    temperature?: string;
+    functional_team?: string;
+    support_team?: string;
+    created_from?: string;
+    created_to?: string;
+    sort?: string;
+    dir?: string;
+  }>;
 }
 
 export default async function MyTicketsPage({
@@ -70,18 +79,30 @@ export default async function MyTicketsPage({
   const requestedPage =
     Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
-  const { data: tickets, totalCount } = await getMyTicketsPaginated(
-    supabase,
-    user.id,
-    requestedPage,
-    PAGE_SIZE,
-  );
+  const [{ data: tickets, totalCount }, functionalTeams, supportTeams] =
+    await Promise.all([
+      getMyTicketsPaginated(supabase, user.id, requestedPage, PAGE_SIZE, {
+        search: params.search,
+        status: params.status,
+        priority: params.priority,
+        category: params.category,
+        temperature: params.temperature,
+        functional_team_id: params.functional_team,
+        support_team_id: params.support_team,
+        created_from: params.created_from,
+        created_to: params.created_to,
+        sort_column: params.sort,
+        sort_dir: params.dir as "asc" | "desc" | undefined,
+      }),
+      getFunctionalTeams(supabase),
+      getAllSupportTeams(supabase),
+    ]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const currentPage = Math.min(requestedPage, totalPages);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">My Tickets</h1>
         <p className="mt-2 text-sm text-gray-700">
@@ -89,22 +110,27 @@ export default async function MyTicketsPage({
         </p>
       </div>
 
+      <TicketFilterBar
+        functionalTeams={functionalTeams.map((t) => ({ value: t.id, label: t.name }))}
+        supportTeams={supportTeams.map((t) => ({ value: t.id, label: t.name }))}
+      />
+
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Ticket ID</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Priority</TableHead>
+              <SortableTableHead column="ticket_number">Ticket ID</SortableTableHead>
+              <SortableTableHead column="title">Title</SortableTableHead>
+              <SortableTableHead column="category">Category</SortableTableHead>
+              <SortableTableHead column="status">Status</SortableTableHead>
+              <SortableTableHead column="priority">Priority</SortableTableHead>
               <TableHead>SLA Response Time</TableHead>
               <TableHead>SLA Resolution Time</TableHead>
-              <TableHead>Temperature</TableHead>
+              <SortableTableHead column="client_temperature">Temperature</SortableTableHead>
               <TableHead>Functional Team</TableHead>
               <TableHead>Support Team</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Updated</TableHead>
+              <SortableTableHead column="created_at">Created</SortableTableHead>
+              <SortableTableHead column="updated_at">Updated</SortableTableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -140,7 +166,6 @@ export default async function MyTicketsPage({
                       </Link>
                     </TableCell>
 
-                    {/* Dropdown fields (do not navigate) */}
                     <TableCell>
                       <TicketCategoryDropdown
                         ticketId={ticket.id}
@@ -262,8 +287,6 @@ export default async function MyTicketsPage({
                         isClosed={ticket.status === "closed"}
                       />
                     </TableCell>
-
-                    {/* Non-dropdown fields (navigate) */}
                     <TableCell className="p-0">
                       <Link
                         href={`/tickets/${ticket.id}`}
