@@ -94,14 +94,7 @@ export function AssignedUserDropdown({
     return (
       <div className={`${compact ? "" : "mt-2 "}flex items-center gap-2`}>
         {assignedUser ? (
-          <>
-            <UserAvatar
-              name={assignedUser.full_name}
-              avatarUrl={assignedUser.avatar_url || undefined}
-              className={compact ? "h-5 w-5" : "h-6 w-6"}
-            />
-            <span className="text-sm">{assignedUser.full_name}</span>
-          </>
+          <span className="text-sm">{assignedUser.full_name}</span>
         ) : (
           <span className="text-sm text-gray-500">Unassigned</span>
         )}
@@ -117,14 +110,7 @@ export function AssignedUserDropdown({
           disabled={isUpdating || isLoading}
         >
           {assignedUser ? (
-            <>
-              <UserAvatar
-                name={assignedUser.full_name}
-                avatarUrl={assignedUser.avatar_url || undefined}
-                className={compact ? "h-5 w-5" : "h-6 w-6"}
-              />
-              <span className="text-sm">{assignedUser.full_name}</span>
-            </>
+            <span className="text-sm">{assignedUser.full_name}</span>
           ) : (
             <span className="text-sm text-gray-500">Unassigned</span>
           )}

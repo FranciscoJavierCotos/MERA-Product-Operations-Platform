@@ -7,7 +7,7 @@ export function formatDate(date: string | Date, formatStr: string = "PPP") {
 
 export function formatRelativeTime(date: string | Date) {
   const dateObj = typeof date === "string" ? parseISO(date) : date;
-  return formatDistanceToNow(dateObj, { addSuffix: true });
+  return formatDistanceToNow(dateObj, { addSuffix: true }).replace(/^about /, "");
 }
 
 export function formatDateTime(date: string | Date) {
