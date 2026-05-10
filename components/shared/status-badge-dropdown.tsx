@@ -9,64 +9,38 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { TicketStatus } from "@/types/ticket.types";
+import type { TicketStatusRow } from "@/types/ticket.types";
 import { createClient } from "@/lib/supabase/client";
 import { updateTicket } from "@/lib/supabase/queries/tickets";
 import { ChevronDown } from "lucide-react";
 
 interface StatusBadgeDropdownProps {
   ticketId: string;
-  status: TicketStatus;
+  currentStatus: TicketStatusRow;
+  statuses: TicketStatusRow[];
   isSupportAgent: boolean;
   isClosed: boolean;
 }
 
-const statusConfig: Record<
-  TicketStatus,
-  {
-    label: string;
-    variant: "default" | "secondary" | "destructive" | "outline";
-  }
-> = {
-  new: { label: "New", variant: "default" },
-  pending_customer: { label: "Pending Customer Side", variant: "secondary" },
-  pending_internal: { label: "Pending Our Side", variant: "secondary" },
-  escalated: { label: "Escalated", variant: "secondary" },
-  resolved: { label: "Resolved", variant: "secondary" },
-  closed: { label: "Closed", variant: "secondary" },
-};
-
-const statusOptions: { value: TicketStatus; label: string }[] = [
-  { value: "new", label: "New" },
-  { value: "pending_customer", label: "Pending Customer Side" },
-  { value: "pending_internal", label: "Pending Our Side" },
-  { value: "escalated", label: "Escalated" },
-  { value: "resolved", label: "Resolved" },
-  { value: "closed", label: "Closed" },
-];
-
 export function StatusBadgeDropdown({
   ticketId,
-  status,
+  currentStatus,
+  statuses,
   isSupportAgent,
   isClosed,
 }: StatusBadgeDropdownProps) {
   const router = useRouter();
   const supabase = createClient();
   const [isUpdating, setIsUpdating] = useState(false);
-  const config = statusConfig[status] ?? {
-    label: status ?? "Unknown",
-    variant: "secondary" as const,
-  };
 
   const canChangeStatus = isSupportAgent || isClosed;
 
-  const handleStatusChange = async (newStatus: TicketStatus) => {
-    if (newStatus === status || isUpdating) return;
+  const handleStatusChange = async (selected: TicketStatusRow) => {
+    if (selected.id === currentStatus.id || isUpdating) return;
 
     setIsUpdating(true);
     try {
-      await updateTicket(supabase, ticketId, { status: newStatus });
+      await updateTicket(supabase, ticketId, { status_id: selected.id });
       router.refresh();
     } catch (error) {
       console.error("Failed to update status:", error);
@@ -75,12 +49,12 @@ export function StatusBadgeDropdown({
     }
   };
 
-  // If ticket is open, only support agents can change status.
-  // If ticket is closed, anyone who can view it may reopen by selecting a new status.
+  const variant = currentStatus.badge_variant as "default" | "secondary" | "destructive" | "outline";
+
   if (!canChangeStatus) {
     return (
-      <Badge variant={config.variant} className="whitespace-nowrap">
-        {config.label}
+      <Badge variant={variant} className="whitespace-nowrap">
+        {currentStatus.label}
       </Badge>
     );
   }
@@ -93,23 +67,23 @@ export function StatusBadgeDropdown({
           disabled={isUpdating}
         >
           <Badge
-            variant={config.variant}
+            variant={variant}
             className="whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
           >
-            {config.label}
+            {currentStatus.label}
             <ChevronDown className="h-3 w-3" />
           </Badge>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
-        {statusOptions.map((option) => (
+        {statuses.map((option) => (
           <DropdownMenuItem
-            key={option.value}
-            onClick={() => handleStatusChange(option.value)}
-            className={status === option.value ? "bg-gray-100" : ""}
+            key={option.id}
+            onClick={() => handleStatusChange(option)}
+            className={currentStatus.id === option.id ? "bg-gray-100" : ""}
           >
             {option.label}
-            {status === option.value && (
+            {currentStatus.id === option.id && (
               <span className="ml-auto text-blue-600">✓</span>
             )}
           </DropdownMenuItem>

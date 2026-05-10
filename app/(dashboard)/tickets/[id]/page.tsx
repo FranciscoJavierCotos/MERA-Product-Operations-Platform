@@ -13,6 +13,13 @@ import {
   getTicketCollaborators,
 } from "@/lib/supabase/queries/teams";
 import { getSlaInstance } from "@/lib/supabase/queries/slas";
+import {
+  getTicketStatuses,
+  getTicketPriorities,
+  getTicketCategories,
+  getTicketTemperatures,
+  getTicketSupportLevels,
+} from "@/lib/supabase/queries/lookup";
 
 export const dynamic = "force-dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,18 +55,10 @@ export default async function TicketDetailPage({
 
   const supabase = await createClient();
 
-  const ticketPromise = getTicketById(supabase, id);
-  const commentsPromise = getTicketComments(supabase, id);
-  const collaboratorsPromise = getTicketCollaborators(supabase, id);
-  const ticketHistoryPromise = getTicketHistory(supabase, id);
-  const slaInstancePromise = getSlaInstance(supabase, id);
-
-  // Get current user
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Get user profile to check role
   type ProfileRole = {
     role: "admin" | "support_lead" | "support_member" | "client";
   };
@@ -83,19 +82,19 @@ export default async function TicketDetailPage({
   let ticketHistory = null;
   let slaInstance = null;
   let myTicketNavigation = {
-    firstTicketId: null,
-    previousTicketId: null,
-    nextTicketId: null,
+    firstTicketId: null as string | null,
+    previousTicketId: null as string | null,
+    nextTicketId: null as string | null,
   };
 
   try {
     [ticket, comments, collaborators, ticketHistory, slaInstance, myTicketNavigation] =
       await Promise.all([
-        ticketPromise,
-        commentsPromise,
-        collaboratorsPromise,
-        ticketHistoryPromise,
-        slaInstancePromise,
+        getTicketById(supabase, id),
+        getTicketComments(supabase, id),
+        getTicketCollaborators(supabase, id),
+        getTicketHistory(supabase, id),
+        getSlaInstance(supabase, id),
         user
           ? getMyTicketNavigation(supabase, user.id, id)
           : Promise.resolve(myTicketNavigation),
@@ -106,13 +105,28 @@ export default async function TicketDetailPage({
     throw error;
   }
 
-  const [supportMembers, functionalTeams, supportTeams] = isSupportAgent
-    ? await Promise.all([
-        getSupportMembers(supabase),
-        getFunctionalTeams(supabase),
-        getAllSupportTeams(supabase),
-      ])
-    : [[], [], []];
+  const [supportMembers, functionalTeams, supportTeams, statuses, priorities, categories, temperatures, supportLevels] =
+    isSupportAgent
+      ? await Promise.all([
+          getSupportMembers(supabase),
+          getFunctionalTeams(supabase),
+          getAllSupportTeams(supabase),
+          getTicketStatuses(supabase),
+          getTicketPriorities(supabase),
+          getTicketCategories(supabase),
+          getTicketTemperatures(supabase),
+          getTicketSupportLevels(supabase),
+        ])
+      : await Promise.all([
+          Promise.resolve([]),
+          Promise.resolve([]),
+          Promise.resolve([]),
+          getTicketStatuses(supabase),
+          getTicketPriorities(supabase),
+          getTicketCategories(supabase),
+          getTicketTemperatures(supabase),
+          getTicketSupportLevels(supabase),
+        ]);
 
   if (!ticket) {
     return <div>Ticket not found</div>;
@@ -120,9 +134,9 @@ export default async function TicketDetailPage({
 
   const isCreator = user && ticket.created_by === user.id;
   const isAssignedUser = user && ticket.assigned_to === user.id;
-  const isClosed = ticket.status === "closed";
+  const isClosed = ticket.status.name === "closed";
   const currentSupportLevel: SupportLevel =
-    (ticket.support_level as SupportLevel) || "L1";
+    (ticket.support_level?.name as SupportLevel) || "L1";
 
   return (
     <div className="space-y-6">
@@ -155,7 +169,7 @@ export default async function TicketDetailPage({
             <div className="space-y-4">
               <SlaDetailBlock
                 instance={slaInstance}
-                ticketStatus={ticket.status}
+                ticketStatus={ticket.status.name}
                 resolvedAt={ticket.resolved_at}
                 createdAt={ticket.created_at}
               />
@@ -231,7 +245,8 @@ export default async function TicketDetailPage({
                 <div className="mt-2">
                   <StatusBadgeDropdown
                     ticketId={ticket.id}
-                    status={ticket.status}
+                    currentStatus={ticket.status}
+                    statuses={statuses}
                     isSupportAgent={!!isSupportAgent}
                     isClosed={isClosed}
                   />
@@ -245,7 +260,8 @@ export default async function TicketDetailPage({
                 <div className="mt-2">
                   <PriorityBadgeDropdown
                     ticketId={ticket.id}
-                    priority={ticket.priority}
+                    currentPriority={ticket.priority}
+                    priorities={priorities}
                     isSupportAgent={!!isSupportAgent}
                     isClosed={isClosed}
                   />
@@ -259,7 +275,8 @@ export default async function TicketDetailPage({
                 <div className="mt-2">
                   <TemperatureBadgeDropdown
                     ticketId={ticket.id}
-                    temperature={ticket.client_temperature}
+                    currentTemperature={ticket.temperature ?? null}
+                    temperatures={temperatures}
                     isAssignedUser={!!isAssignedUser}
                     isClosed={isClosed}
                   />
@@ -302,7 +319,8 @@ export default async function TicketDetailPage({
                 <div className="mt-2">
                   <TicketCategoryDropdown
                     ticketId={ticket.id}
-                    category={ticket.category}
+                    currentCategory={ticket.category ?? null}
+                    categories={categories}
                     isSupportAgent={!!isSupportAgent}
                     isClosed={isClosed}
                   />
@@ -352,9 +370,9 @@ export default async function TicketDetailPage({
             <div className="pt-4 border-t">
               <h3 className="text-sm font-medium text-gray-700 mb-2">Tags</h3>
               <div className="flex flex-wrap gap-2">
-                {ticket.tags.map((tag) => (
-                  <Badge key={tag} variant="outline">
-                    {tag}
+                {ticket.tags.map(({ tag }) => (
+                  <Badge key={tag.id} variant="outline">
+                    {tag.name}
                   </Badge>
                 ))}
               </div>

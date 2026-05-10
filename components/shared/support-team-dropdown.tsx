@@ -68,24 +68,23 @@ export function SupportTeamDropdown({
     }
   };
 
-  const getCategoryLevel = (category?: string): SupportLevel => {
-    if (category === "l1_support") return "L1";
-    if (category === "l2_technical") return "L2";
-    if (category === "l3_engineering") return "L3";
-    return "L1";
+  const getCategoryLevelId = (category?: string): number => {
+    if (category === "l1_support") return 1;
+    if (category === "l2_technical") return 2;
+    if (category === "l3_engineering") return 3;
+    return 1;
   };
 
   const handleTeamChange = async (team: Team) => {
     if (isUpdating || team.id === currentTeam?.id) return;
 
-    const newLevel = getCategoryLevel(team.category);
+    const newLevelId = getCategoryLevelId(team.category);
 
     setIsUpdating(true);
     try {
-      // Update ticket with new team and level
       await updateTicket(supabase, ticketId, {
         team_id: team.id,
-        support_level: newLevel,
+        support_level_id: newLevelId,
       });
       router.refresh();
     } catch (error) {

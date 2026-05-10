@@ -1,10 +1,10 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { SupportLevel, SUPPORT_LEVEL_CONFIG } from "@/types/team.types";
+import type { TicketSupportLevelRow } from "@/types/ticket.types";
 
 interface SupportLevelBadgeProps {
-  level: SupportLevel;
+  level: TicketSupportLevelRow | null | undefined;
   showDescription?: boolean;
 }
 
@@ -12,12 +12,12 @@ export function SupportLevelBadge({
   level,
   showDescription = false,
 }: SupportLevelBadgeProps) {
-  const config = SUPPORT_LEVEL_CONFIG[level];
+  if (!level) return null;
 
   return (
-    <Badge variant="secondary" className="whitespace-nowrap">
-      {config.label}
-      {showDescription && ` - ${config.description}`}
+    <Badge className={`${level.color_class} whitespace-nowrap`}>
+      {level.label}
+      {showDescription && ` - ${level.description}`}
     </Badge>
   );
 }

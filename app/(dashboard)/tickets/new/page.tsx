@@ -6,11 +6,16 @@ import { createClient } from "@/lib/supabase/client";
 import { createTicket } from "@/lib/supabase/queries/tickets";
 import { getSupportMembers } from "@/lib/supabase/queries/users";
 import { getFunctionalTeams } from "@/lib/supabase/queries/teams";
+import {
+  getTicketStatuses,
+  getTicketPriorities,
+  getTicketCategories,
+  getTicketSupportLevels,
+} from "@/lib/supabase/queries/lookup";
 import { uploadCommentImage } from "@/lib/supabase/queries/comments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -19,110 +24,109 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Profile } from "@/types/user.types";
-import { Team, L1_SUPPORT_DESK_ID } from "@/types/team.types";
+import type { Profile } from "@/types/user.types";
+import type { Team } from "@/types/team.types";
+import { L1_SUPPORT_DESK_ID } from "@/types/team.types";
+import type {
+  TicketStatusRow,
+  TicketPriorityRow,
+  TicketCategoryRow,
+} from "@/types/ticket.types";
 import { useUnsavedChangesContext } from "@/lib/contexts/unsaved-changes-context";
 import { RichTextEditor } from "@/components/tickets/rich-text-editor";
 
 export default function NewTicketPage() {
-  type TicketCategory =
-    | "bug"
-    | "feature_request"
-    | "question"
-    | "configuration_request";
-
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<TicketCategory | "">("");
+  const [categoryId, setCategoryId] = useState<number | null>(null);
   const [ccEmail, setCcEmail] = useState("");
-  const [priority, setPriority] = useState<
-    "low" | "medium" | "high" | "urgent"
-  >("medium");
-  const [status, setStatus] = useState<
-    | "new"
-    | "pending_customer"
-    | "pending_internal"
-    | "escalated"
-    | "resolved"
-    | "closed"
-  >("new");
+  const [priorityId, setPriorityId] = useState<number | null>(null);
+  const [statusId, setStatusId] = useState<number | null>(null);
   const [assignedTo, setAssignedTo] = useState<string>("");
   const [functionalTeamId, setFunctionalTeamId] = useState<string>("");
+
+  const [statuses, setStatuses] = useState<TicketStatusRow[]>([]);
+  const [priorities, setPriorities] = useState<TicketPriorityRow[]>([]);
+  const [categories, setCategories] = useState<TicketCategoryRow[]>([]);
   const [functionalTeams, setFunctionalTeams] = useState<Team[]>([]);
   const [supportMembers, setSupportMembers] = useState<Profile[]>([]);
+  const [defaultStatusId, setDefaultStatusId] = useState<number>(1);
+  const [defaultPriorityId, setDefaultPriorityId] = useState<number>(2);
+  const [l1SupportLevelId, setL1SupportLevelId] = useState<number>(1);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
   const unsavedChangesContext = useUnsavedChangesContext();
 
-  // Track form dirty state
   const hasUnsavedChanges = useMemo(() => {
     return (
       title.trim() !== "" ||
       description.trim() !== "" ||
-      category !== "" ||
+      categoryId !== null ||
       ccEmail.trim() !== "" ||
       assignedTo !== "" ||
       functionalTeamId !== ""
     );
-  }, [title, description, category, ccEmail, assignedTo, functionalTeamId]);
+  }, [title, description, categoryId, ccEmail, assignedTo, functionalTeamId]);
 
-  // Register/unregister with context
   useEffect(() => {
     unsavedChangesContext.setHasUnsavedChanges(hasUnsavedChanges);
-  }, [hasUnsavedChanges]); // Remove unsavedChangesContext from dependencies
+  }, [hasUnsavedChanges]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Register save/discard handlers for the global back button
   useEffect(() => {
     const handleSave = async () => {
-      // Create a synthetic form submission
       const form = document.querySelector("form");
       if (form) {
-        const submitEvent = new Event("submit", {
-          cancelable: true,
-          bubbles: true,
-        });
-        form.dispatchEvent(submitEvent);
+        form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
       }
     };
-
     const handleDiscard = () => {
       setTitle("");
       setDescription("");
-      setCategory("");
+      setCategoryId(null);
       setCcEmail("");
-      setPriority("medium");
-      setStatus("new");
+      setPriorityId(null);
+      setStatusId(null);
       setAssignedTo("");
       setFunctionalTeamId("");
     };
-
-    unsavedChangesContext.registerHandlers({
-      onSave: handleSave,
-      onDiscard: handleDiscard,
-    });
-
-    return () => {
-      unsavedChangesContext.unregisterHandlers();
-    };
-  }, []); // Empty deps - register once on mount
+    unsavedChangesContext.registerHandlers({ onSave: handleSave, onDiscard: handleDiscard });
+    return () => { unsavedChangesContext.unregisterHandlers(); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [members, teams] = await Promise.all([
-          getSupportMembers(supabase),
-          getFunctionalTeams(supabase),
-        ]);
+        const [members, teams, fetchedStatuses, fetchedPriorities, fetchedCategories, supportLevels] =
+          await Promise.all([
+            getSupportMembers(supabase),
+            getFunctionalTeams(supabase),
+            getTicketStatuses(supabase),
+            getTicketPriorities(supabase),
+            getTicketCategories(supabase),
+            getTicketSupportLevels(supabase),
+          ]);
         setSupportMembers(members);
         setFunctionalTeams(teams);
+        setStatuses(fetchedStatuses);
+        setPriorities(fetchedPriorities);
+        setCategories(fetchedCategories);
+
+        const newStatus = fetchedStatuses.find((s) => s.name === "new");
+        const mediumPriority = fetchedPriorities.find((p) => p.name === "medium");
+        const l1Level = supportLevels.find((sl) => sl.name === "L1");
+
+        if (newStatus) { setDefaultStatusId(newStatus.id); setStatusId(newStatus.id); }
+        if (mediumPriority) { setDefaultPriorityId(mediumPriority.id); setPriorityId(mediumPriority.id); }
+        if (l1Level) setL1SupportLevelId(l1Level.id);
       } catch (err) {
         console.error("Error loading data:", err);
       }
     }
     loadData();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,59 +134,56 @@ export default function NewTicketPage() {
     setError(null);
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Validate functional team is selected
       if (!functionalTeamId) {
         setError("Please select a functional department");
         setLoading(false);
         return;
       }
 
-      if (!category) {
+      if (!categoryId) {
         setError("Please select a category");
         setLoading(false);
         return;
       }
 
+      if (!priorityId) {
+        setError("Please select a priority");
+        setLoading(false);
+        return;
+      }
+
+      const resolvedStatusId = assignedTo ? (statusId ?? defaultStatusId) : defaultStatusId;
+
       const ticket = await createTicket(supabase, {
         title,
         description,
-        category,
+        category_id: categoryId,
         cc_email: ccEmail.trim() ? ccEmail.trim().toLowerCase() : null,
-        priority,
-        status: assignedTo ? status : "new",
+        priority_id: priorityId,
+        status_id: resolvedStatusId,
         assigned_to: assignedTo || null,
         created_by: user.id,
         functional_team_id: functionalTeamId,
-        team_id: L1_SUPPORT_DESK_ID, // Auto-assign to L1 Support Desk
-        support_level: "L1",
+        team_id: L1_SUPPORT_DESK_ID,
+        support_level_id: l1SupportLevelId,
       });
 
-      // Clear unsaved changes flag after successful creation
       unsavedChangesContext.setHasUnsavedChanges(false);
-
       router.push(`/tickets/${ticket.id}`);
-    } catch (err: any) {
-      setError(err.message || "An error occurred creating the ticket");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "An error occurred creating the ticket";
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
   const handleImageUpload = async (file: File): Promise<string> => {
-    try {
-      // Use a temporary ID for upload path before ticket is created
-      const tempId = "temp-" + Date.now();
-      const url = await uploadCommentImage(supabase, file, tempId);
-      return url;
-    } catch (error) {
-      console.error("Failed to upload image:", error);
-      throw error;
-    }
+    const tempId = "temp-" + Date.now();
+    return uploadCommentImage(supabase, file, tempId);
   };
 
   return (
@@ -259,11 +260,9 @@ export default function NewTicketPage() {
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>
                 <Select
-                  value={category || "none"}
+                  value={categoryId?.toString() ?? "none"}
                   onValueChange={(value) =>
-                    setCategory(
-                      value === "none" ? "" : (value as TicketCategory),
-                    )
+                    setCategoryId(value === "none" ? null : parseInt(value, 10))
                   }
                   disabled={loading}
                 >
@@ -274,14 +273,11 @@ export default function NewTicketPage() {
                     <SelectItem value="none" disabled>
                       Select category...
                     </SelectItem>
-                    <SelectItem value="bug">Bug</SelectItem>
-                    <SelectItem value="feature_request">
-                      Feature Request
-                    </SelectItem>
-                    <SelectItem value="question">Question</SelectItem>
-                    <SelectItem value="configuration_request">
-                      Configuration Request
-                    </SelectItem>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={c.id.toString()}>
+                        {c.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -303,20 +299,19 @@ export default function NewTicketPage() {
               <div className="space-y-2">
                 <Label htmlFor="priority">Priority *</Label>
                 <Select
-                  value={priority}
-                  onValueChange={(value) =>
-                    setPriority(value as "low" | "medium" | "high" | "urgent")
-                  }
+                  value={priorityId?.toString() ?? ""}
+                  onValueChange={(value) => setPriorityId(parseInt(value, 10))}
                   disabled={loading}
                 >
                   <SelectTrigger id="priority">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
+                    {priorities.map((p) => (
+                      <SelectItem key={p.id} value={p.id.toString()}>
+                        {p.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -324,34 +319,19 @@ export default function NewTicketPage() {
               <div className="space-y-2">
                 <Label htmlFor="status">Status *</Label>
                 <Select
-                  value={status}
-                  onValueChange={(value) =>
-                    setStatus(
-                      value as
-                        | "new"
-                        | "pending_customer"
-                        | "pending_internal"
-                        | "escalated"
-                        | "resolved"
-                        | "closed",
-                    )
-                  }
+                  value={statusId?.toString() ?? ""}
+                  onValueChange={(value) => setStatusId(parseInt(value, 10))}
                   disabled={loading || !assignedTo}
                 >
                   <SelectTrigger id="status">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="new">New</SelectItem>
-                    <SelectItem value="pending_customer">
-                      Pending Customer Side
-                    </SelectItem>
-                    <SelectItem value="pending_internal">
-                      Pending Our Side
-                    </SelectItem>
-                    <SelectItem value="escalated">Escalated</SelectItem>
-                    <SelectItem value="resolved">Resolved</SelectItem>
-                    <SelectItem value="closed">Closed</SelectItem>
+                    {statuses.map((s) => (
+                      <SelectItem key={s.id} value={s.id.toString()}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -364,7 +344,7 @@ export default function NewTicketPage() {
                 onValueChange={(value) => {
                   setAssignedTo(value === "unassigned" ? "" : value);
                   if (value === "unassigned") {
-                    setStatus("new");
+                    setStatusId(defaultStatusId);
                   }
                 }}
                 disabled={loading}

@@ -11,31 +11,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { updateTicket } from "@/lib/supabase/queries/tickets";
-import type { TicketCategory } from "@/types/ticket.types";
+import type { TicketCategoryRow } from "@/types/ticket.types";
 import { ChevronDown } from "lucide-react";
 
 interface TicketCategoryDropdownProps {
   ticketId: string;
-  category: TicketCategory | null | undefined;
+  currentCategory: TicketCategoryRow | null | undefined;
+  categories: TicketCategoryRow[];
   isSupportAgent: boolean;
   isClosed: boolean;
 }
 
-const categoryOptions: Array<{ value: TicketCategory; label: string }> = [
-  { value: "bug", label: "Bug" },
-  { value: "feature_request", label: "Feature Request" },
-  { value: "question", label: "Question" },
-  { value: "configuration_request", label: "Configuration Request" },
-];
-
-const getCategoryLabel = (category: TicketCategory | null | undefined) => {
-  const match = categoryOptions.find((o) => o.value === category);
-  return match?.label ?? "-";
-};
-
 export function TicketCategoryDropdown({
   ticketId,
-  category,
+  currentCategory,
+  categories,
   isSupportAgent,
   isClosed,
 }: TicketCategoryDropdownProps) {
@@ -43,13 +33,13 @@ export function TicketCategoryDropdown({
   const supabase = createClient();
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const handleChange = async (newCategory: TicketCategory) => {
+  const handleChange = async (selected: TicketCategoryRow) => {
     if (isUpdating) return;
-    if (newCategory === category) return;
+    if (selected.id === currentCategory?.id) return;
 
     setIsUpdating(true);
     try {
-      await updateTicket(supabase, ticketId, { category: newCategory });
+      await updateTicket(supabase, ticketId, { category_id: selected.id });
       router.refresh();
     } catch (error) {
       console.error("Failed to update category:", error);
@@ -58,10 +48,12 @@ export function TicketCategoryDropdown({
     }
   };
 
+  const label = currentCategory?.label ?? "-";
+
   if (!isSupportAgent || isClosed) {
     return (
       <Badge variant="outline" className="whitespace-nowrap">
-        {getCategoryLabel(category)}
+        {label}
       </Badge>
     );
   }
@@ -77,20 +69,20 @@ export function TicketCategoryDropdown({
             variant="outline"
             className="whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
           >
-            {getCategoryLabel(category)}
+            {label}
             <ChevronDown className="h-3 w-3" />
           </Badge>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
-        {categoryOptions.map((option) => (
+        {categories.map((option) => (
           <DropdownMenuItem
-            key={option.value}
-            onClick={() => handleChange(option.value)}
-            className={category === option.value ? "bg-gray-100" : ""}
+            key={option.id}
+            onClick={() => handleChange(option)}
+            className={currentCategory?.id === option.id ? "bg-gray-100" : ""}
           >
             {option.label}
-            {category === option.value && (
+            {currentCategory?.id === option.id && (
               <span className="ml-auto text-blue-600">✓</span>
             )}
           </DropdownMenuItem>

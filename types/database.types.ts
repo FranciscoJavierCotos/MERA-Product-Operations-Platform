@@ -82,6 +82,161 @@ export interface Database {
           updated_at?: string;
         };
       };
+      ticket_statuses: {
+        Row: {
+          id: number;
+          name: string;
+          label: string;
+          badge_variant: string;
+          is_final: boolean;
+          display_order: number;
+        };
+        Insert: {
+          id: number;
+          name: string;
+          label: string;
+          badge_variant?: string;
+          is_final?: boolean;
+          display_order: number;
+        };
+        Update: {
+          id?: number;
+          name?: string;
+          label?: string;
+          badge_variant?: string;
+          is_final?: boolean;
+          display_order?: number;
+        };
+      };
+      ticket_priorities: {
+        Row: {
+          id: number;
+          name: string;
+          label: string;
+          color_class: string;
+          display_order: number;
+        };
+        Insert: {
+          id: number;
+          name: string;
+          label: string;
+          color_class: string;
+          display_order: number;
+        };
+        Update: {
+          id?: number;
+          name?: string;
+          label?: string;
+          color_class?: string;
+          display_order?: number;
+        };
+      };
+      ticket_categories: {
+        Row: {
+          id: number;
+          name: string;
+          label: string;
+          display_order: number;
+        };
+        Insert: {
+          id: number;
+          name: string;
+          label: string;
+          display_order: number;
+        };
+        Update: {
+          id?: number;
+          name?: string;
+          label?: string;
+          display_order?: number;
+        };
+      };
+      ticket_support_levels: {
+        Row: {
+          id: number;
+          name: string;
+          label: string;
+          description: string;
+          color_class: string;
+          display_order: number;
+        };
+        Insert: {
+          id: number;
+          name: string;
+          label: string;
+          description: string;
+          color_class: string;
+          display_order: number;
+        };
+        Update: {
+          id?: number;
+          name?: string;
+          label?: string;
+          description?: string;
+          color_class?: string;
+          display_order?: number;
+        };
+      };
+      ticket_temperatures: {
+        Row: {
+          id: number;
+          name: string;
+          label: string;
+          emoji: string;
+          color_class: string;
+          display_order: number;
+        };
+        Insert: {
+          id: number;
+          name: string;
+          label: string;
+          emoji: string;
+          color_class: string;
+          display_order: number;
+        };
+        Update: {
+          id?: number;
+          name?: string;
+          label?: string;
+          emoji?: string;
+          color_class?: string;
+          display_order?: number;
+        };
+      };
+      tags: {
+        Row: {
+          id: number;
+          name: string;
+          slug: string;
+          color_class: string;
+        };
+        Insert: {
+          id?: number;
+          name: string;
+          slug: string;
+          color_class?: string;
+        };
+        Update: {
+          id?: number;
+          name?: string;
+          slug?: string;
+          color_class?: string;
+        };
+      };
+      ticket_tags: {
+        Row: {
+          ticket_id: string;
+          tag_id: number;
+        };
+        Insert: {
+          ticket_id: string;
+          tag_id: number;
+        };
+        Update: {
+          ticket_id?: string;
+          tag_id?: number;
+        };
+      };
       tickets: {
         Row: {
           id: string;
@@ -89,29 +244,17 @@ export interface Database {
           title: string;
           description: string;
           cc_email: string | null;
-          category:
-            | "bug"
-            | "feature_request"
-            | "question"
-            | "configuration_request"
-            | null;
-          status:
-            | "new"
-            | "pending_customer"
-            | "pending_internal"
-            | "escalated"
-            | "resolved"
-            | "closed";
-          priority: "low" | "medium" | "high" | "urgent";
+          status_id: number;
+          priority_id: number;
+          category_id: number | null;
+          support_level_id: number | null;
+          temperature_id: number | null;
           created_by: string | null;
           assigned_to: string | null;
           team_id: string | null;
           functional_team_id: string | null;
-          support_level: "L1" | "L2" | "L3" | null;
-          client_temperature: "hot" | "warm" | "cool" | null;
           client_email: string | null;
           client_name: string | null;
-          tags: string[];
           attachments: Json;
           custom_fields: Json;
           time_worked_minutes: number;
@@ -127,29 +270,17 @@ export interface Database {
           title: string;
           description: string;
           cc_email?: string | null;
-          category?:
-            | "bug"
-            | "feature_request"
-            | "question"
-            | "configuration_request"
-            | null;
-          status?:
-            | "new"
-            | "pending_customer"
-            | "pending_internal"
-            | "escalated"
-            | "resolved"
-            | "closed";
-          priority?: "low" | "medium" | "high" | "urgent";
+          status_id?: number;
+          priority_id: number;
+          category_id?: number | null;
+          support_level_id?: number | null;
+          temperature_id?: number | null;
           created_by?: string | null;
           assigned_to?: string | null;
           team_id?: string | null;
           functional_team_id?: string | null;
-          support_level?: "L1" | "L2" | "L3" | null;
-          client_temperature?: "hot" | "warm" | "cool" | null;
           client_email?: string | null;
           client_name?: string | null;
-          tags?: string[];
           attachments?: Json;
           custom_fields?: Json;
           time_worked_minutes?: number;
@@ -165,29 +296,17 @@ export interface Database {
           title?: string;
           description?: string;
           cc_email?: string | null;
-          category?:
-            | "bug"
-            | "feature_request"
-            | "question"
-            | "configuration_request"
-            | null;
-          status?:
-            | "new"
-            | "pending_customer"
-            | "pending_internal"
-            | "escalated"
-            | "resolved"
-            | "closed";
-          priority?: "low" | "medium" | "high" | "urgent";
+          status_id?: number;
+          priority_id?: number;
+          category_id?: number | null;
+          support_level_id?: number | null;
+          temperature_id?: number | null;
           created_by?: string | null;
           assigned_to?: string | null;
           team_id?: string | null;
           functional_team_id?: string | null;
-          support_level?: "L1" | "L2" | "L3" | null;
-          client_temperature?: "hot" | "warm" | "cool" | null;
           client_email?: string | null;
           client_name?: string | null;
-          tags?: string[];
           attachments?: Json;
           custom_fields?: Json;
           time_worked_minutes?: number;
@@ -387,7 +506,7 @@ export interface Database {
         Row: {
           id: string;
           name: string;
-          priority: "low" | "medium" | "high" | "urgent";
+          priority_id: number;
           response_time_minutes: number;
           resolution_time_minutes: number;
           is_active: boolean;
@@ -397,7 +516,7 @@ export interface Database {
         Insert: {
           id?: string;
           name: string;
-          priority: "low" | "medium" | "high" | "urgent";
+          priority_id: number;
           response_time_minutes: number;
           resolution_time_minutes: number;
           is_active?: boolean;
@@ -407,7 +526,7 @@ export interface Database {
         Update: {
           id?: string;
           name?: string;
-          priority?: "low" | "medium" | "high" | "urgent";
+          priority_id?: number;
           response_time_minutes?: number;
           resolution_time_minutes?: number;
           is_active?: boolean;
@@ -462,14 +581,6 @@ export interface Database {
     };
     Enums: {
       user_role: "admin" | "support_lead" | "support_member" | "client";
-      ticket_status:
-        | "new"
-        | "pending_customer"
-        | "pending_internal"
-        | "escalated"
-        | "resolved"
-        | "closed";
-      ticket_priority: "low" | "medium" | "high" | "urgent";
       task_status: "todo" | "in_progress" | "completed";
     };
   };

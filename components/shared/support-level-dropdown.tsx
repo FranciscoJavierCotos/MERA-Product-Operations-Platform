@@ -11,21 +11,21 @@ import {
 import { SupportLevelBadge } from "@/components/shared/support-level-badge";
 import { createClient } from "@/lib/supabase/client";
 import { updateTicket } from "@/lib/supabase/queries/tickets";
-import { SupportLevel, SUPPORT_LEVEL_CONFIG } from "@/types/team.types";
+import type { TicketSupportLevelRow } from "@/types/ticket.types";
 import { ChevronDown } from "lucide-react";
 
 interface SupportLevelDropdownProps {
   ticketId: string;
-  level: SupportLevel;
+  currentLevel: TicketSupportLevelRow | null | undefined;
+  supportLevels: TicketSupportLevelRow[];
   isSupportAgent: boolean;
   isClosed: boolean;
 }
 
-const levelOptions: SupportLevel[] = ["L1", "L2", "L3"];
-
 export function SupportLevelDropdown({
   ticketId,
-  level,
+  currentLevel,
+  supportLevels,
   isSupportAgent,
   isClosed,
 }: SupportLevelDropdownProps) {
@@ -33,12 +33,12 @@ export function SupportLevelDropdown({
   const supabase = createClient();
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const handleLevelChange = async (newLevel: SupportLevel) => {
-    if (newLevel === level || isUpdating) return;
+  const handleLevelChange = async (selected: TicketSupportLevelRow) => {
+    if (selected.id === currentLevel?.id || isUpdating) return;
 
     setIsUpdating(true);
     try {
-      await updateTicket(supabase, ticketId, { support_level: newLevel });
+      await updateTicket(supabase, ticketId, { support_level_id: selected.id });
       router.refresh();
     } catch (error) {
       console.error("Failed to update support level:", error);
@@ -48,7 +48,7 @@ export function SupportLevelDropdown({
   };
 
   if (!isSupportAgent || isClosed) {
-    return <SupportLevelBadge level={level} />;
+    return <SupportLevelBadge level={currentLevel} />;
   }
 
   return (
@@ -59,20 +59,20 @@ export function SupportLevelDropdown({
           disabled={isUpdating}
         >
           <span className="inline-flex items-center gap-1">
-            <SupportLevelBadge level={level} />
+            <SupportLevelBadge level={currentLevel} />
             <ChevronDown className="h-3 w-3 text-gray-400" />
           </span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
-        {levelOptions.map((option) => (
+        {supportLevels.map((option) => (
           <DropdownMenuItem
-            key={option}
+            key={option.id}
             onClick={() => handleLevelChange(option)}
-            className={option === level ? "bg-gray-100" : ""}
+            className={option.id === currentLevel?.id ? "bg-gray-100" : ""}
           >
-            <span>{SUPPORT_LEVEL_CONFIG[option].label}</span>
-            {option === level && (
+            <span>{option.label}</span>
+            {option.id === currentLevel?.id && (
               <span className="ml-auto text-blue-600">✓</span>
             )}
           </DropdownMenuItem>

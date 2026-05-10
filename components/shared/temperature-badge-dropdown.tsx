@@ -9,74 +9,36 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ClientTemperature } from "@/types/ticket.types";
+import type { TicketTemperatureRow } from "@/types/ticket.types";
 import { createClient } from "@/lib/supabase/client";
 import { updateTicket } from "@/lib/supabase/queries/tickets";
 import { ChevronDown } from "lucide-react";
 
 interface TemperatureBadgeDropdownProps {
   ticketId: string;
-  temperature: ClientTemperature;
+  currentTemperature: TicketTemperatureRow | null | undefined;
+  temperatures: TicketTemperatureRow[];
   isAssignedUser: boolean;
   isClosed: boolean;
 }
 
-const temperatureConfig: Record<
-  ClientTemperature,
-  {
-    label: string;
-    emoji: string;
-    className: string;
-  }
-> = {
-  hot: {
-    label: "Hot",
-    emoji: "🔴",
-    className: "bg-red-100 text-red-800 hover:bg-red-100",
-  },
-  warm: {
-    label: "Warm",
-    emoji: "🟡",
-    className:
-      "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-  },
-  cool: {
-    label: "Good",
-    emoji: "🟢",
-    className:
-      "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-  },
-};
-
-const temperatureOptions: {
-  value: ClientTemperature;
-  label: string;
-  emoji: string;
-}[] = [
-  { value: "cool", label: "Good", emoji: "🟢" },
-  { value: "warm", label: "Warm", emoji: "🟡" },
-  { value: "hot", label: "Hot", emoji: "🔴" },
-];
-
 export function TemperatureBadgeDropdown({
   ticketId,
-  temperature,
+  currentTemperature,
+  temperatures,
   isAssignedUser,
   isClosed,
 }: TemperatureBadgeDropdownProps) {
   const router = useRouter();
   const supabase = createClient();
   const [isUpdating, setIsUpdating] = useState(false);
-  const config = temperatureConfig[temperature];
 
-  const handleTemperatureChange = async (newTemperature: ClientTemperature) => {
-    if (newTemperature === temperature || isUpdating) return;
+  const handleTemperatureChange = async (selected: TicketTemperatureRow) => {
+    if (selected.id === currentTemperature?.id || isUpdating) return;
 
     setIsUpdating(true);
     try {
-      await updateTicket(supabase, ticketId, {
-        client_temperature: newTemperature,
-      });
+      await updateTicket(supabase, ticketId, { temperature_id: selected.id });
       router.refresh();
     } catch (error) {
       console.error("Failed to update client temperature:", error);
@@ -85,9 +47,8 @@ export function TemperatureBadgeDropdown({
     }
   };
 
-  // If not assigned user or ticket is closed, show non-interactive emoji
   if (!isAssignedUser || isClosed) {
-    return <span>{config.emoji}</span>;
+    return <span>{currentTemperature?.emoji ?? "—"}</span>;
   }
 
   return (
@@ -98,22 +59,22 @@ export function TemperatureBadgeDropdown({
           disabled={isUpdating}
         >
           <Badge
-            className={`${config.className} whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1`}
+            className={`${currentTemperature?.color_class ?? ""} whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1`}
           >
-            <span>{config.emoji}</span>
+            <span>{currentTemperature?.emoji}</span>
             <ChevronDown className="h-3 w-3" />
           </Badge>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
-        {temperatureOptions.map((option) => (
+        {temperatures.map((option) => (
           <DropdownMenuItem
-            key={option.value}
-            onClick={() => handleTemperatureChange(option.value)}
-            className={temperature === option.value ? "bg-gray-100" : ""}
+            key={option.id}
+            onClick={() => handleTemperatureChange(option)}
+            className={currentTemperature?.id === option.id ? "bg-gray-100" : ""}
           >
             <span>{option.emoji}</span>
-            {temperature === option.value && (
+            {currentTemperature?.id === option.id && (
               <span className="ml-auto text-blue-600">✓</span>
             )}
           </DropdownMenuItem>

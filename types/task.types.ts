@@ -32,7 +32,7 @@ export interface Task {
   updated_at: string;
 
   // Relations
-  ticket?: Pick<Ticket, "id" | "ticket_number" | "title" | "status">;
+  ticket?: Pick<Ticket, "id" | "ticket_number" | "title" | "status_id">;
   assigned_user?: Profile;
   creator?: Profile;
 }

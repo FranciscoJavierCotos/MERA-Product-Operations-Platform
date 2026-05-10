@@ -1,6 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { getMyTicketsPaginated } from "@/lib/supabase/queries/tickets";
 import { getFunctionalTeams, getAllSupportTeams } from "@/lib/supabase/queries/teams";
+import {
+  getTicketStatuses,
+  getTicketPriorities,
+  getTicketCategories,
+  getTicketTemperatures,
+  getTicketSupportLevels,
+} from "@/lib/supabase/queries/lookup";
 import { Pagination } from "@/components/shared/pagination";
 import { TicketFilterBar } from "@/components/tickets/ticket-filter-bar";
 import { ResizableTicketTable, type TicketRow } from "@/components/tickets/resizable-ticket-table";
@@ -54,24 +61,48 @@ export default async function MyTicketsPage({
   const requestedPage =
     Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
-  const [{ data: tickets, totalCount }, functionalTeams, supportTeams] =
-    await Promise.all([
-      getMyTicketsPaginated(supabase, user.id, requestedPage, PAGE_SIZE, {
-        search: params.search,
-        status: params.status,
-        priority: params.priority,
-        category: params.category,
-        temperature: params.temperature,
-        functional_team_id: params.functional_team,
-        support_team_id: params.support_team,
-        created_from: params.created_from,
-        created_to: params.created_to,
-        sort_column: params.sort,
-        sort_dir: params.dir as "asc" | "desc" | undefined,
-      }),
-      getFunctionalTeams(supabase),
-      getAllSupportTeams(supabase),
-    ]);
+  const [
+    statuses,
+    priorities,
+    categories,
+    temperatures,
+    supportLevels,
+    functionalTeams,
+    supportTeams,
+  ] = await Promise.all([
+    getTicketStatuses(supabase),
+    getTicketPriorities(supabase),
+    getTicketCategories(supabase),
+    getTicketTemperatures(supabase),
+    getTicketSupportLevels(supabase),
+    getFunctionalTeams(supabase),
+    getAllSupportTeams(supabase),
+  ]);
+
+  const statusId = statuses.find((s) => s.name === params.status)?.id;
+  const priorityId = priorities.find((p) => p.name === params.priority)?.id;
+  const categoryId = categories.find((c) => c.name === params.category)?.id;
+  const temperatureId = temperatures.find((t) => t.name === params.temperature)?.id;
+
+  const { data: tickets, totalCount } = await getMyTicketsPaginated(
+    supabase,
+    user.id,
+    requestedPage,
+    PAGE_SIZE,
+    {
+      search: params.search,
+      status_id: statusId,
+      priority_id: priorityId,
+      category_id: categoryId,
+      temperature_id: temperatureId,
+      functional_team_id: params.functional_team,
+      support_team_id: params.support_team,
+      created_from: params.created_from,
+      created_to: params.created_to,
+      sort_column: params.sort,
+      sort_dir: params.dir as "asc" | "desc" | undefined,
+    }
+  );
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const currentPage = Math.min(requestedPage, totalPages);
@@ -86,6 +117,10 @@ export default async function MyTicketsPage({
       </div>
 
       <TicketFilterBar
+        statuses={statuses}
+        priorities={priorities}
+        categories={categories}
+        temperatures={temperatures}
         functionalTeams={functionalTeams.map((t) => ({ value: t.id, label: t.name }))}
         supportTeams={supportTeams.map((t) => ({ value: t.id, label: t.name }))}
       />
@@ -96,6 +131,11 @@ export default async function MyTicketsPage({
           variant="my"
           isSupportAgent={!!isSupportAgent}
           currentUserId={user.id}
+          statuses={statuses}
+          priorities={priorities}
+          categories={categories}
+          temperatures={temperatures}
+          supportLevels={supportLevels}
         />
         <Pagination
           currentPage={currentPage}

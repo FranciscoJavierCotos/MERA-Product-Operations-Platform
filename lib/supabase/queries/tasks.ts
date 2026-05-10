@@ -13,7 +13,7 @@ type Client = SupabaseClient<Database>;
 
 const TASK_SELECT = `
   *,
-  ticket:tickets(id, ticket_number, title, status),
+  ticket:tickets(id, ticket_number, title, status_id),
   assigned_user:profiles!tasks_assigned_to_fkey(id, full_name, email, avatar_url),
   creator:profiles!tasks_created_by_fkey(id, full_name, email, avatar_url)
 `;
@@ -49,7 +49,7 @@ export async function getTasks(supabase: Client, filters?: TaskFilters) {
 export async function getMyTasks(
   supabase: Client,
   userId: string,
-  status?: TaskStatus
+  status?: TaskStatus,
 ) {
   let query = supabase
     .from("tasks")
@@ -96,7 +96,7 @@ export async function getTasksByTicket(supabase: Client, ticketId: string) {
 export async function getUpcomingTasks(
   supabase: Client,
   userId: string,
-  days: number = 7
+  days: number = 7,
 ) {
   const now = new Date();
   const futureDate = new Date();
@@ -149,7 +149,7 @@ export async function createTask(supabase: Client, task: CreateTaskInput) {
 export async function updateTask(
   supabase: Client,
   id: string,
-  updates: UpdateTaskInput
+  updates: UpdateTaskInput,
 ) {
   const updateData: Record<string, unknown> = { ...updates };
 
@@ -176,7 +176,7 @@ export async function updateTask(
 export async function completeTask(
   supabase: Client,
   id: string,
-  timeSpentMinutes?: number
+  timeSpentMinutes?: number,
 ) {
   const updateData: Record<string, unknown> = {
     status: "completed",
@@ -228,18 +228,18 @@ export async function deleteTask(supabase: Client, id: string) {
  */
 export async function getTaskStats(
   supabase: Client,
-  userId?: string
+  userId?: string,
 ): Promise<TaskStats> {
   const now = new Date().toISOString();
 
   // Build base query - use any to handle dynamic schema
   let baseQuery = (supabase.from("tasks") as any).select(
-    "id, status, due_date"
+    "id, status, due_date",
   );
 
   if (userId) {
     baseQuery = baseQuery.or(
-      `assigned_to.eq.${userId},created_by.eq.${userId}`
+      `assigned_to.eq.${userId},created_by.eq.${userId}`,
     );
   }
 
@@ -258,7 +258,7 @@ export async function getTaskStats(
     pending: tasks.filter((t) => t.status === "pending").length,
     completed: tasks.filter((t) => t.status === "completed").length,
     overdue: tasks.filter(
-      (t) => t.status === "pending" && t.due_date && t.due_date < now
+      (t) => t.status === "pending" && t.due_date && t.due_date < now,
     ).length,
   };
 

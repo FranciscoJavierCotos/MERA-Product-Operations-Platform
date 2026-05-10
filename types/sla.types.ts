@@ -4,7 +4,7 @@ export type SlaDisplayStatus = "on_track" | "at_risk" | "breached" | "met";
 export interface SlaPolicy {
   id: string;
   name: string;
-  priority: "low" | "medium" | "high" | "urgent";
+  priority_id: number;
   response_time_minutes: number;
   resolution_time_minutes: number;
   is_active: boolean;

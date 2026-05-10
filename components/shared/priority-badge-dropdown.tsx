@@ -9,67 +9,36 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { TicketPriority } from "@/types/ticket.types";
+import type { TicketPriorityRow } from "@/types/ticket.types";
 import { createClient } from "@/lib/supabase/client";
 import { updateTicket } from "@/lib/supabase/queries/tickets";
 import { ChevronDown } from "lucide-react";
 
 interface PriorityBadgeDropdownProps {
   ticketId: string;
-  priority: TicketPriority;
+  currentPriority: TicketPriorityRow;
+  priorities: TicketPriorityRow[];
   isSupportAgent: boolean;
   isClosed: boolean;
 }
 
-const priorityConfig: Record<
-  TicketPriority,
-  {
-    label: string;
-    className: string;
-  }
-> = {
-  low: {
-    label: "Low",
-    className: "bg-gray-100 text-gray-800 hover:bg-gray-100",
-  },
-  medium: {
-    label: "Medium",
-    className: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-  },
-  high: {
-    label: "High",
-    className: "bg-orange-100 text-orange-800 hover:bg-orange-100",
-  },
-  urgent: {
-    label: "Urgent",
-    className: "bg-red-100 text-red-800 hover:bg-red-100",
-  },
-};
-
-const priorityOptions: { value: TicketPriority; label: string }[] = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-  { value: "urgent", label: "Urgent" },
-];
-
 export function PriorityBadgeDropdown({
   ticketId,
-  priority,
+  currentPriority,
+  priorities,
   isSupportAgent,
   isClosed,
 }: PriorityBadgeDropdownProps) {
   const router = useRouter();
   const supabase = createClient();
   const [isUpdating, setIsUpdating] = useState(false);
-  const config = priorityConfig[priority];
 
-  const handlePriorityChange = async (newPriority: TicketPriority) => {
-    if (newPriority === priority || isUpdating) return;
+  const handlePriorityChange = async (selected: TicketPriorityRow) => {
+    if (selected.id === currentPriority.id || isUpdating) return;
 
     setIsUpdating(true);
     try {
-      await updateTicket(supabase, ticketId, { priority: newPriority });
+      await updateTicket(supabase, ticketId, { priority_id: selected.id });
       router.refresh();
     } catch (error) {
       console.error("Failed to update priority:", error);
@@ -78,9 +47,10 @@ export function PriorityBadgeDropdown({
     }
   };
 
-  // If not a support agent or ticket is closed, show non-interactive badge
   if (!isSupportAgent || isClosed) {
-    return <Badge className={config.className}>{config.label}</Badge>;
+    return (
+      <Badge className={currentPriority.color_class}>{currentPriority.label}</Badge>
+    );
   }
 
   return (
@@ -91,22 +61,22 @@ export function PriorityBadgeDropdown({
           disabled={isUpdating}
         >
           <Badge
-            className={`${config.className} whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1`}
+            className={`${currentPriority.color_class} whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1`}
           >
-            {config.label}
+            {currentPriority.label}
             <ChevronDown className="h-3 w-3" />
           </Badge>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
-        {priorityOptions.map((option) => (
+        {priorities.map((option) => (
           <DropdownMenuItem
-            key={option.value}
-            onClick={() => handlePriorityChange(option.value)}
-            className={priority === option.value ? "bg-gray-100" : ""}
+            key={option.id}
+            onClick={() => handlePriorityChange(option)}
+            className={currentPriority.id === option.id ? "bg-gray-100" : ""}
           >
             {option.label}
-            {priority === option.value && (
+            {currentPriority.id === option.id && (
               <span className="ml-auto text-blue-600">✓</span>
             )}
           </DropdownMenuItem>

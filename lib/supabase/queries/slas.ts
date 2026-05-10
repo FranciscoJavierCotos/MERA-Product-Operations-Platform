@@ -3,23 +3,17 @@ import { Database } from "@/types/database.types";
 import type { SlaInstance, SlaStats } from "@/types/sla.types";
 
 type Client = SupabaseClient<Database>;
-type TicketPriority = Database["public"]["Enums"]["ticket_priority"];
 
+// Priority IDs: low=1, medium=2, high=3, urgent=4
 export interface SlaPolicyTargets {
   response_time_minutes: number;
   resolution_time_minutes: number;
 }
 
-export type SlaPolicyTargetsByPriority = Partial<
-  Record<TicketPriority, SlaPolicyTargets>
->;
+export type SlaPolicyTargetsByPriorityId = Partial<Record<number, SlaPolicyTargets>>;
 
-const OPEN_STATUSES = [
-  "new",
-  "pending_customer",
-  "pending_internal",
-  "escalated",
-] as const;
+// Status IDs: new=1, pending_customer=2, pending_internal=3, escalated=4
+const OPEN_STATUS_IDS = [1, 2, 3, 4];
 
 export async function getSlaInstance(
   supabase: Client,
@@ -40,18 +34,19 @@ export async function getSlaInstance(
   return data as unknown as SlaInstance | null;
 }
 
-export async function getActiveSlaPolicyTargetsByPriority(
+export async function getActiveSlaPolicyTargetsByPriorityId(
   supabase: Client,
-): Promise<SlaPolicyTargetsByPriority> {
-  const { data, error } = await supabase
-    .from("sla_policies")
-    .select("priority, response_time_minutes, resolution_time_minutes")
+): Promise<SlaPolicyTargetsByPriorityId> {
+  const { data: rawData, error } = await (supabase.from("sla_policies") as any)
+    .select("priority_id, response_time_minutes, resolution_time_minutes")
     .eq("is_active", true);
 
   if (error) throw error;
 
-  return (data ?? []).reduce<SlaPolicyTargetsByPriority>((acc, policy) => {
-    acc[policy.priority] = {
+  const data = rawData as Array<{ priority_id: number; response_time_minutes: number; resolution_time_minutes: number }> | null;
+
+  return (data ?? []).reduce<SlaPolicyTargetsByPriorityId>((acc, policy) => {
+    acc[policy.priority_id] = {
       response_time_minutes: policy.response_time_minutes,
       resolution_time_minutes: policy.resolution_time_minutes,
     };
@@ -66,11 +61,10 @@ export async function getSlaStats(supabase: Client): Promise<SlaStats> {
     Date.now() + 4 * 60 * 60 * 1000,
   ).toISOString();
 
-  // Get IDs of all open tickets
   const { data: openTicketsRaw } = await (supabase as any)
     .from("tickets")
     .select("id")
-    .in("status", [...OPEN_STATUSES]);
+    .in("status_id", OPEN_STATUS_IDS);
   const openTickets = openTicketsRaw as Array<{ id: string }> | null;
 
   const openIds = (openTickets ?? []).map((t) => t.id);
@@ -124,13 +118,13 @@ export async function getMostUrgentSlaTickets(
   supabase: Client,
   limit: number = 5,
 ) {
-  const { data: openTicketsRaw2 } = await (supabase as any)
+  const { data: openTicketsRaw } = await (supabase as any)
     .from("tickets")
     .select("id")
-    .in("status", [...OPEN_STATUSES]);
-  const openTickets2 = openTicketsRaw2 as Array<{ id: string }> | null;
+    .in("status_id", OPEN_STATUS_IDS);
+  const openTickets = openTicketsRaw as Array<{ id: string }> | null;
 
-  const openIds = (openTickets2 ?? []).map((t) => t.id);
+  const openIds = (openTickets ?? []).map((t) => t.id);
 
   if (openIds.length === 0) return [];
 
@@ -139,9 +133,11 @@ export async function getMostUrgentSlaTickets(
     .select(
       `
       *,
-      policy:sla_policies(name, priority, resolution_time_minutes),
+      policy:sla_policies(name, priority_id, resolution_time_minutes),
       ticket:tickets!sla_instances_ticket_id_fkey(
-        id, ticket_number, title, status, priority,
+        id, ticket_number, title, status_id, priority_id,
+        status:ticket_statuses(id, name, label, badge_variant, is_final, display_order),
+        priority:ticket_priorities(id, name, label, color_class, display_order),
         assigned_user:profiles!tickets_assigned_to_fkey(id, full_name)
       )
     `,

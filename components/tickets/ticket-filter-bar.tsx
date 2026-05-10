@@ -14,6 +14,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils/cn";
+import type {
+  TicketStatusRow,
+  TicketPriorityRow,
+  TicketCategoryRow,
+  TicketTemperatureRow,
+} from "@/types/ticket.types";
 
 interface FilterOption {
   value: string;
@@ -21,6 +27,10 @@ interface FilterOption {
 }
 
 export interface TicketFilterBarProps {
+  statuses: TicketStatusRow[];
+  priorities: TicketPriorityRow[];
+  categories: TicketCategoryRow[];
+  temperatures: TicketTemperatureRow[];
   functionalTeams: FilterOption[];
   supportTeams: FilterOption[];
   supportMembers?: FilterOption[];
@@ -28,35 +38,6 @@ export interface TicketFilterBarProps {
 }
 
 const ALL = "_all";
-
-const STATUS_OPTIONS: FilterOption[] = [
-  { value: "new", label: "New" },
-  { value: "pending_customer", label: "Pending Customer" },
-  { value: "pending_internal", label: "Pending Internal" },
-  { value: "escalated", label: "Escalated" },
-  { value: "resolved", label: "Resolved" },
-  { value: "closed", label: "Closed" },
-];
-
-const PRIORITY_OPTIONS: FilterOption[] = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-  { value: "urgent", label: "Urgent" },
-];
-
-const CATEGORY_OPTIONS: FilterOption[] = [
-  { value: "bug", label: "Bug" },
-  { value: "feature_request", label: "Feature Request" },
-  { value: "question", label: "Question" },
-  { value: "configuration_request", label: "Configuration Request" },
-];
-
-const TEMPERATURE_OPTIONS: FilterOption[] = [
-  { value: "cool", label: "Cool" },
-  { value: "warm", label: "Warm" },
-  { value: "hot", label: "Hot" },
-];
 
 const FILTER_KEYS = [
   "search",
@@ -72,6 +53,10 @@ const FILTER_KEYS = [
 ] as const;
 
 export function TicketFilterBar({
+  statuses,
+  priorities,
+  categories,
+  temperatures,
   functionalTeams,
   supportTeams,
   supportMembers,
@@ -229,9 +214,9 @@ export function TicketFilterBar({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>All statuses</SelectItem>
-            {STATUS_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
+            {statuses.map((s) => (
+              <SelectItem key={s.id} value={s.name}>
+                {s.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -247,9 +232,9 @@ export function TicketFilterBar({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>All priorities</SelectItem>
-            {PRIORITY_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
+            {priorities.map((p) => (
+              <SelectItem key={p.id} value={p.name}>
+                {p.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -265,9 +250,9 @@ export function TicketFilterBar({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>All categories</SelectItem>
-            {CATEGORY_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
+            {categories.map((c) => (
+              <SelectItem key={c.id} value={c.name}>
+                {c.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -283,9 +268,9 @@ export function TicketFilterBar({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>All temperatures</SelectItem>
-            {TEMPERATURE_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
+            {temperatures.map((t) => (
+              <SelectItem key={t.id} value={t.name}>
+                {t.emoji} {t.label}
               </SelectItem>
             ))}
           </SelectContent>

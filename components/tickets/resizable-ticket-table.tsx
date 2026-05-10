@@ -12,9 +12,15 @@ import { TemperatureBadgeDropdown } from "@/components/shared/temperature-badge-
 import { FunctionalTeamDropdown } from "@/components/shared/functional-team-dropdown";
 import { SupportTeamDropdown } from "@/components/shared/support-team-dropdown";
 import { AssignedUserDropdown } from "@/components/shared/assigned-user-dropdown";
-import type { SupportLevel, Team } from "@/types/team.types";
+import type { Team, SupportLevel } from "@/types/team.types";
 import type { SlaInstance } from "@/types/sla.types";
-import type { TicketStatus, TicketPriority, TicketCategory, ClientTemperature } from "@/types/ticket.types";
+import type {
+  TicketStatusRow,
+  TicketPriorityRow,
+  TicketCategoryRow,
+  TicketTemperatureRow,
+  TicketSupportLevelRow,
+} from "@/types/ticket.types";
 import {
   computeSlaDisplayInfo,
   computeElapsedMinutes,
@@ -36,19 +42,19 @@ interface ColDef {
 }
 
 const BASE_COLUMNS: ColDef[] = [
-  { key: "ticket_number", label: "Ticket ID", defaultWidth: 105, sortCol: "ticket_number" },
-  { key: "title", label: "Title", defaultWidth: 210, sortCol: "title" },
-  { key: "category", label: "Category", defaultWidth: 145, sortCol: "category" },
-  { key: "status", label: "Status", defaultWidth: 155, sortCol: "status" },
-  { key: "priority", label: "Priority", defaultWidth: 120, sortCol: "priority" },
-  { key: "sla_response", label: "SLA Response Time", defaultWidth: 155 },
-  { key: "sla_resolution", label: "SLA Resolution Time", defaultWidth: 160 },
-  { key: "functional_team", label: "Functional Team", defaultWidth: 165 },
-  { key: "support_team", label: "Support Team", defaultWidth: 200 },
+  { key: "ticket_number", label: "Ticket ID",           defaultWidth: 105, sortCol: "ticket_number" },
+  { key: "title",         label: "Title",               defaultWidth: 210, sortCol: "title" },
+  { key: "category",      label: "Category",            defaultWidth: 145, sortCol: "category_id" },
+  { key: "status",        label: "Status",              defaultWidth: 155, sortCol: "status_id" },
+  { key: "priority",      label: "Priority",            defaultWidth: 120, sortCol: "priority_id" },
+  { key: "sla_response",  label: "SLA Response Time",   defaultWidth: 155 },
+  { key: "sla_resolution",label: "SLA Resolution Time", defaultWidth: 160 },
+  { key: "functional_team", label: "Functional Team",  defaultWidth: 165 },
+  { key: "support_team",  label: "Support Team",        defaultWidth: 200 },
 ];
 
-const ASSIGNED_TO_COL: ColDef = { key: "assigned_to_col", label: "Assigned To", defaultWidth: 175 };
-const TEMPERATURE_COL: ColDef = { key: "temperature", label: "Temperature", defaultWidth: 125, sortCol: "client_temperature" };
+const ASSIGNED_TO_COL: ColDef = { key: "assigned_to_col", label: "Assigned To",  defaultWidth: 175 };
+const TEMPERATURE_COL: ColDef = { key: "temperature",     label: "Temperature",  defaultWidth: 125, sortCol: "temperature_id" };
 
 const DATE_COLUMNS: ColDef[] = [
   { key: "created_at", label: "Created", defaultWidth: 135, sortCol: "created_at" },
@@ -56,20 +62,20 @@ const DATE_COLUMNS: ColDef[] = [
 ];
 
 const ALL_COLUMNS: ColDef[] = [...BASE_COLUMNS, ASSIGNED_TO_COL, TEMPERATURE_COL, ...DATE_COLUMNS];
-const MY_COLUMNS: ColDef[] = [...BASE_COLUMNS, TEMPERATURE_COL, ...DATE_COLUMNS];
+const MY_COLUMNS: ColDef[]  = [...BASE_COLUMNS, TEMPERATURE_COL, ...DATE_COLUMNS];
 
 export interface TicketRow {
   id: string;
   ticket_number: number;
   title: string;
-  category: TicketCategory | null | undefined;
-  status: TicketStatus;
-  priority: TicketPriority;
+  status: TicketStatusRow;
+  priority: TicketPriorityRow;
+  category?: TicketCategoryRow | null;
+  temperature?: TicketTemperatureRow | null;
+  support_level?: TicketSupportLevelRow | null;
   sla_instance: SlaInstance | SlaInstance[] | null | undefined;
-  client_temperature: ClientTemperature | null | undefined;
   functional_team: Team | null | undefined;
   support_team: Team | null | undefined;
-  support_level: string | null | undefined;
   assigned_user: {
     id: string;
     full_name: string | null;
@@ -86,7 +92,11 @@ interface ResizableTicketTableProps {
   variant: "all" | "my";
   isSupportAgent: boolean;
   currentUserId: string | null;
-  colSpanEmpty?: number;
+  statuses: TicketStatusRow[];
+  priorities: TicketPriorityRow[];
+  categories: TicketCategoryRow[];
+  temperatures: TicketTemperatureRow[];
+  supportLevels: TicketSupportLevelRow[];
 }
 
 function getDefaultWidths(columns: ColDef[]): Record<string, number> {
@@ -117,11 +127,15 @@ export function ResizableTicketTable({
   variant,
   isSupportAgent,
   currentUserId,
+  statuses,
+  priorities,
+  categories,
+  temperatures,
+  supportLevels,
 }: ResizableTicketTableProps) {
   const columns = variant === "all" ? ALL_COLUMNS : MY_COLUMNS;
   const storageKey = `ticket-table-widths-${variant}`;
 
-  // Initialize with defaults to avoid SSR/hydration mismatch; load localStorage in effect
   const [widths, setWidths] = useState<Record<string, number>>(() =>
     getDefaultWidths(columns),
   );
@@ -135,7 +149,6 @@ export function ResizableTicketTable({
   const widthsRef = useRef(widths);
   widthsRef.current = widths;
 
-  // Sort
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -159,7 +172,6 @@ export function ResizableTicketTable({
     startTransition(() => router.push(qs ? `${pathname}?${qs}` : pathname));
   };
 
-  // Resize
   const handleResizeMouseDown = useCallback(
     (colKey: string, e: React.MouseEvent) => {
       e.preventDefault();
@@ -194,7 +206,6 @@ export function ResizableTicketTable({
     [storageKey],
   );
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       document.body.style.cursor = "";
@@ -247,7 +258,6 @@ export function ResizableTicketTable({
                     <span className="whitespace-nowrap font-medium">{col.label}</span>
                   )}
 
-                  {/* Resize handle */}
                   <div
                     className="group/resize absolute right-0 top-0 h-full w-4 cursor-col-resize z-10 flex items-center justify-center"
                     onMouseDown={(e) => handleResizeMouseDown(col.key, e)}
@@ -274,6 +284,11 @@ export function ResizableTicketTable({
                 variant={variant}
                 isSupportAgent={isSupportAgent}
                 currentUserId={currentUserId}
+                statuses={statuses}
+                priorities={priorities}
+                categories={categories}
+                temperatures={temperatures}
+                supportLevels={supportLevels}
               />
             ))
           ) : (
@@ -299,24 +314,34 @@ function TicketTableRow({
   variant,
   isSupportAgent,
   currentUserId,
+  statuses,
+  priorities,
+  categories,
+  temperatures,
+  supportLevels,
 }: {
   ticket: TicketRow;
   variant: "all" | "my";
   isSupportAgent: boolean;
   currentUserId: string | null;
+  statuses: TicketStatusRow[];
+  priorities: TicketPriorityRow[];
+  categories: TicketCategoryRow[];
+  temperatures: TicketTemperatureRow[];
+  supportLevels: TicketSupportLevelRow[];
 }) {
   const slaInstance = getTicketSlaInstance(ticket.sla_instance ?? null);
   const now = new Date();
   const slaInfo = slaInstance
     ? computeSlaDisplayInfo(
         slaInstance,
-        ticket.status,
+        ticket.status.name,
         ticket.resolved_at ?? null,
         now,
       )
     : null;
 
-  const isClosed = ticket.status === "closed";
+  const isClosed = ticket.status.name === "closed";
   const h = ROW_HEIGHT;
 
   const cellClass = "p-0 overflow-hidden border-b";
@@ -335,7 +360,7 @@ function TicketTableRow({
         </Link>
       </td>
 
-      {/* Title — allows up to 2 lines */}
+      {/* Title */}
       <td className={cellClass}>
         <Link
           href={`/tickets/${ticket.id}`}
@@ -351,7 +376,8 @@ function TicketTableRow({
         <div className={innerClass} style={{ height: h }}>
           <TicketCategoryDropdown
             ticketId={ticket.id}
-            category={ticket.category ?? null}
+            currentCategory={ticket.category ?? null}
+            categories={categories}
             isSupportAgent={isSupportAgent}
             isClosed={isClosed}
           />
@@ -363,7 +389,8 @@ function TicketTableRow({
         <div className={innerClass} style={{ height: h }}>
           <StatusBadgeDropdown
             ticketId={ticket.id}
-            status={ticket.status}
+            currentStatus={ticket.status}
+            statuses={statuses}
             isSupportAgent={isSupportAgent}
             isClosed={isClosed}
           />
@@ -375,7 +402,8 @@ function TicketTableRow({
         <div className={innerClass} style={{ height: h }}>
           <PriorityBadgeDropdown
             ticketId={ticket.id}
-            priority={ticket.priority}
+            currentPriority={ticket.priority}
+            priorities={priorities}
             isSupportAgent={isSupportAgent}
             isClosed={isClosed}
           />
@@ -468,7 +496,7 @@ function TicketTableRow({
           <SupportTeamDropdown
             ticketId={ticket.id}
             currentTeam={(ticket.support_team as Team | undefined) ?? null}
-            currentLevel={(ticket.support_level as SupportLevel) || "L1"}
+            currentLevel={(ticket.support_level?.name as SupportLevel) || "L1"}
             isSupportAgent={isSupportAgent}
             isClosed={isClosed}
           />
@@ -503,7 +531,8 @@ function TicketTableRow({
         <div className={innerClass} style={{ height: h }}>
           <TemperatureBadgeDropdown
             ticketId={ticket.id}
-            temperature={(ticket.client_temperature ?? "warm") as ClientTemperature}
+            currentTemperature={ticket.temperature ?? null}
+            temperatures={temperatures}
             isAssignedUser={!!(currentUserId && ticket.assigned_to === currentUserId)}
             isClosed={isClosed}
           />
