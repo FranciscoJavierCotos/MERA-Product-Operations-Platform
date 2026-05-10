@@ -100,6 +100,7 @@ export interface Ticket {
   attachments?: unknown[];
   custom_fields?: Record<string, unknown>;
   time_worked_minutes: number;
+  resolution?: string | null;
   created_at: string;
   updated_at: string;
   resolved_at?: string;

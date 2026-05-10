@@ -249,6 +249,7 @@ export default async function TicketDetailPage({
                     statuses={statuses}
                     isSupportAgent={!!isSupportAgent}
                     isClosed={isClosed}
+                    currentResolution={ticket.resolution ?? null}
                   />
                 </div>
               </div>
@@ -386,6 +387,8 @@ export default async function TicketDetailPage({
           <TicketDetailClient
             ticketId={ticket.id}
             description={ticket.description}
+            resolution={ticket.resolution ?? null}
+            showResolution={ticket.status.is_final}
             isCreator={!!isCreator}
             isSupportAgent={!!isSupportAgent}
             isClosed={isClosed}

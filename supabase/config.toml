@@ -1,7 +1,4 @@
 # A local development project using the CLI
-[project]
-ref = ""
-
 [api]
 enabled = true
 port = 54321

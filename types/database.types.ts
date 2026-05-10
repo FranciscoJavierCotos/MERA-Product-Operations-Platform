@@ -259,6 +259,9 @@ export interface Database {
           custom_fields: Json;
           time_worked_minutes: number;
           search_vector: unknown | null;
+          resolution: string | null;
+          resolution_plain: string | null;
+          resolution_embedding: unknown | null;
           created_at: string;
           updated_at: string;
           resolved_at: string | null;
@@ -285,6 +288,9 @@ export interface Database {
           custom_fields?: Json;
           time_worked_minutes?: number;
           search_vector?: unknown | null;
+          resolution?: string | null;
+          resolution_plain?: string | null;
+          resolution_embedding?: unknown | null;
           created_at?: string;
           updated_at?: string;
           resolved_at?: string | null;
@@ -311,6 +317,9 @@ export interface Database {
           custom_fields?: Json;
           time_worked_minutes?: number;
           search_vector?: unknown | null;
+          resolution?: string | null;
+          resolution_plain?: string | null;
+          resolution_embedding?: unknown | null;
           created_at?: string;
           updated_at?: string;
           resolved_at?: string | null;

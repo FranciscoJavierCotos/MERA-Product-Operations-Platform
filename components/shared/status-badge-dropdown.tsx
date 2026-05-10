@@ -12,6 +12,7 @@ import {
 import type { TicketStatusRow } from "@/types/ticket.types";
 import { createClient } from "@/lib/supabase/client";
 import { updateTicket } from "@/lib/supabase/queries/tickets";
+import { ResolutionDialog } from "@/components/tickets/resolution-dialog";
 import { ChevronDown } from "lucide-react";
 
 interface StatusBadgeDropdownProps {
@@ -20,7 +21,12 @@ interface StatusBadgeDropdownProps {
   statuses: TicketStatusRow[];
   isSupportAgent: boolean;
   isClosed: boolean;
+  currentResolution?: string | null;
 }
+
+const isHtmlEmpty = (html: string | null | undefined) =>
+  !html ||
+  html.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim().length === 0;
 
 export function StatusBadgeDropdown({
   ticketId,
@@ -28,15 +34,24 @@ export function StatusBadgeDropdown({
   statuses,
   isSupportAgent,
   isClosed,
+  currentResolution,
 }: StatusBadgeDropdownProps) {
   const router = useRouter();
   const supabase = createClient();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<TicketStatusRow | null>(
+    null,
+  );
 
   const canChangeStatus = isSupportAgent || isClosed;
 
   const handleStatusChange = async (selected: TicketStatusRow) => {
     if (selected.id === currentStatus.id || isUpdating) return;
+
+    if (selected.is_final && isHtmlEmpty(currentResolution)) {
+      setPendingStatus(selected);
+      return;
+    }
 
     setIsUpdating(true);
     try {
@@ -60,35 +75,45 @@ export function StatusBadgeDropdown({
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          className="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-md"
-          disabled={isUpdating}
-        >
-          <Badge
-            variant={variant}
-            className="whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-md"
+            disabled={isUpdating}
           >
-            {currentStatus.label}
-            <ChevronDown className="h-3 w-3" />
-          </Badge>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        {statuses.map((option) => (
-          <DropdownMenuItem
-            key={option.id}
-            onClick={() => handleStatusChange(option)}
-            className={currentStatus.id === option.id ? "bg-gray-100" : ""}
-          >
-            {option.label}
-            {currentStatus.id === option.id && (
-              <span className="ml-auto text-blue-600">✓</span>
-            )}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+            <Badge
+              variant={variant}
+              className="whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
+            >
+              {currentStatus.label}
+              <ChevronDown className="h-3 w-3" />
+            </Badge>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          {statuses.map((option) => (
+            <DropdownMenuItem
+              key={option.id}
+              onClick={() => handleStatusChange(option)}
+              className={currentStatus.id === option.id ? "bg-gray-100" : ""}
+            >
+              {option.label}
+              {currentStatus.id === option.id && (
+                <span className="ml-auto text-blue-600">✓</span>
+              )}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <ResolutionDialog
+        open={pendingStatus !== null}
+        onClose={() => setPendingStatus(null)}
+        ticketId={ticketId}
+        targetStatus={pendingStatus}
+        initialResolution={currentResolution ?? ""}
+      />
+    </>
   );
 }

@@ -41,7 +41,7 @@ const SORTABLE_COLUMNS = new Set([
 ]);
 
 const TICKET_SELECT = `
-  id, ticket_number, title, description, cc_email,
+  id, ticket_number, title, description, resolution, cc_email,
   status_id, priority_id, category_id, support_level_id, temperature_id,
   created_by, assigned_to, team_id, functional_team_id,
   client_email, client_name, attachments, custom_fields,
@@ -60,7 +60,7 @@ const TICKET_SELECT = `
 `;
 
 const TICKET_SELECT_DETAIL = `
-  id, ticket_number, title, description, cc_email,
+  id, ticket_number, title, description, resolution, cc_email,
   status_id, priority_id, category_id, support_level_id, temperature_id,
   created_by, assigned_to, team_id, functional_team_id,
   client_email, client_name, attachments, custom_fields,
@@ -366,6 +366,29 @@ export async function deleteTicket(supabase: Client, id: string) {
   const { error } = await supabase.from("tickets").delete().eq("id", id);
   if (error) throw error;
   return { success: true };
+}
+
+export interface ResolutionMatch {
+  id: string;
+  ticket_number: number;
+  title: string;
+  resolution: string | null;
+  similarity: number;
+}
+
+export async function findSimilarResolutions(
+  supabase: Client,
+  embedding: number[],
+  limit = 5,
+  excludeTicketId?: string,
+): Promise<ResolutionMatch[]> {
+  const { data, error } = await (supabase.rpc as any)("match_resolutions", {
+    query_embedding: embedding,
+    match_count: limit,
+    exclude_ticket_id: excludeTicketId ?? null,
+  });
+  if (error) throw error;
+  return (data ?? []) as ResolutionMatch[];
 }
 
 export async function updateTimeWorked(
