@@ -82,7 +82,7 @@ export function FunctionalTeamDropdown({
   // If not a support agent or ticket is closed, show non-interactive badge
   if (!isSupportAgent || isClosed) {
     return (
-      <Badge variant="outline" className="whitespace-nowrap">
+      <Badge variant="secondary" className="whitespace-nowrap">
         {currentTeam?.name || "Not assigned"}
       </Badge>
     );
@@ -96,7 +96,7 @@ export function FunctionalTeamDropdown({
           disabled={isUpdating || isLoading}
         >
           <Badge
-            variant="outline"
+            variant="secondary"
             className="whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
           >
             {currentTeam?.name || "Select Department"}

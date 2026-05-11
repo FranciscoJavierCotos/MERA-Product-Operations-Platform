@@ -52,7 +52,7 @@ export function TicketCategoryDropdown({
 
   if (!isSupportAgent || isClosed) {
     return (
-      <Badge variant="outline" className="whitespace-nowrap">
+      <Badge variant="secondary" className="whitespace-nowrap">
         {label}
       </Badge>
     );
@@ -66,7 +66,7 @@ export function TicketCategoryDropdown({
           disabled={isUpdating}
         >
           <Badge
-            variant="outline"
+            variant="secondary"
             className="whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
           >
             {label}

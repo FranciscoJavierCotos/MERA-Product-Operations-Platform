@@ -88,45 +88,59 @@ export default async function TicketDetailPage({
   };
 
   try {
-    [ticket, comments, collaborators, ticketHistory, slaInstance, myTicketNavigation] =
-      await Promise.all([
-        getTicketById(supabase, id),
-        getTicketComments(supabase, id),
-        getTicketCollaborators(supabase, id),
-        getTicketHistory(supabase, id),
-        getSlaInstance(supabase, id),
-        user
-          ? getMyTicketNavigation(supabase, user.id, id)
-          : Promise.resolve(myTicketNavigation),
-      ]);
+    [
+      ticket,
+      comments,
+      collaborators,
+      ticketHistory,
+      slaInstance,
+      myTicketNavigation,
+    ] = await Promise.all([
+      getTicketById(supabase, id),
+      getTicketComments(supabase, id),
+      getTicketCollaborators(supabase, id),
+      getTicketHistory(supabase, id),
+      getSlaInstance(supabase, id),
+      user
+        ? getMyTicketNavigation(supabase, user.id, id)
+        : Promise.resolve(myTicketNavigation),
+    ]);
   } catch (error: unknown) {
     const maybeCode = (error as { code?: string } | null)?.code;
     if (maybeCode === "22P02") notFound();
     throw error;
   }
 
-  const [supportMembers, functionalTeams, supportTeams, statuses, priorities, categories, temperatures, supportLevels] =
-    isSupportAgent
-      ? await Promise.all([
-          getSupportMembers(supabase),
-          getFunctionalTeams(supabase),
-          getAllSupportTeams(supabase),
-          getTicketStatuses(supabase),
-          getTicketPriorities(supabase),
-          getTicketCategories(supabase),
-          getTicketTemperatures(supabase),
-          getTicketSupportLevels(supabase),
-        ])
-      : await Promise.all([
-          Promise.resolve([]),
-          Promise.resolve([]),
-          Promise.resolve([]),
-          getTicketStatuses(supabase),
-          getTicketPriorities(supabase),
-          getTicketCategories(supabase),
-          getTicketTemperatures(supabase),
-          getTicketSupportLevels(supabase),
-        ]);
+  const [
+    supportMembers,
+    functionalTeams,
+    supportTeams,
+    statuses,
+    priorities,
+    categories,
+    temperatures,
+    supportLevels,
+  ] = isSupportAgent
+    ? await Promise.all([
+        getSupportMembers(supabase),
+        getFunctionalTeams(supabase),
+        getAllSupportTeams(supabase),
+        getTicketStatuses(supabase),
+        getTicketPriorities(supabase),
+        getTicketCategories(supabase),
+        getTicketTemperatures(supabase),
+        getTicketSupportLevels(supabase),
+      ])
+    : await Promise.all([
+        Promise.resolve([]),
+        Promise.resolve([]),
+        Promise.resolve([]),
+        getTicketStatuses(supabase),
+        getTicketPriorities(supabase),
+        getTicketCategories(supabase),
+        getTicketTemperatures(supabase),
+        getTicketSupportLevels(supabase),
+      ]);
 
   if (!ticket) {
     return <div>Ticket not found</div>;
@@ -364,21 +378,23 @@ export default async function TicketDetailPage({
                 isSupportAgent={!!isSupportAgent}
                 isClosed={isClosed}
               />
+
+              {ticket.tags && ticket.tags.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">
+                    Tags
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {ticket.tags.map(({ tag }) => (
+                      <Badge key={tag.id} variant="outline">
+                        {tag.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-
-          {ticket.tags && ticket.tags.length > 0 && (
-            <div className="pt-4 border-t">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                {ticket.tags.map(({ tag }) => (
-                  <Badge key={tag.id} variant="outline">
-                    {tag.name}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
