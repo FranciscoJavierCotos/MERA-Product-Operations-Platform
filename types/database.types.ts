@@ -581,6 +581,326 @@ export interface Database {
           updated_at?: string;
         };
       };
+      kb_collections: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          description: string | null;
+          owner_team_id: string | null;
+          environment: string;
+          archived_at: string | null;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          description?: string | null;
+          owner_team_id?: string | null;
+          environment?: string;
+          archived_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          slug?: string;
+          description?: string | null;
+          owner_team_id?: string | null;
+          environment?: string;
+          archived_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+      };
+      kb_tags: {
+        Row: {
+          id: string;
+          name: string;
+          color: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          color?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          color?: string | null;
+          created_at?: string;
+        };
+      };
+      kb_documents: {
+        Row: {
+          id: string;
+          collection_id: string | null;
+          title: string;
+          description: string | null;
+          source_type_id: number;
+          current_version_id: string | null;
+          ai_retrieval_enabled: boolean;
+          archived_at: string | null;
+          expires_at: string | null;
+          metadata: Json;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          collection_id?: string | null;
+          title: string;
+          description?: string | null;
+          source_type_id?: number;
+          current_version_id?: string | null;
+          ai_retrieval_enabled?: boolean;
+          archived_at?: string | null;
+          expires_at?: string | null;
+          metadata?: Json;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          collection_id?: string | null;
+          title?: string;
+          description?: string | null;
+          source_type_id?: number;
+          current_version_id?: string | null;
+          ai_retrieval_enabled?: boolean;
+          archived_at?: string | null;
+          expires_at?: string | null;
+          metadata?: Json;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+      };
+      kb_document_versions: {
+        Row: {
+          id: string;
+          document_id: string;
+          version_number: number;
+          storage_path: string;
+          original_filename: string;
+          mime_type: string;
+          file_size_bytes: number;
+          file_sha256: string | null;
+          extracted_text: string | null;
+          page_count: number | null;
+          status_id: number;
+          processing_error: string | null;
+          uploaded_by: string | null;
+          created_at: string;
+          processed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          document_id: string;
+          version_number: number;
+          storage_path: string;
+          original_filename: string;
+          mime_type: string;
+          file_size_bytes: number;
+          file_sha256?: string | null;
+          extracted_text?: string | null;
+          page_count?: number | null;
+          status_id?: number;
+          processing_error?: string | null;
+          uploaded_by?: string | null;
+          created_at?: string;
+          processed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          document_id?: string;
+          version_number?: number;
+          storage_path?: string;
+          original_filename?: string;
+          mime_type?: string;
+          file_size_bytes?: number;
+          file_sha256?: string | null;
+          extracted_text?: string | null;
+          page_count?: number | null;
+          status_id?: number;
+          processing_error?: string | null;
+          uploaded_by?: string | null;
+          created_at?: string;
+          processed_at?: string | null;
+        };
+      };
+      kb_document_tags: {
+        Row: { document_id: string; tag_id: string };
+        Insert: { document_id: string; tag_id: string };
+        Update: { document_id?: string; tag_id?: string };
+      };
+      kb_document_chunks: {
+        Row: {
+          id: string;
+          document_version_id: string;
+          document_id: string;
+          chunk_index: number;
+          content: string;
+          content_tokens: number | null;
+          page_number: number | null;
+          embedding: unknown | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          document_version_id: string;
+          document_id: string;
+          chunk_index: number;
+          content: string;
+          content_tokens?: number | null;
+          page_number?: number | null;
+          embedding?: unknown | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          document_version_id?: string;
+          document_id?: string;
+          chunk_index?: number;
+          content?: string;
+          content_tokens?: number | null;
+          page_number?: number | null;
+          embedding?: unknown | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+      };
+      kb_resolution_settings: {
+        Row: {
+          ticket_id: string;
+          ai_retrieval_enabled: boolean;
+          archived_at: string | null;
+          collection_id: string | null;
+          manual_notes: string | null;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          ticket_id: string;
+          ai_retrieval_enabled?: boolean;
+          archived_at?: string | null;
+          collection_id?: string | null;
+          manual_notes?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          ticket_id?: string;
+          ai_retrieval_enabled?: boolean;
+          archived_at?: string | null;
+          collection_id?: string | null;
+          manual_notes?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+      };
+      kb_retrieval_config: {
+        Row: {
+          id: boolean;
+          similarity_threshold: number;
+          max_results: number;
+          source_weights: Json;
+          sources_enabled: Json;
+          environment: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          id?: boolean;
+          similarity_threshold?: number;
+          max_results?: number;
+          source_weights?: Json;
+          sources_enabled?: Json;
+          environment?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          id?: boolean;
+          similarity_threshold?: number;
+          max_results?: number;
+          source_weights?: Json;
+          sources_enabled?: Json;
+          environment?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+      };
+      kb_audit_log: {
+        Row: {
+          id: string;
+          entity_type: string;
+          entity_id: string | null;
+          action: string;
+          actor_id: string | null;
+          payload: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          entity_type: string;
+          entity_id?: string | null;
+          action: string;
+          actor_id?: string | null;
+          payload?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          entity_type?: string;
+          entity_id?: string | null;
+          action?: string;
+          actor_id?: string | null;
+          payload?: Json;
+          created_at?: string;
+        };
+      };
+      kb_retrieval_log: {
+        Row: {
+          id: string;
+          ticket_id: string | null;
+          user_id: string | null;
+          query_text: string | null;
+          results: Json;
+          result_count: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          ticket_id?: string | null;
+          user_id?: string | null;
+          query_text?: string | null;
+          results?: Json;
+          result_count?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          ticket_id?: string | null;
+          user_id?: string | null;
+          query_text?: string | null;
+          results?: Json;
+          result_count?: number;
+          created_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;

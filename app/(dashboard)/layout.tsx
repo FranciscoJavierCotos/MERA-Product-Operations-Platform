@@ -37,7 +37,7 @@ export default async function DashboardLayout({
   return (
     <UnsavedChangesProvider>
       <div className="min-h-screen bg-gray-100">
-        <Sidebar />
+        <Sidebar role={displayProfile.role} />
         <div className="md:pl-64 flex flex-col flex-1">
           <Navbar user={displayProfile} />
           <main className="flex-1">

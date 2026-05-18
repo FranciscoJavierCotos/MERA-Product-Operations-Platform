@@ -8,19 +8,29 @@ import {
   CheckSquare,
   Search,
   User,
+  Brain,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
-const navigation = [
+type Role = "admin" | "support_lead" | "support_member" | "client";
+
+const navigation: Array<{
+  name: string;
+  href: string;
+  icon: typeof LayoutDashboard;
+  adminOnly?: boolean;
+}> = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "All Tickets", href: "/tickets", icon: Ticket },
   { name: "My Tickets", href: "/my-tickets", icon: User },
   { name: "My Tasks", href: "/tasks", icon: CheckSquare },
   { name: "Search", href: "/search", icon: Search },
+  { name: "AI Knowledge", href: "/knowledge", icon: Brain, adminOnly: true },
 ];
 
-export function Sidebar() {
+export function Sidebar({ role }: { role?: Role } = {}) {
   const pathname = usePathname();
+  const items = navigation.filter((item) => !item.adminOnly || role === "admin");
 
   return (
     <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
@@ -30,7 +40,7 @@ export function Sidebar() {
         </div>
         <div className="flex-1 flex flex-col overflow-y-auto">
           <nav className="flex-1 px-2 py-4 space-y-1">
-            {navigation.map((item) => {
+            {items.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link

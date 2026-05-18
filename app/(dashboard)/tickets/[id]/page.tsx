@@ -44,6 +44,7 @@ import { Team, SupportLevel } from "@/types/team.types";
 import { isUuid } from "@/lib/utils/uuid";
 import { TicketNavigationButtons } from "@/components/tickets/ticket-navigation-buttons";
 import { SlaDetailBlock } from "@/components/tickets/sla-detail-block";
+import { AiRecommendationPanel } from "@/components/tickets/ai-recommendation-panel";
 
 export default async function TicketDetailPage({
   params,
@@ -420,6 +421,8 @@ export default async function TicketDetailPage({
           />
         </div>
       </div>
+
+      {isSupportAgent && <AiRecommendationPanel ticketId={ticket.id} />}
 
       <CommentsActivitySection
         ticketId={ticket.id}
