@@ -1103,6 +1103,67 @@ export interface Database {
           created_at?: string;
         };
       };
+      link_types: {
+        Row: {
+          id: string;
+          inverse_id: string;
+          label: string;
+          inverse_label: string;
+          is_symmetric: boolean;
+          sort_order: number;
+        };
+        Insert: {
+          id: string;
+          inverse_id: string;
+          label: string;
+          inverse_label: string;
+          is_symmetric?: boolean;
+          sort_order?: number;
+        };
+        Update: {
+          id?: string;
+          inverse_id?: string;
+          label?: string;
+          inverse_label?: string;
+          is_symmetric?: boolean;
+          sort_order?: number;
+        };
+      };
+      item_links: {
+        Row: {
+          id: string;
+          source_ticket_id: string | null;
+          source_work_item_id: string | null;
+          target_work_item_id: string;
+          link_type: string;
+          is_primary: boolean;
+          note: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          source_ticket_id?: string | null;
+          source_work_item_id?: string | null;
+          target_work_item_id: string;
+          link_type: string;
+          is_primary?: boolean;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          source_ticket_id?: string | null;
+          source_work_item_id?: string | null;
+          target_work_item_id?: string;
+          link_type?: string;
+          is_primary?: boolean;
+          note?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;

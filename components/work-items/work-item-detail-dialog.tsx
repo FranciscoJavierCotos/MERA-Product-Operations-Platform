@@ -15,6 +15,8 @@ import {
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { WorkItemTypeBadge } from "./work-item-type-badge";
 import { WorkItemStatusBadge } from "./work-item-status-badge";
+import { WorkItemLinksSection } from "./work-item-links-section";
+import { LinkWorkItemDialog } from "@/components/tickets/link-work-item-dialog";
 import {
   WORK_ITEM_STATUSES, WORK_ITEM_STATUS_LABELS,
   WORK_ITEM_TYPES, WORK_ITEM_TYPE_LABELS,
@@ -25,6 +27,7 @@ import type {
 import type { Profile } from "@/types/user.types";
 import type { TicketPriorityRow } from "@/types/ticket.types";
 import type { SprintWithCounts } from "@/types/sprint.types";
+import type { LinkTypeRow } from "@/types/item-link.types";
 import {
   updateWorkItemAction,
   createWorkItemCommentAction,
@@ -70,6 +73,13 @@ export function WorkItemDetailDialog({
 
   const [comments, setComments] = useState<WorkItemComment[]>([]);
   const [newComment, setNewComment] = useState("");
+
+  // Link dialog — rendered outside the main Dialog to avoid Radix nested-Dialog
+  // focus-trap conflicts.
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkDialogTypes, setLinkDialogTypes] = useState<LinkTypeRow[]>([]);
+  const [linkDialogExcludeIds, setLinkDialogExcludeIds] = useState<string[]>([]);
+  const [linksRefreshTrigger, setLinksRefreshTrigger] = useState(0);
 
   useEffect(() => {
     if (!item) return;
@@ -148,8 +158,9 @@ export function WorkItemDetailDialog({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <span className="text-xs font-mono text-gray-500">{item.item_key}</span>
@@ -316,6 +327,19 @@ export function WorkItemDetailDialog({
               </Field>
             )}
 
+            <div className="pt-2 border-t">
+              <WorkItemLinksSection
+                workItemId={item.id}
+                canEdit={true}
+                refreshTrigger={linksRefreshTrigger}
+                onOpenAddLink={({ linkTypes, excludeIds }) => {
+                  setLinkDialogTypes(linkTypes);
+                  setLinkDialogExcludeIds(excludeIds);
+                  setLinkDialogOpen(true);
+                }}
+              />
+            </div>
+
             {error && <p className="text-xs text-red-600">{error}</p>}
 
             <div className="pt-2 flex gap-2">
@@ -332,6 +356,24 @@ export function WorkItemDetailDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Rendered outside the main Dialog to prevent Radix nested-Dialog issues */}
+    {item && (
+      <LinkWorkItemDialog
+        open={linkDialogOpen}
+        onClose={() => {
+          setLinkDialogOpen(false);
+          // Trigger WorkItemLinksSection to re-fetch its links
+          setLinksRefreshTrigger((n) => n + 1);
+          router.refresh();
+        }}
+        sourceWorkItemId={item.id}
+        linkTypes={linkDialogTypes}
+        excludeWorkItemIds={linkDialogExcludeIds}
+        defaultIsPrimary={false}
+      />
+    )}
+    </>
   );
 }
 

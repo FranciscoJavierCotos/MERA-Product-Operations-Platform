@@ -45,6 +45,10 @@ import { isUuid } from "@/lib/utils/uuid";
 import { TicketNavigationButtons } from "@/components/tickets/ticket-navigation-buttons";
 import { SlaDetailBlock } from "@/components/tickets/sla-detail-block";
 import { AiRecommendationPanel } from "@/components/tickets/ai-recommendation-panel";
+import {
+  listLinkTypes,
+  listTicketLinks,
+} from "@/lib/supabase/queries/item-links";
 
 export default async function TicketDetailPage({
   params,
@@ -82,6 +86,8 @@ export default async function TicketDetailPage({
   let collaborators = null;
   let ticketHistory = null;
   let slaInstance = null;
+  let ticketLinks: Awaited<ReturnType<typeof listTicketLinks>> = [];
+  let linkTypes: Awaited<ReturnType<typeof listLinkTypes>> = [];
   let myTicketNavigation = {
     firstTicketId: null as string | null,
     previousTicketId: null as string | null,
@@ -95,6 +101,8 @@ export default async function TicketDetailPage({
       collaborators,
       ticketHistory,
       slaInstance,
+      ticketLinks,
+      linkTypes,
       myTicketNavigation,
     ] = await Promise.all([
       getTicketById(supabase, id),
@@ -102,6 +110,8 @@ export default async function TicketDetailPage({
       getTicketCollaborators(supabase, id),
       getTicketHistory(supabase, id),
       getSlaInstance(supabase, id),
+      listTicketLinks(supabase, id),
+      listLinkTypes(supabase),
       user
         ? getMyTicketNavigation(supabase, user.id, id)
         : Promise.resolve(myTicketNavigation),
@@ -432,6 +442,8 @@ export default async function TicketDetailPage({
             isCreator={!!isCreator}
             isSupportAgent={!!isSupportAgent}
             isClosed={isClosed}
+            ticketLinks={ticketLinks}
+            linkTypes={linkTypes}
           />
         </div>
         <div className="min-w-0 h-full">
