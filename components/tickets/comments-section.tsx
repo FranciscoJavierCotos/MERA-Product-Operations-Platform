@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { CommentForm } from "./comment-form";
 import { CommentItem } from "./comment-item";
@@ -15,39 +14,78 @@ interface CommentsSectionProps {
   ticketId: string;
   initialComments: TicketComment[];
   currentUserId?: string;
+  inline?: boolean;
+  isFormOpen?: boolean;
+  onFormOpenChange?: (open: boolean) => void;
+  onCountChange?: (count: number) => void;
+  onLoadingChange?: (loading: boolean) => void;
 }
 
 export function CommentsSection({
   ticketId,
   initialComments,
   currentUserId,
+  inline = false,
+  isFormOpen: isFormOpenProp,
+  onFormOpenChange,
+  onCountChange,
+  onLoadingChange,
 }: CommentsSectionProps) {
   const [comments, setComments] = useState<TicketComment[]>(initialComments);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isCommentFormOpen, setIsCommentFormOpen] = useState(false);
+  const [isFormOpenInternal, setIsFormOpenInternal] = useState(false);
+
+  const isCommentFormOpen =
+    isFormOpenProp !== undefined ? isFormOpenProp : isFormOpenInternal;
+
+  const setIsCommentFormOpen = useCallback(
+    (open: boolean) => {
+      if (onFormOpenChange) {
+        onFormOpenChange(open);
+      } else {
+        setIsFormOpenInternal(open);
+      }
+    },
+    [onFormOpenChange],
+  );
+
+  const setCommentsAndNotify = useCallback(
+    (newComments: TicketComment[]) => {
+      setComments(newComments);
+      onCountChange?.(newComments.length);
+    },
+    [onCountChange],
+  );
+
+  const setLoadingAndNotify = useCallback(
+    (loading: boolean) => {
+      setIsLoading(loading);
+      onLoadingChange?.(loading);
+    },
+    [onLoadingChange],
+  );
 
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
-    setComments(initialComments);
-  }, [initialComments]);
+    setCommentsAndNotify(initialComments);
+  }, [initialComments, setCommentsAndNotify]);
 
   const refreshComments = useCallback(async () => {
     try {
-      setIsLoading(true);
+      setLoadingAndNotify(true);
       setError(null);
       const updatedComments = await getCommentsByTicket(supabase, ticketId);
-      setComments(updatedComments);
+      setCommentsAndNotify(updatedComments);
     } catch (err) {
       console.error("Failed to refresh comments:", err);
       setError("Failed to load comments");
     } finally {
-      setIsLoading(false);
+      setLoadingAndNotify(false);
     }
-  }, [supabase, ticketId]);
+  }, [supabase, ticketId, setCommentsAndNotify, setLoadingAndNotify]);
 
-  // Set up real-time subscription for new comments
   useEffect(() => {
     const channel = supabase
       .channel(`ticket-comments-${ticketId}`)
@@ -61,14 +99,13 @@ export function CommentsSection({
         },
         async (payload) => {
           if (payload.eventType === "INSERT") {
-            // Fetch the new comment with user data
             await refreshComments();
           } else if (payload.eventType === "UPDATE") {
-            // Update the comment in the list
             await refreshComments();
           } else if (payload.eventType === "DELETE") {
-            // Remove the comment from the list
-            setComments((prev) => prev.filter((c) => c.id !== payload.old.id));
+            setCommentsAndNotify(
+              comments.filter((c) => c.id !== payload.old.id),
+            );
           }
         },
       )
@@ -77,11 +114,11 @@ export function CommentsSection({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refreshComments, supabase, ticketId]);
+  }, [refreshComments, supabase, ticketId, comments, setCommentsAndNotify]);
 
   const handleCommentCreated = async () => {
     await refreshComments();
-    setIsCommentFormOpen(false); // Close form after successful comment
+    setIsCommentFormOpen(false);
   };
 
   const handleCommentUpdated = async () => {
@@ -96,29 +133,9 @@ export function CommentsSection({
     setIsCommentFormOpen(false);
   };
 
-  return (
-    <Card className="shadow-sm">
-      <CardHeader className="border-b bg-gray-50/50">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            Comments ({comments.length})
-            {isLoading && (
-              <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-            )}
-          </CardTitle>
-          {!isCommentFormOpen && (
-            <Button
-              onClick={() => setIsCommentFormOpen(true)}
-              size="sm"
-              className="gap-2 shadow-sm"
-            >
-              <MessageSquarePlus className="h-4 w-4" />
-              Add Comment
-            </Button>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="pt-6">
+  function renderContent() {
+    return (
+      <>
         {isCommentFormOpen && (
           <div className="pb-6 mb-6 border-b">
             <CommentForm
@@ -171,7 +188,37 @@ export function CommentsSection({
             </div>
           )
         )}
-      </CardContent>
+      </>
+    );
+  }
+
+  if (inline) {
+    return renderContent();
+  }
+
+  return (
+    <Card className="shadow-sm">
+      <CardHeader className="border-b bg-gray-50/50">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            Comments ({comments.length})
+            {isLoading && (
+              <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+            )}
+          </CardTitle>
+          {!isCommentFormOpen && (
+            <Button
+              onClick={() => setIsCommentFormOpen(true)}
+              size="sm"
+              className="gap-2 shadow-sm"
+            >
+              <MessageSquarePlus className="h-4 w-4" />
+              Add Comment
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-6">{renderContent()}</CardContent>
     </Card>
   );
 }

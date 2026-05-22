@@ -399,8 +399,31 @@ export default async function TicketDetailPage({
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        <div className="min-w-0">
+      {isSupportAgent ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+          <div className="min-w-0">
+            <AiRecommendationPanel ticketId={ticket.id} />
+          </div>
+          <div className="min-w-0">
+            <TicketTasksSection
+              ticketId={ticket.id}
+              users={supportMembers || []}
+              currentUserId={user?.id || ""}
+              isClosed={isClosed}
+            />
+          </div>
+        </div>
+      ) : (
+        <TicketTasksSection
+          ticketId={ticket.id}
+          users={supportMembers || []}
+          currentUserId={user?.id || ""}
+          isClosed={isClosed}
+        />
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        <div className="min-w-0 h-full">
           <TicketDetailClient
             ticketId={ticket.id}
             description={ticket.description}
@@ -411,25 +434,15 @@ export default async function TicketDetailPage({
             isClosed={isClosed}
           />
         </div>
-
-        <div className="min-w-0">
-          <TicketTasksSection
+        <div className="min-w-0 h-full">
+          <CommentsActivitySection
             ticketId={ticket.id}
-            users={supportMembers || []}
-            currentUserId={user?.id || ""}
-            isClosed={isClosed}
+            initialComments={comments || []}
+            initialHistory={ticketHistory || []}
+            currentUserId={user?.id}
           />
         </div>
       </div>
-
-      {isSupportAgent && <AiRecommendationPanel ticketId={ticket.id} />}
-
-      <CommentsActivitySection
-        ticketId={ticket.id}
-        initialComments={comments || []}
-        initialHistory={ticketHistory || []}
-        currentUserId={user?.id}
-      />
     </div>
   );
 }

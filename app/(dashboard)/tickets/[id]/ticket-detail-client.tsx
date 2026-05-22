@@ -33,7 +33,7 @@ export function TicketDetailClient({
   const canEditResolution = isSupportAgent && !isClosed;
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6 h-full">
       {showResolution && (
         <ResolutionCard
           ticketId={ticketId}
@@ -42,7 +42,7 @@ export function TicketDetailClient({
         />
       )}
 
-      <Card className="min-h-[280px]">
+      <Card className="flex-1 min-h-[280px]">
         <CardHeader>
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-xl font-semibold">Description</h2>

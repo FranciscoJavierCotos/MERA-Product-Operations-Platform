@@ -52,18 +52,18 @@ export function AiRecommendationPanel({ ticketId }: Props) {
   }
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Sparkles className="h-5 w-5 text-indigo-600" />
-            AI Recommendation
+            AI Research
           </CardTitle>
           <Button onClick={run} disabled={isPending} size="sm">
             {isPending
               ? "Searching…"
               : results === null
-                ? "Get recommendations"
+                ? "Search"
                 : "Refresh"}
           </Button>
         </div>
@@ -78,8 +78,8 @@ export function AiRecommendationPanel({ ticketId }: Props) {
         )}
         {results === null && !error && (
           <div className="text-sm text-gray-500">
-            Click <strong>Get recommendations</strong> to retrieve relevant
-            past resolutions and documentation chunks.
+            Click <strong>Search</strong> to retrieve relevant past resolutions
+            and documentation.
           </div>
         )}
         {results !== null && results.length === 0 && (

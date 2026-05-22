@@ -901,6 +901,208 @@ export interface Database {
           created_at?: string;
         };
       };
+      projects: {
+        Row: {
+          id: string;
+          key: string;
+          name: string;
+          description: string | null;
+          methodology: "scrum" | "kanban" | "waterfall";
+          status: "active" | "archived";
+          team_id: string | null;
+          lead_id: string | null;
+          next_item_number: number;
+          sprint_duration_weeks: number;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          key: string;
+          name: string;
+          description?: string | null;
+          methodology?: "scrum" | "kanban" | "waterfall";
+          status?: "active" | "archived";
+          team_id?: string | null;
+          lead_id?: string | null;
+          next_item_number?: number;
+          sprint_duration_weeks?: number;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          key?: string;
+          name?: string;
+          description?: string | null;
+          methodology?: "scrum" | "kanban" | "waterfall";
+          status?: "active" | "archived";
+          team_id?: string | null;
+          lead_id?: string | null;
+          next_item_number?: number;
+          sprint_duration_weeks?: number;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      sprints: {
+        Row: {
+          id: string;
+          project_id: string;
+          name: string;
+          goal: string | null;
+          start_date: string | null;
+          end_date: string | null;
+          status: "planned" | "active" | "completed";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          name: string;
+          goal?: string | null;
+          start_date?: string | null;
+          end_date?: string | null;
+          status?: "planned" | "active" | "completed";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          name?: string;
+          goal?: string | null;
+          start_date?: string | null;
+          end_date?: string | null;
+          status?: "planned" | "active" | "completed";
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      work_items: {
+        Row: {
+          id: string;
+          project_id: string;
+          sprint_id: string | null;
+          item_key: string;
+          type: "epic" | "story" | "task" | "bug";
+          status: "todo" | "in_progress" | "in_review" | "done";
+          priority_id: number | null;
+          title: string;
+          description: string | null;
+          story_points: number | null;
+          assigned_to: string | null;
+          reporter_id: string | null;
+          parent_id: string | null;
+          rank: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          sprint_id?: string | null;
+          item_key?: string;
+          type?: "epic" | "story" | "task" | "bug";
+          status?: "todo" | "in_progress" | "in_review" | "done";
+          priority_id?: number | null;
+          title: string;
+          description?: string | null;
+          story_points?: number | null;
+          assigned_to?: string | null;
+          reporter_id?: string | null;
+          parent_id?: string | null;
+          rank: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          sprint_id?: string | null;
+          item_key?: string;
+          type?: "epic" | "story" | "task" | "bug";
+          status?: "todo" | "in_progress" | "in_review" | "done";
+          priority_id?: number | null;
+          title?: string;
+          description?: string | null;
+          story_points?: number | null;
+          assigned_to?: string | null;
+          reporter_id?: string | null;
+          parent_id?: string | null;
+          rank?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      work_item_comments: {
+        Row: {
+          id: string;
+          work_item_id: string;
+          user_id: string;
+          content: string;
+          attachments: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          work_item_id: string;
+          user_id: string;
+          content: string;
+          attachments?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          work_item_id?: string;
+          user_id?: string;
+          content?: string;
+          attachments?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      work_item_history: {
+        Row: {
+          id: string;
+          work_item_id: string;
+          user_id: string | null;
+          action: string;
+          field_name: string | null;
+          old_value: string | null;
+          new_value: string | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          work_item_id: string;
+          user_id?: string | null;
+          action: string;
+          field_name?: string | null;
+          old_value?: string | null;
+          new_value?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          work_item_id?: string;
+          user_id?: string | null;
+          action?: string;
+          field_name?: string | null;
+          old_value?: string | null;
+          new_value?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -911,6 +1113,11 @@ export interface Database {
     Enums: {
       user_role: "admin" | "support_lead" | "support_member" | "client";
       task_status: "todo" | "in_progress" | "completed";
+      project_methodology: "scrum" | "kanban" | "waterfall";
+      project_status: "active" | "archived";
+      sprint_status: "planned" | "active" | "completed";
+      work_item_type: "epic" | "story" | "task" | "bug";
+      work_item_status: "todo" | "in_progress" | "in_review" | "done";
     };
   };
 }

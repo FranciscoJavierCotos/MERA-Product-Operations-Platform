@@ -9,6 +9,7 @@ import {
   Search,
   User,
   Brain,
+  FolderKanban,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
@@ -23,6 +24,7 @@ const navigation: Array<{
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "All Tickets", href: "/tickets", icon: Ticket },
   { name: "My Tickets", href: "/my-tickets", icon: User },
+  { name: "Projects", href: "/projects", icon: FolderKanban },
   { name: "My Tasks", href: "/tasks", icon: CheckSquare },
   { name: "Search", href: "/search", icon: Search },
   { name: "AI Knowledge", href: "/knowledge", icon: Brain, adminOnly: true },

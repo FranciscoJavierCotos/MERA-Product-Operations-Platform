@@ -12,6 +12,7 @@ import { ArrowRight, History } from "lucide-react";
 interface TicketHistoryProps {
   ticketId: string;
   initialHistory?: TicketHistory[];
+  inline?: boolean;
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -68,6 +69,7 @@ const formatTaskDueDate = (dueDate?: string | null) => {
 export function TicketHistory({
   ticketId,
   initialHistory,
+  inline = false,
 }: TicketHistoryProps) {
   const supabase = useMemo(() => createClient(), []);
   const [history, setHistory] = useState<TicketHistory[]>(initialHistory ?? []);
@@ -102,6 +104,8 @@ export function TicketHistory({
   }, [initialHistory, supabase, ticketId]);
 
   if (isLoading) {
+    if (inline)
+      return <p className="text-sm text-gray-500 py-4">Loading history…</p>;
     return (
       <Card>
         <CardHeader>
@@ -121,21 +125,8 @@ export function TicketHistory({
     return null;
   }
 
-  return (
-    <Card className="border-slate-200/70 bg-white">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <History className="h-5 w-5" />
-            Ticket History
-          </CardTitle>
-          <span className="rounded-full border border-slate-200/70 bg-slate-50 px-2.5 py-1 text-xs text-slate-500">
-            {history.length} {history.length === 1 ? "event" : "events"}
-          </span>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="divide-y divide-slate-100">
+  const historyList = (
+    <div className="divide-y divide-slate-100">
           {history.map((entry) => {
             const fieldLabel = entry.field_name
               ? FIELD_LABELS[entry.field_name] || entry.field_name
@@ -213,7 +204,26 @@ export function TicketHistory({
             );
           })}
         </div>
-      </CardContent>
+  );
+
+  if (inline) {
+    return historyList;
+  }
+
+  return (
+    <Card className="border-slate-200/70 bg-white">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <History className="h-5 w-5" />
+            Ticket History
+          </CardTitle>
+          <span className="rounded-full border border-slate-200/70 bg-slate-50 px-2.5 py-1 text-xs text-slate-500">
+            {history.length} {history.length === 1 ? "event" : "events"}
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent>{historyList}</CardContent>
     </Card>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils/cn";
 import { Task } from "@/types/task.types";
 import { Profile } from "@/types/user.types";
 import { CreateTaskFormData } from "@/lib/validations/task.schema";
@@ -100,7 +101,7 @@ export function TicketTasksSection({
   const completedTasks = tasks.filter((t) => t.status === "completed");
 
   return (
-    <Card className={tasks.length <= 1 ? "min-h-[280px]" : undefined}>
+    <Card className={cn("h-full", tasks.length <= 1 ? "min-h-[280px]" : undefined)}>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <ListTodo className="h-5 w-5" />
