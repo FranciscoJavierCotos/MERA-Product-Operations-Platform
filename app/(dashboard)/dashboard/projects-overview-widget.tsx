@@ -1,0 +1,235 @@
+import { createClient } from "@/lib/supabase/server";
+import { getActiveProjectsForDashboard } from "@/lib/supabase/queries/projects";
+import type { ProjectDashboardCard } from "@/lib/supabase/queries/projects";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Layers,
+  CalendarDays,
+  User,
+  Building2,
+  ArrowRight,
+  Zap,
+  Clock,
+} from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils/cn";
+
+function daysRemaining(endDate: string | null): number | null {
+  if (!endDate) return null;
+  const diff = new Date(endDate).getTime() - Date.now();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
+function formatDateShort(dateStr: string | null): string {
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function ProgressBar({
+  value,
+  max,
+  colorClass,
+}: {
+  value: number;
+  max: number;
+  colorClass: string;
+}) {
+  const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
+  return (
+    <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
+      <div
+        className={cn("h-full rounded-full transition-all", colorClass)}
+        style={{ width: `${pct}%` }}
+      />
+    </div>
+  );
+}
+
+function MethodologyBadge({ methodology }: { methodology: string }) {
+  const styles: Record<string, string> = {
+    scrum: "bg-violet-100 text-violet-700",
+    kanban: "bg-sky-100 text-sky-700",
+    waterfall: "bg-amber-100 text-amber-700",
+  };
+  return (
+    <span
+      className={cn(
+        "text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded",
+        styles[methodology] ?? "bg-gray-100 text-gray-600",
+      )}
+    >
+      {methodology}
+    </span>
+  );
+}
+
+function ProjectCard({ project }: { project: ProjectDashboardCard }) {
+  const sprint = project.activeSprint;
+  const days = sprint ? daysRemaining(sprint.end_date) : null;
+  const itemPct =
+    sprint && sprint.total_items > 0
+      ? Math.round((sprint.done_items / sprint.total_items) * 100)
+      : 0;
+  const pointPct =
+    sprint && sprint.total_points > 0
+      ? Math.round((sprint.done_points / sprint.total_points) * 100)
+      : 0;
+
+  const daysColor =
+    days === null
+      ? "text-gray-400"
+      : days < 0
+        ? "text-red-600"
+        : days <= 3
+          ? "text-orange-600"
+          : "text-gray-500";
+
+  return (
+    <Link
+      href={`/projects/${project.key}`}
+      className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded-xl"
+    >
+      <div className="h-full border border-gray-200 rounded-xl p-4 bg-white hover:border-violet-300 hover:shadow-sm transition-all flex flex-col gap-3">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="shrink-0 text-[11px] font-bold tracking-widest text-violet-700 bg-violet-50 border border-violet-200 rounded px-1.5 py-0.5">
+              {project.key}
+            </span>
+            <span className="text-sm font-semibold text-gray-900 truncate group-hover:text-violet-700 transition-colors">
+              {project.name}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <MethodologyBadge methodology={project.methodology} />
+            <ArrowRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-violet-400 transition-colors" />
+          </div>
+        </div>
+
+        {/* Meta */}
+        <div className="flex items-center gap-3 text-xs text-gray-500">
+          {project.lead && (
+            <span className="flex items-center gap-1">
+              <User className="h-3 w-3" />
+              {project.lead.full_name}
+            </span>
+          )}
+          {project.team && (
+            <span className="flex items-center gap-1">
+              <Building2 className="h-3 w-3" />
+              {project.team.name}
+            </span>
+          )}
+        </div>
+
+        {/* Sprint section */}
+        {sprint ? (
+          <div className="flex flex-col gap-2.5 pt-0.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="flex items-center gap-1 font-medium text-gray-700">
+                <Zap className="h-3 w-3 text-violet-500" />
+                {sprint.name}
+              </span>
+              <span className="flex items-center gap-1 text-gray-400">
+                <CalendarDays className="h-3 w-3" />
+                {formatDateShort(sprint.start_date)} –{" "}
+                {formatDateShort(sprint.end_date)}
+              </span>
+            </div>
+
+            {/* Items progress */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-[11px] text-gray-500">
+                <span>Items</span>
+                <span className="font-medium text-gray-700">
+                  {sprint.done_items} / {sprint.total_items}
+                  <span className="ml-1 text-gray-400">({itemPct}%)</span>
+                </span>
+              </div>
+              <ProgressBar
+                value={sprint.done_items}
+                max={sprint.total_items}
+                colorClass="bg-violet-500"
+              />
+            </div>
+
+            {/* Story points — only if any exist */}
+            {sprint.total_points > 0 && (
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px] text-gray-500">
+                  <span>Story pts</span>
+                  <span className="font-medium text-gray-700">
+                    {sprint.done_points} / {sprint.total_points}
+                    <span className="ml-1 text-gray-400">({pointPct}%)</span>
+                  </span>
+                </div>
+                <ProgressBar
+                  value={sprint.done_points}
+                  max={sprint.total_points}
+                  colorClass="bg-emerald-500"
+                />
+              </div>
+            )}
+
+            {/* Days remaining */}
+            {days !== null && (
+              <div
+                className={cn(
+                  "flex items-center gap-1 text-[11px] font-medium",
+                  daysColor,
+                )}
+              >
+                <Clock className="h-3 w-3" />
+                {days < 0
+                  ? `${Math.abs(days)}d overdue`
+                  : days === 0
+                    ? "Ends today"
+                    : `${days}d remaining`}
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-xs text-gray-400 italic pt-0.5">No active sprint</p>
+        )}
+      </div>
+    </Link>
+  );
+}
+
+export async function ProjectsOverviewWidget() {
+  const supabase = await createClient();
+  const projects = await getActiveProjectsForDashboard(supabase);
+
+  if (projects.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Layers className="h-4 w-4 text-violet-500" />
+            Active Projects
+          </CardTitle>
+          <Link
+            href="/projects"
+            className="text-xs text-violet-600 hover:text-violet-800 font-medium flex items-center gap-0.5"
+          >
+            View all
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {projects.map((project) => (
+            <ProjectCard key={project.id} project={project} />
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

@@ -64,3 +64,148 @@ export async function getTags(supabase: Client): Promise<TicketTagRow[]> {
   if (error) throw error;
   return data as TicketTagRow[];
 }
+
+// ── Mutations ─────────────────────────────────────────────────────────────────
+
+// Ticket Statuses
+export async function createTicketStatus(
+  supabase: Client,
+  input: Omit<TicketStatusRow, "id">,
+): Promise<TicketStatusRow> {
+  const { data, error } = await (supabase.from("ticket_statuses") as any)
+    .insert([input])
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as TicketStatusRow;
+}
+
+export async function updateTicketStatus(
+  supabase: Client,
+  id: number,
+  input: Partial<Omit<TicketStatusRow, "id">>,
+): Promise<TicketStatusRow> {
+  const { data, error } = await (supabase.from("ticket_statuses") as any)
+    .update(input)
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as TicketStatusRow;
+}
+
+export async function deleteTicketStatus(
+  supabase: Client,
+  id: number,
+): Promise<void> {
+  const { error } = await (supabase.from("ticket_statuses") as any)
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+}
+
+// Ticket Priorities
+export async function createTicketPriority(
+  supabase: Client,
+  input: Omit<TicketPriorityRow, "id">,
+): Promise<TicketPriorityRow> {
+  const { data, error } = await (supabase.from("ticket_priorities") as any)
+    .insert([input])
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as TicketPriorityRow;
+}
+
+export async function updateTicketPriority(
+  supabase: Client,
+  id: number,
+  input: Partial<Omit<TicketPriorityRow, "id">>,
+): Promise<TicketPriorityRow> {
+  const { data, error } = await (supabase.from("ticket_priorities") as any)
+    .update(input)
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as TicketPriorityRow;
+}
+
+export async function deleteTicketPriority(
+  supabase: Client,
+  id: number,
+): Promise<void> {
+  const { error } = await (supabase.from("ticket_priorities") as any)
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+}
+
+// Ticket Categories
+export async function createTicketCategory(
+  supabase: Client,
+  input: Omit<TicketCategoryRow, "id">,
+): Promise<TicketCategoryRow> {
+  const { data, error } = await (supabase.from("ticket_categories") as any)
+    .insert([input])
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as TicketCategoryRow;
+}
+
+export async function updateTicketCategory(
+  supabase: Client,
+  id: number,
+  input: Partial<Omit<TicketCategoryRow, "id">>,
+): Promise<TicketCategoryRow> {
+  const { data, error } = await (supabase.from("ticket_categories") as any)
+    .update(input)
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as TicketCategoryRow;
+}
+
+export async function deleteTicketCategory(
+  supabase: Client,
+  id: number,
+): Promise<void> {
+  const { error } = await (supabase.from("ticket_categories") as any)
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+}
+
+// Tags
+export async function createTag(
+  supabase: Client,
+  input: Omit<TicketTagRow, "id">,
+): Promise<TicketTagRow> {
+  const { data, error } = await (supabase.from("tags") as any)
+    .insert([input])
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as TicketTagRow;
+}
+
+export async function updateTag(
+  supabase: Client,
+  id: number,
+  input: Partial<Omit<TicketTagRow, "id">>,
+): Promise<TicketTagRow> {
+  const { data, error } = await (supabase.from("tags") as any)
+    .update(input)
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as TicketTagRow;
+}
+
+export async function deleteTag(supabase: Client, id: number): Promise<void> {
+  const { error } = await (supabase.from("tags") as any).delete().eq("id", id);
+  if (error) throw error;
+}

@@ -21,6 +21,7 @@ import { sortTicketsForList } from "@/lib/utils/ticketSort";
 import Link from "next/link";
 import { DashboardUpcomingTasks } from "./dashboard-upcoming-tasks";
 import { SlaSummaryWidget } from "./sla-summary-widget";
+import { ProjectsOverviewWidget } from "./projects-overview-widget";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -104,56 +105,57 @@ export default async function DashboardPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Recent Tickets</CardTitle>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Recent Tickets</CardTitle>
+            <Link
+              href="/tickets"
+              className="text-xs text-violet-600 hover:text-violet-800 font-medium"
+            >
+              View all →
+            </Link>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="pt-0">
+          <div className="divide-y divide-gray-100">
             {recentTickets && recentTickets.length > 0 ? (
               recentTicketsSorted.map((ticket: any) => (
                 <Link
                   key={ticket.id}
                   href={`/tickets/${ticket.id}`}
-                  className="block p-4 hover:bg-gray-50 rounded-lg border"
+                  className="flex items-center justify-between gap-3 py-2 px-1 hover:bg-gray-50 rounded-md -mx-1 transition-colors"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-500">
-                          {formatTicketNumber(ticket.ticket_number)}
-                        </span>
-                        <h3 className="text-sm font-semibold">
-                          {ticket.title}
-                        </h3>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {ticket.assigned_user?.full_name || "Unassigned"} •{" "}
-                        {ticket.functional_team?.name ||
-                        ticket.support_team?.name ? (
-                          <>
-                            {ticket.functional_team?.name && (
-                              <span>{ticket.functional_team.name}</span>
-                            )}
-                            {ticket.functional_team?.name &&
-                              ticket.support_team?.name &&
-                              " / "}
-                            {ticket.support_team?.name && (
-                              <span>{ticket.support_team.name}</span>
-                            )}
-                            {" • "}
-                          </>
-                        ) : null}
-                        {formatRelativeTime(ticket.created_at)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <TemperatureBadge
-                        temperature={ticket.client_temperature}
-                        showLabel={false}
-                      />
-                      <PriorityBadge priority={ticket.priority} />
-                      <StatusBadge status={ticket.status} />
-                    </div>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="shrink-0 text-xs font-mono text-gray-400">
+                      {formatTicketNumber(ticket.ticket_number)}
+                    </span>
+                    <span className="text-sm font-medium text-gray-800 truncate">
+                      {ticket.title}
+                    </span>
+                    <span className="hidden sm:inline text-xs text-gray-400 shrink-0">
+                      {ticket.assigned_user?.full_name || "Unassigned"}
+                      {(ticket.functional_team?.name ||
+                        ticket.support_team?.name) && (
+                        <>
+                          {" · "}
+                          {ticket.functional_team?.name}
+                          {ticket.functional_team?.name &&
+                            ticket.support_team?.name &&
+                            " / "}
+                          {ticket.support_team?.name}
+                        </>
+                      )}
+                      {" · "}
+                      {formatRelativeTime(ticket.created_at)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <TemperatureBadge
+                      temperature={ticket.client_temperature}
+                      showLabel={false}
+                    />
+                    <PriorityBadge priority={ticket.priority} />
+                    <StatusBadge status={ticket.status} />
                   </div>
                 </Link>
               ))
@@ -165,6 +167,9 @@ export default async function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Active Projects Overview */}
+      <ProjectsOverviewWidget />
 
       {/* SLA Overview Widget */}
       <SlaSummaryWidget />

@@ -106,3 +106,143 @@ export async function archiveProject(
 
   if (error) throw new Error(error.message);
 }
+
+// ─── Dashboard overview ────────────────────────────────────────────────────
+
+export interface ProjectSprintSummary {
+  id: string;
+  name: string;
+  start_date: string | null;
+  end_date: string | null;
+  total_items: number;
+  done_items: number;
+  total_points: number;
+  done_points: number;
+}
+
+export interface ProjectDashboardCard {
+  id: string;
+  key: string;
+  name: string;
+  methodology: string;
+  lead: { id: string; full_name: string } | null;
+  team: { id: string; name: string } | null;
+  activeSprint: ProjectSprintSummary | null;
+}
+
+/**
+ * Fetches all active projects with their active sprint's item + story-point
+ * progress. Designed for the dashboard overview widget.
+ */
+export async function getActiveProjectsForDashboard(
+  supabase: Client,
+): Promise<ProjectDashboardCard[]> {
+  const { data: projects, error: pErr } = await supabase
+    .from("projects")
+    .select(
+      `id, key, name, methodology,
+       team:teams(id, name),
+       lead:profiles!projects_lead_id_fkey(id, full_name)`,
+    )
+    .eq("status", "active")
+    .order("name", { ascending: true });
+
+  if (pErr) throw new Error(pErr.message);
+  if (!projects || projects.length === 0) return [];
+
+  const projectIds = (projects as Array<{ id: string }>).map((p) => p.id);
+
+  // Fetch active sprints for these projects in one query.
+  const { data: sprints, error: sErr } = await supabase
+    .from("sprints")
+    .select("id, project_id, name, start_date, end_date")
+    .in("project_id", projectIds)
+    .eq("status", "active");
+
+  if (sErr) throw new Error(sErr.message);
+  const activeSprints = (sprints ?? []) as Array<{
+    id: string;
+    project_id: string;
+    name: string;
+    start_date: string | null;
+    end_date: string | null;
+  }>;
+
+  // Aggregate work-item counts & story points per sprint in one query.
+  const sprintIds = activeSprints.map((s) => s.id);
+  const aggMap = new Map<
+    string,
+    { total: number; done: number; total_points: number; done_points: number }
+  >();
+
+  if (sprintIds.length > 0) {
+    const { data: items, error: iErr } = await supabase
+      .from("work_items")
+      .select("sprint_id, status, story_points")
+      .in("sprint_id", sprintIds);
+
+    if (iErr) throw new Error(iErr.message);
+
+    for (const item of (items ?? []) as Array<{
+      sprint_id: string;
+      status: string;
+      story_points: number | null;
+    }>) {
+      const agg = aggMap.get(item.sprint_id) ?? {
+        total: 0,
+        done: 0,
+        total_points: 0,
+        done_points: 0,
+      };
+      agg.total += 1;
+      agg.total_points += item.story_points ?? 0;
+      if (item.status === "done") {
+        agg.done += 1;
+        agg.done_points += item.story_points ?? 0;
+      }
+      aggMap.set(item.sprint_id, agg);
+    }
+  }
+
+  return (
+    projects as Array<{
+      id: string;
+      key: string;
+      name: string;
+      methodology: string;
+      team: { id: string; name: string } | null;
+      lead: { id: string; full_name: string } | null;
+    }>
+  ).map((project) => {
+    const sprint = activeSprints.find((s) => s.project_id === project.id) ?? null;
+    const counts = sprint
+      ? (aggMap.get(sprint.id) ?? {
+          total: 0,
+          done: 0,
+          total_points: 0,
+          done_points: 0,
+        })
+      : null;
+
+    return {
+      id: project.id,
+      key: project.key,
+      name: project.name,
+      methodology: project.methodology,
+      lead: project.lead as { id: string; full_name: string } | null,
+      team: project.team as { id: string; name: string } | null,
+      activeSprint: sprint
+        ? {
+            id: sprint.id,
+            name: sprint.name,
+            start_date: sprint.start_date,
+            end_date: sprint.end_date,
+            total_items: counts!.total,
+            done_items: counts!.done,
+            total_points: counts!.total_points,
+            done_points: counts!.done_points,
+          }
+        : null,
+    };
+  });
+}

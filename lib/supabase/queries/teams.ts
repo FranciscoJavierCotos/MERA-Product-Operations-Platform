@@ -200,3 +200,36 @@ export async function getTeamById(supabase: Client, teamId: string) {
   if (error) throw error;
   return data as unknown as Team;
 }
+
+// ── Mutations ─────────────────────────────────────────────────────────────────
+
+export async function createTeam(
+  supabase: Client,
+  input: { name: string; description?: string | null; category: TeamCategory },
+): Promise<Team> {
+  const { data, error } = await (supabase.from("teams") as any)
+    .insert([input])
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as unknown as Team;
+}
+
+export async function updateTeam(
+  supabase: Client,
+  id: string,
+  input: Partial<{ name: string; description: string | null; category: TeamCategory }>,
+): Promise<Team> {
+  const { data, error } = await (supabase.from("teams") as any)
+    .update(input)
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as unknown as Team;
+}
+
+export async function deleteTeam(supabase: Client, id: string): Promise<void> {
+  const { error } = await supabase.from("teams").delete().eq("id", id);
+  if (error) throw error;
+}

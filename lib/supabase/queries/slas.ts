@@ -1,6 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database.types";
-import type { SlaInstance, SlaStats } from "@/types/sla.types";
+import type { SlaInstance, SlaPolicy, SlaStats } from "@/types/sla.types";
 
 type Client = SupabaseClient<Database>;
 
@@ -112,6 +112,52 @@ export async function getSlaStats(supabase: Client): Promise<SlaStats> {
     due4h: due4h ?? 0,
     onTrack: onTrack ?? 0,
   };
+}
+
+export async function getAllSlaPolicies(
+  supabase: Client,
+): Promise<SlaPolicy[]> {
+  const { data, error } = await (supabase.from("sla_policies") as any)
+    .select("*")
+    .order("priority_id");
+  if (error) throw error;
+  return (data ?? []) as SlaPolicy[];
+}
+
+export async function createSlaPolicy(
+  supabase: Client,
+  input: Omit<SlaPolicy, "id" | "created_at" | "updated_at">,
+): Promise<SlaPolicy> {
+  const { data, error } = await (supabase.from("sla_policies") as any)
+    .insert([input])
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as SlaPolicy;
+}
+
+export async function updateSlaPolicy(
+  supabase: Client,
+  id: string,
+  input: Partial<Omit<SlaPolicy, "id" | "created_at" | "updated_at">>,
+): Promise<SlaPolicy> {
+  const { data, error } = await (supabase.from("sla_policies") as any)
+    .update(input)
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as SlaPolicy;
+}
+
+export async function deleteSlaPolicy(
+  supabase: Client,
+  id: string,
+): Promise<void> {
+  const { error } = await (supabase.from("sla_policies") as any)
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
 }
 
 export async function getMostUrgentSlaTickets(

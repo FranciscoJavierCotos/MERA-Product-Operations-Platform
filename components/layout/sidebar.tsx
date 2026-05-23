@@ -10,6 +10,7 @@ import {
   User,
   Brain,
   FolderKanban,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
@@ -28,6 +29,7 @@ const navigation: Array<{
   { name: "My Tasks", href: "/tasks", icon: CheckSquare },
   { name: "Search", href: "/search", icon: Search },
   { name: "AI Knowledge", href: "/knowledge", icon: Brain, adminOnly: true },
+  { name: "Settings", href: "/settings", icon: Settings, adminOnly: true },
 ];
 
 export function Sidebar({ role }: { role?: Role } = {}) {
