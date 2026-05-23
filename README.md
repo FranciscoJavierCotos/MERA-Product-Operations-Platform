@@ -128,22 +128,26 @@ cd mera && npm install        # Node >= 20
 
 # 2. Environment
 cp .env.example .env.local
-#   NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co
-#   NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-#   SUPABASE_SERVICE_ROLE_KEY=...
+# Fill in NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
+# and SUPABASE_SERVICE_ROLE_KEY from your Supabase project settings.
 
-# 3. Database
+# 3. Database — push the full schema (starts from 001_initial_schema.sql)
 npx supabase link --project-ref <ref>
 npx supabase db push          # applies all migrations in order
-npx supabase db seed          # optional dev data
+npx supabase db seed          # optional: seed a default team + example data
 
-# 4. Edge functions (AI features)
-npx supabase secrets set GEMINI_API_KEY=<your-key>
+# 4. Configure pg_net webhook URLs (run once in Supabase SQL editor)
+# These let DB triggers call your Edge Functions after ticket closes / doc uploads.
+# ALTER DATABASE postgres SET app.supabase_url    = 'https://<ref>.supabase.co';
+# ALTER DATABASE postgres SET app.supabase_anon_key = '<your-anon-key>';
+
+# 5. Edge functions (AI features — required for embeddings & KB ingestion)
+npx supabase secrets set GEMINI_API_KEY=<your-gemini-key>
 npx supabase functions deploy embed-resolution --project-ref <ref>
 npx supabase functions deploy embed-query      --project-ref <ref>
 npx supabase functions deploy ingest-document  --project-ref <ref>
 
-# 5. Run
+# 6. Run
 npm run dev                   # http://localhost:3000
 ```
 
