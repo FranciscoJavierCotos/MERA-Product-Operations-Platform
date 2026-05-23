@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
 import {
@@ -26,7 +26,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 import {
   Upload,
   RefreshCw,
@@ -147,7 +147,7 @@ export function DocumentsTab({
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 className="pl-8"
-                placeholder="Search documents…"
+                placeholder="Search documentsâ€¦"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -230,7 +230,7 @@ export function DocumentsTab({
                       </button>
                     </TableCell>
                     <TableCell className="text-sm text-gray-600">
-                      {d.collection?.name ?? "—"}
+                      {d.collection?.name ?? "â€”"}
                     </TableCell>
                     <TableCell className="text-sm font-mono text-gray-600">
                       v{d.current_version?.version_number ?? "?"}
@@ -397,7 +397,7 @@ function UploadDocumentDialog({
               className="w-full border rounded-md px-2 py-2 bg-white"
               defaultValue=""
             >
-              <option value="">— None —</option>
+              <option value="">â€” None â€”</option>
               {collections.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -451,7 +451,7 @@ function UploadDocumentDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={busy}>
-              {busy ? "Uploading…" : "Upload"}
+              {busy ? "Uploadingâ€¦" : "Upload"}
             </Button>
           </DialogFooter>
         </form>

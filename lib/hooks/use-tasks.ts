@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
@@ -21,7 +21,7 @@ import {
   UpdateTaskInput,
   TaskStats,
 } from "@/types/task.types";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 
 // Query Keys
 export const taskKeys = {

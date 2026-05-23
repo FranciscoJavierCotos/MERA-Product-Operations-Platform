@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -40,7 +40,7 @@ import { Ticket } from "@/types/ticket.types";
 import { useUnsavedChangesContextOptional } from "@/lib/contexts/unsaved-changes-context";
 import { RichTextEditor } from "./rich-text-editor";
 import { uploadCommentImage } from "@/lib/supabase/queries/comments";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 
 interface DeleteButtonProps {
   ticketId: string;

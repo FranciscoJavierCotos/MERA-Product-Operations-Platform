@@ -1,3 +1,6 @@
+// Toast notifications
+export { useToast, toast } from "./use-toast";
+
 // Navigation and state management hooks
 export { useNavigation } from "./use-navigation";
 export {

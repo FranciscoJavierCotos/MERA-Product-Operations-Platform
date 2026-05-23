@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, FileText, Ticket as TicketIcon } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 import { recommendForTicketAction } from "@/app/(dashboard)/knowledge/actions";
 
 interface Match {
@@ -61,7 +61,7 @@ export function AiRecommendationPanel({ ticketId }: Props) {
           </CardTitle>
           <Button onClick={run} disabled={isPending} size="sm">
             {isPending
-              ? "Searching…"
+              ? "Searchingâ€¦"
               : results === null
                 ? "Search"
                 : "Refresh"}
@@ -85,7 +85,7 @@ export function AiRecommendationPanel({ ticketId }: Props) {
         {results !== null && results.length === 0 && (
           <div className="text-sm text-gray-500">
             No matches above the current similarity threshold. Try lowering it
-            in AI Knowledge → Settings.
+            in AI Knowledge â†’ Settings.
           </div>
         )}
         {results !== null && results.length > 0 && (
@@ -123,14 +123,14 @@ export function AiRecommendationPanel({ ticketId }: Props) {
                       href={`/tickets/${r.source_id}`}
                       className="text-xs text-primary hover:underline"
                     >
-                      Open ticket →
+                      Open ticket â†’
                     </Link>
                   ) : (
                     <Link
                       href={`/knowledge`}
                       className="text-xs text-primary hover:underline"
                     >
-                      Open in Knowledge Center →
+                      Open in Knowledge Center â†’
                     </Link>
                   )}
                 </div>

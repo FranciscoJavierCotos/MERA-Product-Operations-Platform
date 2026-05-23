@@ -11,7 +11,7 @@
 ![AI Adopted](https://img.shields.io/badge/AI-Fully_Adopted-FF6B35?style=flat-square)
 
 <p align="center">
-  <img src="./ticket-page.jpg" width="1000" />
+  <img src="./docs/screenshots/ticket-page.jpg" width="1000" />
 </p>
 
 ---

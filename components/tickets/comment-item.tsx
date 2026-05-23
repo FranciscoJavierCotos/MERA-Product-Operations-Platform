@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { TicketComment } from "@/types/ticket.types";
@@ -31,7 +31,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 
 interface CommentItemProps {
   comment: TicketComment;
@@ -218,7 +218,7 @@ export function CommentItem({
                 {comment.user?.full_name || "Unknown"}
               </span>
               <span className="text-xs text-gray-500">
-                {formatDateTime(comment.created_at)} •{" "}
+                {formatDateTime(comment.created_at)} â€¢{" "}
                 {formatRelativeTime(comment.created_at)}
               </span>
               {isEdited && (

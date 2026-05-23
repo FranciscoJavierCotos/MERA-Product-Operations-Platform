@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -42,7 +42,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 import {
   slaPolicySchema,
   type SlaPolicyFormData,
@@ -55,7 +55,7 @@ import {
 import type { SlaPolicy } from "@/types/sla.types";
 import type { TicketPriorityRow } from "@/types/ticket.types";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function formatMinutes(mins: number): string {
   if (mins < 60) return `${mins}m`;
@@ -64,7 +64,7 @@ function formatMinutes(mins: number): string {
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
-// ── SLA Form ──────────────────────────────────────────────────────────────────
+// â”€â”€ SLA Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function SlaForm({
   initialValues,
@@ -173,14 +173,14 @@ function SlaForm({
           Cancel
         </Button>
         <Button type="submit" disabled={isPending}>
-          {isPending ? "Saving…" : "Save"}
+          {isPending ? "Savingâ€¦" : "Save"}
         </Button>
       </div>
     </form>
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
+// â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface SlaTabProps {
   policies: SlaPolicy[];
@@ -290,7 +290,7 @@ export function SlaTab({ policies, priorities }: SlaTabProps) {
                           {priorityMap[policy.priority_id].label}
                         </span>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-gray-400">â€”</span>
                       )}
                     </TableCell>
                     <TableCell className="text-sm">

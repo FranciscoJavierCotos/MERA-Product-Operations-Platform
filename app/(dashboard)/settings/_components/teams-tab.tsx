@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Fragment, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -43,7 +43,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 import {
   teamSchema,
   type TeamFormData,
@@ -69,7 +69,7 @@ const CATEGORY_ORDER: TeamCategory[] = [
   "functional",
 ];
 
-// ── Team Form ─────────────────────────────────────────────────────────────────
+// â”€â”€ Team Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function TeamForm({
   initialValues,
@@ -140,14 +140,14 @@ function TeamForm({
           Cancel
         </Button>
         <Button type="submit" disabled={isPending}>
-          {isPending ? "Saving…" : "Save"}
+          {isPending ? "Savingâ€¦" : "Save"}
         </Button>
       </div>
     </form>
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
+// â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface TeamsTabProps {
   teams: Team[];
@@ -264,7 +264,7 @@ export function TeamsTab({ teams }: TeamsTabProps) {
                       <TableRow key={team.id}>
                         <TableCell className="font-medium">{team.name}</TableCell>
                         <TableCell className="text-sm text-gray-500">
-                          {team.description ?? "—"}
+                          {team.description ?? "â€”"}
                         </TableCell>
                         <TableCell>
                           {confirmDeleteId === team.id ? (

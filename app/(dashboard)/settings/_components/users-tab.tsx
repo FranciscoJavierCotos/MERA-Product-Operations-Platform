@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -36,7 +36,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 import {
   profileAdminUpdateSchema,
   type ProfileAdminUpdateData,
@@ -45,7 +45,7 @@ import { updateProfileAdminAction } from "../actions";
 import type { Profile, UserRole } from "@/types/user.types";
 import type { Team } from "@/types/team.types";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const ROLE_LABELS: Record<UserRole, string> = {
   admin: "Admin",
@@ -73,7 +73,7 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-// ── Edit Profile Form ─────────────────────────────────────────────────────────
+// â”€â”€ Edit Profile Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function EditProfileForm({
   profile,
@@ -166,14 +166,14 @@ function EditProfileForm({
           Cancel
         </Button>
         <Button type="submit" disabled={isPending}>
-          {isPending ? "Saving…" : "Save"}
+          {isPending ? "Savingâ€¦" : "Save"}
         </Button>
       </div>
     </form>
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
+// â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface UsersTabProps {
   profiles: Profile[];
@@ -261,7 +261,7 @@ export function UsersTab({ profiles, teams }: UsersTabProps) {
                   <TableCell className="text-sm text-gray-600">
                     {profile.team_id
                       ? (teamMap[profile.team_id]?.name ?? "Unknown team")
-                      : "—"}
+                      : "â€”"}
                   </TableCell>
                   <TableCell>
                     <Button

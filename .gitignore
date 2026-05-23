@@ -84,4 +84,6 @@ kubeconfig
 .claude
 
 # Documentation
-docs/
+docs/*
+!docs/screenshots/
+!docs/screenshots/**

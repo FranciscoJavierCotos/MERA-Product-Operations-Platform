@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -15,7 +15,7 @@ import { createClient } from "@/lib/supabase/client";
 import { createComment } from "@/lib/supabase/queries/comments";
 import { uploadCommentImage } from "@/lib/supabase/queries/comments";
 import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 
 interface CommentFormProps {
   ticketId: string;

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
@@ -19,7 +19,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 import { Search, RefreshCw, Archive, Check } from "lucide-react";
 import type { KbResolutionRow } from "@/types/knowledge.types";
 import {
@@ -104,7 +104,7 @@ export function ResolutionsTab({ rows, isAdmin }: Props) {
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               className="pl-8"
-              placeholder="Search title or resolution text…"
+              placeholder="Search title or resolution textâ€¦"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -179,10 +179,10 @@ export function ResolutionsTab({ rows, isAdmin }: Props) {
                   {r.title}
                 </TableCell>
                 <TableCell className="text-sm text-gray-600">
-                  {r.category ?? "—"}
+                  {r.category ?? "â€”"}
                 </TableCell>
                 <TableCell className="text-sm text-gray-600">
-                  {r.resolved_at ? formatRelativeTime(r.resolved_at) : "—"}
+                  {r.resolved_at ? formatRelativeTime(r.resolved_at) : "â€”"}
                 </TableCell>
                 <TableCell>
                   {r.has_embedding ? (

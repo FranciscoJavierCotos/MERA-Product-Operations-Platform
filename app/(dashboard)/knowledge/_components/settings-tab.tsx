@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 import {
@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 import {
   saveRetrievalConfigAction,
   saveCollectionAction,
@@ -144,7 +144,7 @@ function RetrievalConfigCard({
         {isAdmin && (
           <div className="flex justify-end">
             <Button onClick={save} disabled={isPending}>
-              {isPending ? "Saving…" : "Save settings"}
+              {isPending ? "Savingâ€¦" : "Save settings"}
             </Button>
           </div>
         )}
@@ -357,7 +357,7 @@ function AuditLogCard({ log }: { log: KbAuditLog[] }) {
                   <span className="font-mono text-xs text-gray-500">
                     {entry.entity_type}
                   </span>
-                  <span className="mx-2">·</span>
+                  <span className="mx-2">Â·</span>
                   <span className="font-medium">{entry.action}</span>
                 </div>
                 <div className="text-xs text-gray-500">
