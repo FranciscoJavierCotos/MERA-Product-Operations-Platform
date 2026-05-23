@@ -11,7 +11,7 @@
 ![AI Adopted](https://img.shields.io/badge/AI-Fully_Adopted-FF6B35?style=flat-square)
 
 <p align="center">
-  <img src="./docs/screenshots/ticket-page.jpg" width="1000" />
+  <img src="./docs/screenshots/Dashboard.png" width="960" alt="MERA Dashboard" />
 </p>
 
 ---
@@ -36,6 +36,39 @@ Most ops teams operate across a fragmented stack: a ticketing tool, a chat threa
 | **SLA Engine** | Per-priority response & resolution policies, auto-assigned on creation, pause/resume on customer-blocked statuses, computed at read time — no cron, no drift |
 | **AI Knowledge Center** | Past resolutions + uploaded PDFs chunked and embedded via Gemini. Unified retrieval ranked by similarity, governed by admin-tunable weights and thresholds |
 | **Projects & Scrum** | Projects, sprints, work items (epic / story / task / bug), drag-and-drop sprint board, backlog planning — same auth, same teams |
+
+---
+
+## Screenshots
+
+<p align="center">
+  <img src="./docs/screenshots/all-tickets.png" width="474" alt="All Tickets — queue with rich filters, SLA countdown, and team assignment" />
+  &nbsp;
+  <img src="./docs/screenshots/scrum-project.png" width="474" alt="Scrum Board — sprints, work items, drag-and-drop kanban" />
+</p>
+<p align="center">
+  <sub>Ticket queue with SLA tracking, temperature, and multi-dim filters &nbsp;|&nbsp; Scrum board — sprints, epics, stories, drag-and-drop</sub>
+</p>
+
+<br/>
+
+<p align="center">
+  <img src="./docs/screenshots/ai-knowledge-center.png" width="960" alt="AI Knowledge Center — resolutions and documents indexed as vector embeddings" />
+</p>
+<p align="center">
+  <sub>AI Knowledge Center — every closed ticket auto-indexed as a 768-dim embedding; PDFs chunked and ingested via edge functions</sub>
+</p>
+
+<br/>
+
+<p align="center">
+  <img src="./docs/screenshots/search.png" width="474" alt="Global Search — full-text across tickets, tasks, and projects" />
+  &nbsp;
+  <img src="./docs/screenshots/settings.png" width="474" alt="System Settings — users, roles, teams, SLA policies, ticket config" />
+</p>
+<p align="center">
+  <sub>Global full-text search with result previews &nbsp;|&nbsp; System settings — users, roles, teams, SLA policies, ticket config</sub>
+</p>
 
 ---
 
