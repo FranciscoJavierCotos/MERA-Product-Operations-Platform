@@ -14,10 +14,6 @@
   <img src="./docs/screenshots/carrousel.png" width="960" alt="MERA Dashboard" />
 </p>
 
-<p align="center">
-  <img src="./docs/screenshots/Dashboard.png" width="960" alt="MERA Dashboard" />
-</p>
-
 ---
 
 ## What is MERA?
@@ -70,12 +66,12 @@ Most ops teams operate across a fragmented stack: a ticketing tool, a chat threa
 <table>
   <tr>
     <td align="center" width="50%">
-      <img src="./docs/screenshots/search.png" alt="Global Search" />
-      <br/><sub><b>Global Search</b> — full-text across tickets, tasks, and projects</sub>
+      <img src="./docs/screenshots/ticket-page.png" alt="Ticket Page" />
+      <br/><sub><b>Ticket Page</b> — full ticket context</sub>
     </td>
     <td align="center" width="50%">
-      <img src="./docs/screenshots/settings.png" alt="System Settings" />
-      <br/><sub><b>System Settings</b> — users, roles, teams, SLA policies, ticket config</sub>
+      <img src="./docs/screenshots/Dashboard.png" alt="Dashboard" />
+      <br/><sub><b>Dashboard</b> — team overview</sub>
     </td>
   </tr>
 </table>
