@@ -30,12 +30,12 @@ Most ops teams operate across a fragmented stack: a ticketing tool, a chat threa
 
 ## Core Surfaces
 
-| Surface | What it does |
-|---|---|
-| **Tickets** | Full lifecycle — status, priority, temperature, SLA, rich-text resolution, realtime comments, immutable audit trail |
-| **SLA Engine** | Per-priority response & resolution policies, auto-assigned on creation, pause/resume on customer-blocked statuses, computed at read time — no cron, no drift |
-| **AI Knowledge Center** | Past resolutions + uploaded PDFs chunked and embedded via Gemini. Unified retrieval ranked by similarity, governed by admin-tunable weights and thresholds |
-| **Projects & Scrum** | Projects, sprints, work items (epic / story / task / bug), drag-and-drop sprint board, backlog planning — same auth, same teams |
+| Surface                 | What it does                                                                                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Tickets**             | Full lifecycle — status, priority, temperature, SLA, rich-text resolution, realtime comments, immutable audit trail                                          |
+| **SLA Engine**          | Per-priority response & resolution policies, auto-assigned on creation, pause/resume on customer-blocked statuses, computed at read time — no cron, no drift |
+| **AI Knowledge Center** | Past resolutions + uploaded PDFs chunked and embedded via Gemini. Unified retrieval ranked by similarity, governed by admin-tunable weights and thresholds   |
+| **Projects & Scrum**    | Projects, sprints, work items (epic / story / task / bug), drag-and-drop sprint board, backlog planning — same auth, same teams                              |
 
 ---
 
@@ -77,12 +77,14 @@ Most ops teams operate across a fragmented stack: a ticketing tool, a chat threa
 MERA was built AI-first, both as a product and as a project.
 
 **In the product:**
+
 - Every ticket close generates a 768-dim Gemini embedding via an edge function triggered by `pg_net` — no manual step, no queue
 - An **AI Research panel** on every ticket embeds the query and runs `match_knowledge()` across ticket resolutions and KB documents in real time
 - PDF ingestion pipeline: upload → edge function → `unpdf` extraction → chunking → Gemini batch embedding → `pgvector` — fully automated
 - Retrieval is governed: similarity threshold, max results, per-source weights, per-document toggle — all admin-configurable, all audited
 
 **In the codebase:**
+
 - Built end-to-end with Claude Code and GitHub Copilot woven into the development workflow
 - AI-assisted development is not hidden or apologized for — it's part of the thesis: this is what modern engineering looks like
 
@@ -126,29 +128,29 @@ Ticket closed → BEFORE trigger strips HTML → resolution_plain
 
 **Key architectural decisions:**
 
-| Decision | Why it matters |
-|---|---|
-| **Postgres triggers carry business logic** — history, SLA state, time accumulation, resolution validation | Application code is replaceable; the database is the contract. Invariants hold regardless of which client writes |
-| **RLS as the security boundary** | Frontend checks are UX only. Stripping the UI must not strip access — auditable, declarative, lives next to the data |
-| **Lookup tables, not enums** — status, priority, category, temperature are DB rows with color and display order | Adding a status is a row insert, not a deploy |
-| **SLA status is a pure function** of stored timestamps — no cron, no recompute | Never wrong, never drifts, zero infrastructure overhead |
-| **`pg_net` fans out to edge functions** | Keeps embeddings async without queue infrastructure |
-| **Server Components first** — client islands only where stateful | Cheap server data fetches, no waterfall on the client |
+| Decision                                                                                                        | Why it matters                                                                                                       |
+| --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **Postgres triggers carry business logic** — history, SLA state, time accumulation, resolution validation       | Application code is replaceable; the database is the contract. Invariants hold regardless of which client writes     |
+| **RLS as the security boundary**                                                                                | Frontend checks are UX only. Stripping the UI must not strip access — auditable, declarative, lives next to the data |
+| **Lookup tables, not enums** — status, priority, category, temperature are DB rows with color and display order | Adding a status is a row insert, not a deploy                                                                        |
+| **SLA status is a pure function** of stored timestamps — no cron, no recompute                                  | Never wrong, never drifts, zero infrastructure overhead                                                              |
+| **`pg_net` fans out to edge functions**                                                                         | Keeps embeddings async without queue infrastructure                                                                  |
+| **Server Components first** — client islands only where stateful                                                | Cheap server data fetches, no waterfall on the client                                                                |
 
 ---
 
 ## Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | **Next.js 16** — App Router, Server Actions, Server Components |
-| UI | **React 19**, **shadcn/ui** + Radix, **Tailwind 3**, **Tiptap v3** |
-| Language | **TypeScript 5** strict — `database.types.ts` is generated and authoritative |
-| Data | **Supabase** — Postgres + Auth + Storage + Realtime + Edge Functions |
-| Vector | **pgvector** (768-dim) + **Gemini `gemini-embedding-001`** |
-| Forms | **react-hook-form** + **Zod** — schemas shared between client and server |
-| Client cache | **TanStack Query v5** — used surgically for optimistic mutations |
-| DnD | **@dnd-kit** — accessible drag-and-drop on sprint board |
+| Layer        | Technology                                                                   |
+| ------------ | ---------------------------------------------------------------------------- |
+| Framework    | **Next.js 16** — App Router, Server Actions, Server Components               |
+| UI           | **React 19**, **shadcn/ui** + Radix, **Tailwind 3**, **Tiptap v3**           |
+| Language     | **TypeScript 5** strict — `database.types.ts` is generated and authoritative |
+| Data         | **Supabase** — Postgres + Auth + Storage + Realtime + Edge Functions         |
+| Vector       | **pgvector** (768-dim) + **Gemini `gemini-embedding-001`**                   |
+| Forms        | **react-hook-form** + **Zod** — schemas shared between client and server     |
+| Client cache | **TanStack Query v5** — used surgically for optimistic mutations             |
+| DnD          | **@dnd-kit** — accessible drag-and-drop on sprint board                      |
 
 ---
 
@@ -200,6 +202,7 @@ MERA is open to collaboration. If you've stumbled across this project and feel l
 - Pick anything from the roadmap below that excites you
 
 **Development conventions (short version):**
+
 - Data access only through `lib/supabase/queries/*` — never inline `.from(...)` in a component
 - Every mutation validates with the matching Zod schema before touching Supabase
 - Schema changes = new file under `supabase/migrations/` + regenerate `types/database.types.ts`
