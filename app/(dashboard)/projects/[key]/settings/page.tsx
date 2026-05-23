@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProjectByKey } from "@/lib/supabase/queries/projects";
 import { getTeams } from "@/lib/supabase/queries/teams";
-import { getAllProfiles } from "@/lib/supabase/queries/users";
+import { getAllProfiles, getProfile } from "@/lib/supabase/queries/users";
 import { ProjectSettingsClient } from "@/components/projects/project-settings-client";
 
 interface PageProps {
@@ -15,9 +15,14 @@ export default async function ProjectSettingsPage({ params }: PageProps) {
   const project = await getProjectByKey(supabase, key);
   if (!project) notFound();
 
-  const [teams, profiles] = await Promise.all([
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [teams, profiles, currentProfile] = await Promise.all([
     getTeams(supabase),
     getAllProfiles(supabase),
+    user ? getProfile(supabase, user.id) : Promise.resolve(null),
   ]);
 
   return (
@@ -25,6 +30,7 @@ export default async function ProjectSettingsPage({ params }: PageProps) {
       project={project}
       teams={teams}
       leadCandidates={profiles.filter((p) => p.role !== "client")}
+      currentUserRole={currentProfile?.role}
     />
   );
 }

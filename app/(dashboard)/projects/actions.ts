@@ -19,6 +19,7 @@ import {
   createProject,
   updateProject,
   archiveProject,
+  deleteProject,
   getProjectById,
 } from "@/lib/supabase/queries/projects";
 import { getProfile } from "@/lib/supabase/queries/users";
@@ -156,6 +157,33 @@ export async function archiveProjectAction(
     return { ok: true, data: null };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Failed" };
+  }
+}
+
+export async function deleteProjectAction(
+  projectId: string,
+): Promise<ActionResult> {
+  try {
+    const { supabase, user } = await requireUser();
+
+    // Only admins may permanently delete a project.
+    const profile = await getProfile(supabase, user.id);
+    if (!profile || profile.role !== "admin") {
+      return { ok: false, error: "Only admins can delete projects." };
+    }
+
+    const project = await getProjectById(supabase, projectId);
+    if (!project) return { ok: false, error: "Project not found." };
+
+    await deleteProject(supabase, projectId);
+
+    revalidatePath("/projects");
+    return { ok: true, data: null };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Failed to delete project.",
+    };
   }
 }
 

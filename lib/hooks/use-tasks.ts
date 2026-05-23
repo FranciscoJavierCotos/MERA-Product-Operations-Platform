@@ -206,11 +206,11 @@ export function useCompleteTask() {
         queryKey: taskKeys.all,
       });
 
-      // Optimistically update
+      // Optimistically update — guard non-array cache entries (e.g. TaskStats)
       queryClient.setQueriesData(
         { queryKey: taskKeys.all },
-        (old: Task[] | undefined) => {
-          if (!old) return old;
+        (old: Task[] | unknown) => {
+          if (!old || !Array.isArray(old)) return old;
           return old.map((task) =>
             task.id === id
               ? {
@@ -295,11 +295,11 @@ export function useDeleteTask() {
         queryKey: taskKeys.all,
       });
 
-      // Optimistically remove
+      // Optimistically remove — guard non-array cache entries (e.g. TaskStats)
       queryClient.setQueriesData(
         { queryKey: taskKeys.all },
-        (old: Task[] | undefined) => {
-          if (!old) return old;
+        (old: Task[] | unknown) => {
+          if (!old || !Array.isArray(old)) return old;
           return old.filter((task) => task.id !== id);
         }
       );

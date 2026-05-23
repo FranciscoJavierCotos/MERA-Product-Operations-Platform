@@ -107,6 +107,54 @@ export async function archiveProject(
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Hard-deletes a project and all its data.
+ *
+ * Order of operations (prevents FK / trigger issues):
+ *  1. Collect the IDs of every work_item in this project.
+ *  2. Delete item_links where any of those work_items is the source OR the
+ *     target — while the work_items still exist so the audit triggers can read
+ *     them cleanly.
+ *  3. Delete the project row; ON DELETE CASCADE removes sprints, work_items,
+ *     work_item_comments, and work_item_history automatically.
+ */
+export async function deleteProject(
+  supabase: Client,
+  id: string,
+): Promise<void> {
+  // 1. Gather work-item IDs belonging to this project.
+  const { data: workItems, error: wiErr } = await (supabase.from("work_items") as any)
+    .select("id")
+    .eq("project_id", id) as { data: Array<{ id: string }> | null; error: { message: string } | null };
+
+  if (wiErr) throw new Error(wiErr.message);
+
+  if (workItems && workItems.length > 0) {
+    const ids = workItems.map((wi) => wi.id);
+
+    // 2a. Delete links where our work items are the target
+    //     (ticket → our item, other-project item → our item).
+    const { error: ltErr } = await (supabase.from("item_links") as any)
+      .delete()
+      .in("target_work_item_id", ids);
+    if (ltErr) throw new Error(ltErr.message);
+
+    // 2b. Delete links where our work items are the source
+    //     (our item → other-project item).
+    const { error: lsErr } = await (supabase.from("item_links") as any)
+      .delete()
+      .in("source_work_item_id", ids);
+    if (lsErr) throw new Error(lsErr.message);
+  }
+
+  // 3. Delete the project; cascades handle everything else.
+  const { error } = await (supabase.from("projects") as any)
+    .delete()
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+}
+
 // ─── Dashboard overview ────────────────────────────────────────────────────
 
 export interface ProjectSprintSummary {

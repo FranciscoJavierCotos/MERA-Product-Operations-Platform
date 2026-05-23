@@ -104,81 +104,83 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Recent Tickets</CardTitle>
-            <Link
-              href="/tickets"
-              className="text-xs text-primary hover:text-primary-800 font-medium"
-            >
-              View all →
-            </Link>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="divide-y divide-gray-100">
-            {recentTickets && recentTickets.length > 0 ? (
-              recentTicketsSorted.map((ticket: any) => (
-                <Link
-                  key={ticket.id}
-                  href={`/tickets/${ticket.id}`}
-                  className="flex items-center justify-between gap-3 py-2 px-1 hover:bg-gray-50 rounded-md -mx-1 transition-colors"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="shrink-0 text-xs font-mono text-gray-400">
-                      {formatTicketNumber(ticket.ticket_number)}
-                    </span>
-                    <span className="text-sm font-medium text-gray-800 truncate">
-                      {ticket.title}
-                    </span>
-                    <span className="hidden sm:inline text-xs text-gray-400 shrink-0">
-                      {ticket.assigned_user?.full_name || "Unassigned"}
-                      {(ticket.functional_team?.name ||
-                        ticket.support_team?.name) && (
-                        <>
-                          {" · "}
-                          {ticket.functional_team?.name}
-                          {ticket.functional_team?.name &&
-                            ticket.support_team?.name &&
-                            " / "}
-                          {ticket.support_team?.name}
-                        </>
-                      )}
-                      {" · "}
-                      {formatRelativeTime(ticket.created_at)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <TemperatureBadge
-                      temperature={ticket.client_temperature}
-                      showLabel={false}
-                    />
-                    <PriorityBadge priority={ticket.priority} />
-                    <StatusBadge status={ticket.status} />
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <p className="text-sm text-gray-500 text-center py-4">
-                No recent tickets
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Active Projects Overview */}
       <ProjectsOverviewWidget />
 
       {/* SLA Overview Widget */}
       <SlaSummaryWidget />
 
-      {/* Upcoming Tasks Widget */}
-      <DashboardUpcomingTasks
-        userId={user.id}
-        initialTasks={upcomingTasks || []}
-      />
+      {/* Recent Tickets + Upcoming Tasks — side by side */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
+        <Card className="h-full">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Recent Tickets</CardTitle>
+              <Link
+                href="/tickets"
+                className="text-xs text-primary hover:text-primary-800 font-medium"
+              >
+                View all →
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="divide-y divide-gray-100">
+              {recentTickets && recentTickets.length > 0 ? (
+                recentTicketsSorted.map((ticket: any) => (
+                  <Link
+                    key={ticket.id}
+                    href={`/tickets/${ticket.id}`}
+                    className="flex items-center justify-between gap-3 py-2 px-1 hover:bg-gray-50 rounded-md -mx-1 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="shrink-0 text-xs font-mono text-gray-400">
+                        {formatTicketNumber(ticket.ticket_number)}
+                      </span>
+                      <span className="text-sm font-medium text-gray-800 truncate">
+                        {ticket.title}
+                      </span>
+                      <span className="hidden sm:inline text-xs text-gray-400 shrink-0">
+                        {ticket.assigned_user?.full_name || "Unassigned"}
+                        {(ticket.functional_team?.name ||
+                          ticket.support_team?.name) && (
+                          <>
+                            {" · "}
+                            {ticket.functional_team?.name}
+                            {ticket.functional_team?.name &&
+                              ticket.support_team?.name &&
+                              " / "}
+                            {ticket.support_team?.name}
+                          </>
+                        )}
+                        {" · "}
+                        {formatRelativeTime(ticket.created_at)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <TemperatureBadge
+                        temperature={ticket.client_temperature}
+                        showLabel={false}
+                      />
+                      <PriorityBadge priority={ticket.priority} />
+                      <StatusBadge status={ticket.status} />
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  No recent tickets
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <DashboardUpcomingTasks
+          userId={user.id}
+          initialTasks={upcomingTasks || []}
+        />
+      </div>
     </div>
   );
 }
