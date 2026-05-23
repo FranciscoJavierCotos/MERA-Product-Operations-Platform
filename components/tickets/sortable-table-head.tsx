@@ -63,7 +63,7 @@ export function SortableTableHead({
           className={cn(
             "h-3.5 w-3.5 shrink-0 transition-colors",
             isActive
-              ? "text-blue-500"
+              ? "text-primary"
               : "text-gray-300 group-hover:text-gray-500",
           )}
         />

@@ -22,7 +22,7 @@ export function TimeWorkedButton({
       <button
         onClick={() => setIsTimeDialogOpen(true)}
         disabled={isClosed}
-        className="text-sm text-gray-900 hover:text-blue-600 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        className="text-sm text-gray-900 hover:text-primary transition-colors disabled:cursor-not-allowed disabled:opacity-50"
       >
         {formatTimeWorked(timeWorkedMinutes)}
       </button>

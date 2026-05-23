@@ -4,48 +4,89 @@
 
 @layer base {
   :root {
+    /* Neutrals — cool slate to harmonize with violet */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 222.2 47% 11.2%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 222.2 47% 11.2%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    --popover-foreground: 222.2 47% 11.2%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+
+    /* Brand — violet (indigo-600 base, full tint/shade ramp) */
+    --primary: 243 75% 59%;
+    --primary-foreground: 0 0% 100%;
+    --primary-50: 226 100% 97%;
+    --primary-100: 226 100% 94%;
+    --primary-200: 228 96% 89%;
+    --primary-300: 230 94% 82%;
+    --primary-400: 234 89% 74%;
+    --primary-500: 239 84% 67%;
+    --primary-600: 243 75% 59%;
+    --primary-700: 245 58% 51%;
+    --primary-800: 244 55% 41%;
+    --primary-900: 244 47% 34%;
+
+    /* Focus ring — violet at AA strength */
+    --ring: 243 75% 59%;
+
+    /* Semantic status — NOT purple. Keep instantly legible. */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 71% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 217 71% 53%;
+    --info-foreground: 0 0% 100%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222.2 47% 11.2%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 222.2 47% 11.2%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 222.2 47% 11.2%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+
+    --primary: 239 84% 67%;
+    --primary-foreground: 244 47% 14%;
+    --primary-50: 244 47% 14%;
+    --primary-100: 244 47% 18%;
+    --primary-200: 244 55% 25%;
+    --primary-300: 244 55% 33%;
+    --primary-400: 245 58% 45%;
+    --primary-500: 243 75% 55%;
+    --primary-600: 239 84% 67%;
+    --primary-700: 234 89% 74%;
+    --primary-800: 230 94% 82%;
+    --primary-900: 228 96% 89%;
+    --ring: 239 84% 67%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 64% 30%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 80% 45%;
+    --warning-foreground: 0 0% 100%;
+    --info: 217 60% 50%;
+    --info-foreground: 0 0% 100%;
   }
 }
 
@@ -74,12 +115,12 @@
 }
 
 .ProseMirror img:hover {
-  outline: 2px solid rgba(59, 130, 246, 0.3);
+  outline: 2px solid hsl(var(--primary) / 0.3);
   outline-offset: 2px;
 }
 
 .ProseMirror img.ProseMirror-selectednode {
-  outline: 2px solid rgb(59, 130, 246);
+  outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
 }
 

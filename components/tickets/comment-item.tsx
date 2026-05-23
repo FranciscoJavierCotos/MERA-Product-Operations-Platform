@@ -328,7 +328,7 @@ export function CommentItem({
               {shouldShowReadMore && (
                 <button
                   onClick={() => setIsExpanded(true)}
-                  className="-mt-1 text-sm text-gray-600 hover:text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
+                  className="-mt-1 text-sm text-gray-600 hover:text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded"
                   aria-label="Show full comment"
                 >
                   ...Read more

@@ -90,7 +90,7 @@ export function DocumentDetailDrawer({ document, onClose }: Props) {
                   <dt className="text-gray-500">AI retrieval</dt>
                   <dd>
                     {document.ai_retrieval_enabled ? (
-                      <Badge className="bg-indigo-600 hover:bg-indigo-600">
+                      <Badge className="bg-primary hover:bg-primary-700">
                         Enabled
                       </Badge>
                     ) : (

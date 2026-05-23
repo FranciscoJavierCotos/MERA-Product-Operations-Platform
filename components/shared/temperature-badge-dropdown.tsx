@@ -55,7 +55,7 @@ export function TemperatureBadgeDropdown({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-md"
+          className="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring rounded-md"
           disabled={isUpdating}
         >
           <Badge
@@ -75,7 +75,7 @@ export function TemperatureBadgeDropdown({
           >
             <span>{option.emoji}</span>
             {currentTemperature?.id === option.id && (
-              <span className="ml-auto text-blue-600">✓</span>
+              <span className="ml-auto text-primary">✓</span>
             )}
           </DropdownMenuItem>
         ))}

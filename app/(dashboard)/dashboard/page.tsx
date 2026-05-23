@@ -110,7 +110,7 @@ export default async function DashboardPage() {
             <CardTitle className="text-base">Recent Tickets</CardTitle>
             <Link
               href="/tickets"
-              className="text-xs text-violet-600 hover:text-violet-800 font-medium"
+              className="text-xs text-primary hover:text-primary-800 font-medium"
             >
               View all →
             </Link>

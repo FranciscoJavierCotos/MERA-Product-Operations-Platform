@@ -7,8 +7,8 @@ import { QueryProvider } from "@/lib/providers/query-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Support Ticket Management System",
-  description: "Professional support ticket management and tracking system",
+  title: "MERA",
+  description: "MERA — open-source support operations platform",
 };
 
 export default function RootLayout({

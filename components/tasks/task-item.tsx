@@ -117,7 +117,7 @@ export function TaskItem({
           onChange={handleCheckboxChange}
           disabled={isCompleted}
           className={cn(
-            "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500",
+            "h-4 w-4 rounded border-gray-300 text-primary focus:ring-ring",
             isCompleted && "cursor-not-allowed opacity-50",
           )}
           aria-label={`Mark "${task.title}" as ${
@@ -207,7 +207,7 @@ export function TaskItem({
               <span className="text-gray-300">·</span>
               <Link
                 href={`/tickets/${task.ticket_id}`}
-                className="text-xs text-blue-600 hover:underline truncate max-w-[200px]"
+                className="text-xs text-primary hover:underline truncate max-w-[200px]"
                 onClick={(e) => e.stopPropagation()}
                 title={`#${task.ticket.ticket_number} - ${task.ticket.title}`}
               >

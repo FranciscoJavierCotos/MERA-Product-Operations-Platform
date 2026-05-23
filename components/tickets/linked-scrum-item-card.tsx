@@ -66,12 +66,12 @@ export function LinkedScrumItemCard({
 
   return (
     <>
-      <Card className="border-indigo-200 bg-indigo-50/40">
+      <Card className="border-primary-200 bg-gradient-to-br from-primary-50 to-white">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <Link2 className="h-4 w-4 text-indigo-700" />
-              <h2 className="text-base font-semibold text-indigo-900">
+              <Link2 className="h-4 w-4 text-primary-700" />
+              <h2 className="text-base font-semibold text-primary-900">
                 Linked scrum item
               </h2>
             </div>
@@ -110,14 +110,13 @@ export function LinkedScrumItemCard({
             <PrimaryLinkView link={primary} linkTypeLabel={linkTypeLabel} />
           ) : (
             <div className="flex flex-col items-start gap-3">
-              <p className="text-sm text-indigo-900/70">
+              <p className="text-sm text-primary-900/70">
                 This ticket is not linked to any scrum work item yet.
               </p>
               {canEdit && (
                 <Button
                   size="sm"
                   onClick={() => setDialogOpen(true)}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
                 >
                   <Link2 className="mr-2 h-4 w-4" />
                   Link to scrum item
@@ -154,12 +153,12 @@ function PrimaryLinkView({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800">
+        <span className="rounded bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-800">
           {linkTypeLabel}
         </span>
         <Link
           href={`/projects/${target.project.key}`}
-          className="font-mono text-sm font-semibold text-indigo-900 hover:underline"
+          className="font-mono text-sm font-semibold text-primary-900 hover:underline"
         >
           {target.item_key}
         </Link>
@@ -204,7 +203,7 @@ function PrimaryLinkView({
         <Field label="">
           <Link
             href={`/projects/${target.project.key}`}
-            className="inline-flex items-center gap-1 text-xs text-indigo-700 hover:underline"
+            className="inline-flex items-center gap-1 text-xs text-primary-700 hover:underline"
           >
             View in project
             <ExternalLink className="h-3 w-3" />
@@ -213,7 +212,7 @@ function PrimaryLinkView({
       </div>
 
       {link.note && (
-        <div className="rounded border border-indigo-200 bg-white/60 p-2 text-xs text-gray-700">
+        <div className="rounded border border-primary-200 bg-white/60 p-2 text-xs text-gray-700">
           {link.note}
         </div>
       )}

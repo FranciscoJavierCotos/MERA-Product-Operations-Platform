@@ -50,8 +50,8 @@ export function Navbar({ user }: NavbarProps) {
           <div className="flex items-center gap-4 flex-1 mr-4">
             <GoBackButton showText={true} />
             <div className="h-6 w-px bg-gray-300 hidden sm:block" />
-            <h2 className="text-2xl font-bold text-gray-900 whitespace-nowrap">
-              Support Ticket System
+            <h2 className="text-2xl font-bold text-gray-900 whitespace-nowrap tracking-tight">
+              MERA
             </h2>
             <div className="hidden md:flex flex-1 max-w-2xl mx-4">
               <NavbarSearch />

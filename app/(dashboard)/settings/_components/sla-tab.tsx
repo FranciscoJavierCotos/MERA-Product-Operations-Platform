@@ -164,7 +164,7 @@ function SlaForm({
           type="checkbox"
           checked={isActive}
           onChange={(e) => setValue("is_active", e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-ring"
         />
         <Label htmlFor="sla-active">Active</Label>
       </div>

@@ -55,7 +55,7 @@ export function SupportLevelDropdown({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-md"
+          className="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring rounded-md"
           disabled={isUpdating}
         >
           <span className="inline-flex items-center gap-1">
@@ -73,7 +73,7 @@ export function SupportLevelDropdown({
           >
             <span>{option.label}</span>
             {option.id === currentLevel?.id && (
-              <span className="ml-auto text-blue-600">✓</span>
+              <span className="ml-auto text-primary">✓</span>
             )}
           </DropdownMenuItem>
         ))}

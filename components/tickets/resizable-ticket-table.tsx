@@ -249,7 +249,7 @@ export function ResizableTicketTable({
                         className={cn(
                           "h-3.5 w-3.5 shrink-0 transition-colors",
                           isActive
-                            ? "text-blue-500"
+                            ? "text-primary"
                             : "text-gray-300 group-hover:text-gray-500",
                         )}
                       />
@@ -265,7 +265,7 @@ export function ResizableTicketTable({
                     <div
                       className={cn(
                         "h-full w-px transition-colors",
-                        isDragging ? "bg-blue-400" : "bg-gray-200 group-hover/resize:bg-blue-400",
+                        isDragging ? "bg-primary-400" : "bg-gray-200 group-hover/resize:bg-primary-400",
                       )}
                     />
                   </div>
@@ -353,7 +353,7 @@ function TicketTableRow({
       <td className={cellClass}>
         <Link
           href={`/tickets/${ticket.id}`}
-          className={cn(innerClass, "text-blue-600 hover:underline")}
+          className={cn(innerClass, "text-primary hover:underline")}
           style={{ height: h }}
         >
           <span className="truncate">{formatTicketNumber(ticket.ticket_number)}</span>

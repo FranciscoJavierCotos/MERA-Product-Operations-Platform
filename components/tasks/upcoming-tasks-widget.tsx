@@ -36,7 +36,7 @@ export function UpcomingTasksWidget({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
-          <Clock className="h-5 w-5 text-blue-500" />
+          <Clock className="h-5 w-5 text-primary" />
           Upcoming Tasks
         </CardTitle>
         <Link href="/tasks">
@@ -106,7 +106,7 @@ function UpcomingTaskItem({ task, onComplete }: UpcomingTaskItemProps) {
         {task.ticket_id && task.ticket && (
           <Link
             href={`/tickets/${task.ticket_id}`}
-            className="text-xs text-blue-600 hover:underline mt-1 inline-block truncate max-w-full"
+            className="text-xs text-primary hover:underline mt-1 inline-block truncate max-w-full"
             title={`#${task.ticket.ticket_number} - ${task.ticket.title}`}
           >
             #{task.ticket.ticket_number} - {task.ticket.title}

@@ -138,7 +138,7 @@ export function TicketFilterBar({
   const activeTriggerCn = (value: string) =>
     cn(
       "h-9 w-auto text-sm",
-      value && "border-blue-400 bg-blue-50 text-blue-800",
+      value && "border-primary-300 bg-primary-50 text-primary-800",
     );
 
   return (
@@ -154,7 +154,7 @@ export function TicketFilterBar({
           <Filter className="h-3.5 w-3.5 text-gray-400" />
           <span className="text-sm font-semibold text-gray-600">Filters</span>
           {activeCount > 0 && (
-            <Badge className="bg-blue-100 px-1.5 py-0 text-xs font-semibold text-blue-700 hover:bg-blue-100">
+            <Badge className="bg-primary-100 px-1.5 py-0 text-xs font-semibold text-primary-700 hover:bg-primary-100">
               {activeCount} active
             </Badge>
           )}
@@ -185,7 +185,7 @@ export function TicketFilterBar({
             onChange={(e) => handleSearchChange(e.target.value)}
             className={cn(
               "h-9 pl-8 pr-8 text-sm",
-              currentSearch && "border-blue-400 bg-blue-50",
+              currentSearch && "border-primary-300 bg-primary-50",
             )}
           />
           {searchValue && (
@@ -354,7 +354,7 @@ export function TicketFilterBar({
             title="Created from"
             className={cn(
               "h-9 w-[138px] text-sm",
-              currentCreatedFrom && "border-blue-400 bg-blue-50",
+              currentCreatedFrom && "border-primary-300 bg-primary-50",
             )}
           />
           <span className="text-gray-300 text-sm select-none">–</span>
@@ -365,7 +365,7 @@ export function TicketFilterBar({
             title="Created to"
             className={cn(
               "h-9 w-[138px] text-sm",
-              currentCreatedTo && "border-blue-400 bg-blue-50",
+              currentCreatedTo && "border-primary-300 bg-primary-50",
             )}
           />
         </div>

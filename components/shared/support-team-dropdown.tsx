@@ -122,7 +122,7 @@ export function SupportTeamDropdown({
     <DropdownMenu onOpenChange={(open) => open && void ensureTeamsLoaded()}>
       <DropdownMenuTrigger asChild>
         <button
-          className="flex items-center gap-2 hover:bg-gray-50 rounded-md px-2 py-1 -ml-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="flex items-center gap-2 hover:bg-gray-50 rounded-md px-2 py-1 -ml-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
           disabled={isUpdating || isLoading}
         >
           {showLevelBadge && (
@@ -152,7 +152,7 @@ export function SupportTeamDropdown({
           >
             <span>{team.name}</span>
             {team.id === currentTeam?.id && (
-              <span className="ml-auto text-blue-600">✓</span>
+              <span className="ml-auto text-primary">✓</span>
             )}
           </DropdownMenuItem>
         ))}
@@ -171,7 +171,7 @@ export function SupportTeamDropdown({
           >
             <span>{team.name}</span>
             {team.id === currentTeam?.id && (
-              <span className="ml-auto text-blue-600">✓</span>
+              <span className="ml-auto text-primary">✓</span>
             )}
           </DropdownMenuItem>
         ))}
@@ -190,7 +190,7 @@ export function SupportTeamDropdown({
           >
             <span>{team.name}</span>
             {team.id === currentTeam?.id && (
-              <span className="ml-auto text-blue-600">✓</span>
+              <span className="ml-auto text-primary">✓</span>
             )}
           </DropdownMenuItem>
         ))}

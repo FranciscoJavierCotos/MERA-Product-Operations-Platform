@@ -61,7 +61,7 @@ export default async function KnowledgeCenterPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Brain className="h-8 w-8 text-indigo-600" />
+            <Brain className="h-8 w-8 text-primary" />
             AI Knowledge Center
           </h1>
           <p className="text-sm text-gray-600 mt-1">
@@ -72,7 +72,7 @@ export default async function KnowledgeCenterPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          icon={<Brain className="h-5 w-5 text-indigo-600" />}
+          icon={<Brain className="h-5 w-5 text-primary" />}
           label="Resolutions indexed"
           value={kpis.resolutions_indexed.toLocaleString()}
           sub={

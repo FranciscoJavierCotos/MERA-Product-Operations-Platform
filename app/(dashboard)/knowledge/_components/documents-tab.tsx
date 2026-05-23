@@ -203,7 +203,7 @@ export function DocumentsTab({
                       <>
                         {" "}
                         <button
-                          className="text-indigo-600 hover:underline"
+                          className="text-primary hover:underline"
                           onClick={() => setUploadOpen(true)}
                         >
                           Upload the first one.
@@ -220,7 +220,7 @@ export function DocumentsTab({
                   <TableRow key={d.id}>
                     <TableCell>
                       <button
-                        className="text-indigo-600 hover:underline flex items-center gap-2 text-left"
+                        className="text-primary hover:underline flex items-center gap-2 text-left"
                         onClick={() => setDetailDoc(d)}
                       >
                         <FileText className="h-4 w-4 flex-shrink-0" />

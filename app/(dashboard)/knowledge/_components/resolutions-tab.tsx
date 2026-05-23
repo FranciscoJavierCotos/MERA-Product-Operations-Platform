@@ -170,7 +170,7 @@ export function ResolutionsTab({ rows, isAdmin }: Props) {
                 <TableCell className="font-mono text-xs">
                   <Link
                     href={`/tickets/${r.ticket_id}`}
-                    className="text-indigo-600 hover:underline"
+                    className="text-primary hover:underline"
                   >
                     {formatTicketNumber(r.ticket_number)}
                   </Link>
@@ -201,7 +201,7 @@ export function ResolutionsTab({ rows, isAdmin }: Props) {
                     variant={r.ai_retrieval_enabled ? "default" : "secondary"}
                     className={
                       r.ai_retrieval_enabled
-                        ? "bg-indigo-600 hover:bg-indigo-600"
+                        ? "bg-primary hover:bg-primary-700"
                         : ""
                     }
                   >
@@ -289,7 +289,7 @@ function FilterPill({
       onClick={onClick}
       className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
         active
-          ? "bg-indigo-600 text-white border-indigo-600"
+          ? "bg-primary text-white border-primary"
           : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
       }`}
     >

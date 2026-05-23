@@ -91,22 +91,22 @@ function ProjectCard({ project }: { project: ProjectDashboardCard }) {
   return (
     <Link
       href={`/projects/${project.key}`}
-      className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded-xl"
+      className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl"
     >
-      <div className="h-full border border-gray-200 rounded-xl p-4 bg-white hover:border-violet-300 hover:shadow-sm transition-all flex flex-col gap-3">
+      <div className="h-full border border-gray-200 rounded-xl p-4 bg-white hover:border-primary-300 hover:shadow-sm transition-all flex flex-col gap-3">
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="shrink-0 text-[11px] font-bold tracking-widest text-violet-700 bg-violet-50 border border-violet-200 rounded px-1.5 py-0.5">
+            <span className="shrink-0 text-[11px] font-bold tracking-widest text-primary-700 bg-primary-50 border border-primary-200 rounded px-1.5 py-0.5">
               {project.key}
             </span>
-            <span className="text-sm font-semibold text-gray-900 truncate group-hover:text-violet-700 transition-colors">
+            <span className="text-sm font-semibold text-gray-900 truncate group-hover:text-primary-700 transition-colors">
               {project.name}
             </span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <MethodologyBadge methodology={project.methodology} />
-            <ArrowRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-violet-400 transition-colors" />
+            <ArrowRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-primary-400 transition-colors" />
           </div>
         </div>
 
@@ -131,7 +131,7 @@ function ProjectCard({ project }: { project: ProjectDashboardCard }) {
           <div className="flex flex-col gap-2.5 pt-0.5">
             <div className="flex items-center justify-between text-xs">
               <span className="flex items-center gap-1 font-medium text-gray-700">
-                <Zap className="h-3 w-3 text-violet-500" />
+                <Zap className="h-3 w-3 text-primary" />
                 {sprint.name}
               </span>
               <span className="flex items-center gap-1 text-gray-400">
@@ -153,7 +153,7 @@ function ProjectCard({ project }: { project: ProjectDashboardCard }) {
               <ProgressBar
                 value={sprint.done_items}
                 max={sprint.total_items}
-                colorClass="bg-violet-500"
+                colorClass="bg-primary"
               />
             </div>
 
@@ -211,12 +211,12 @@ export async function ProjectsOverviewWidget() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Layers className="h-4 w-4 text-violet-500" />
+            <Layers className="h-4 w-4 text-primary" />
             Active Projects
           </CardTitle>
           <Link
             href="/projects"
-            className="text-xs text-violet-600 hover:text-violet-800 font-medium flex items-center gap-0.5"
+            className="text-xs text-primary hover:text-primary-800 font-medium flex items-center gap-0.5"
           >
             View all
             <ArrowRight className="h-3 w-3" />

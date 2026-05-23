@@ -106,7 +106,7 @@ export function AssignedUserDropdown({
     <DropdownMenu onOpenChange={(open) => open && void ensureMembersLoaded()}>
       <DropdownMenuTrigger asChild>
         <button
-          className={`${compact ? "" : "mt-2 "}flex items-center gap-2 hover:bg-gray-50 rounded-md px-2 py-1 -ml-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+          className={`${compact ? "" : "mt-2 "}flex items-center gap-2 hover:bg-gray-50 rounded-md px-2 py-1 -ml-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring`}
           disabled={isUpdating || isLoading}
         >
           {assignedUser ? (
@@ -123,7 +123,7 @@ export function AssignedUserDropdown({
           className={!assignedUser ? "bg-gray-100" : ""}
         >
           <span className="text-gray-500">Unassigned</span>
-          {!assignedUser && <span className="ml-auto text-blue-600">✓</span>}
+          {!assignedUser && <span className="ml-auto text-primary">✓</span>}
         </DropdownMenuItem>
         {supportMembers.map((member) => (
           <DropdownMenuItem
@@ -140,7 +140,7 @@ export function AssignedUserDropdown({
               <span className="text-sm">{member.full_name}</span>
             </div>
             {assignedUser?.id === member.id && (
-              <span className="ml-auto text-blue-600">✓</span>
+              <span className="ml-auto text-primary">✓</span>
             )}
           </DropdownMenuItem>
         ))}

@@ -56,7 +56,7 @@ export function AiRecommendationPanel({ ticketId }: Props) {
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Sparkles className="h-5 w-5 text-indigo-600" />
+            <Sparkles className="h-5 w-5 text-primary" />
             AI Research
           </CardTitle>
           <Button onClick={run} disabled={isPending} size="sm">
@@ -121,14 +121,14 @@ export function AiRecommendationPanel({ ticketId }: Props) {
                   {r.source_type === "resolution" ? (
                     <Link
                       href={`/tickets/${r.source_id}`}
-                      className="text-xs text-indigo-600 hover:underline"
+                      className="text-xs text-primary hover:underline"
                     >
                       Open ticket →
                     </Link>
                   ) : (
                     <Link
                       href={`/knowledge`}
-                      className="text-xs text-indigo-600 hover:underline"
+                      className="text-xs text-primary hover:underline"
                     >
                       Open in Knowledge Center →
                     </Link>

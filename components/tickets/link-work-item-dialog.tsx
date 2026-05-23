@@ -262,7 +262,7 @@ export function LinkWorkItemDialog({
                         type="button"
                         onClick={() => setSelected(r)}
                         className={`flex w-full items-start gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50 ${
-                          isSelected ? "bg-indigo-50" : ""
+                          isSelected ? "bg-primary-50" : ""
                         }`}
                       >
                         <div className="min-w-0 flex-1">
@@ -281,7 +281,7 @@ export function LinkWorkItemDialog({
                           </p>
                         </div>
                         {isSelected && (
-                          <span className="text-xs font-medium text-indigo-700">
+                          <span className="text-xs font-medium text-primary-700">
                             Selected
                           </span>
                         )}
