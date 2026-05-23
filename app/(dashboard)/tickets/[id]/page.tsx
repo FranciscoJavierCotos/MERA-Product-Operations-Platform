@@ -45,6 +45,8 @@ import { isUuid } from "@/lib/utils/uuid";
 import { TicketNavigationButtons } from "@/components/tickets/ticket-navigation-buttons";
 import { SlaDetailBlock } from "@/components/tickets/sla-detail-block";
 import { AiRecommendationPanel } from "@/components/tickets/ai-recommendation-panel";
+import { LinkedScrumItemCard } from "@/components/tickets/linked-scrum-item-card";
+import { TicketLinksSection } from "@/components/tickets/ticket-links-section";
 import {
   listLinkTypes,
   listTicketLinks,
@@ -409,31 +411,9 @@ export default async function TicketDetailPage({
         </CardContent>
       </Card>
 
-      {isSupportAgent ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-          <div className="min-w-0">
-            <AiRecommendationPanel ticketId={ticket.id} />
-          </div>
-          <div className="min-w-0">
-            <TicketTasksSection
-              ticketId={ticket.id}
-              users={supportMembers || []}
-              currentUserId={user?.id || ""}
-              isClosed={isClosed}
-            />
-          </div>
-        </div>
-      ) : (
-        <TicketTasksSection
-          ticketId={ticket.id}
-          users={supportMembers || []}
-          currentUserId={user?.id || ""}
-          isClosed={isClosed}
-        />
-      )}
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-        <div className="min-w-0 h-full">
+        {/* Left column: Description → Comments */}
+        <div className="min-w-0 h-full flex flex-col gap-6">
           <TicketDetailClient
             ticketId={ticket.id}
             description={ticket.description}
@@ -442,17 +422,38 @@ export default async function TicketDetailPage({
             isCreator={!!isCreator}
             isSupportAgent={!!isSupportAgent}
             isClosed={isClosed}
-            ticketLinks={ticketLinks}
-            linkTypes={linkTypes}
           />
-        </div>
-        <div className="min-w-0 h-full">
           <CommentsActivitySection
             ticketId={ticket.id}
             initialComments={comments || []}
             initialHistory={ticketHistory || []}
             currentUserId={user?.id}
           />
+        </div>
+        {/* Right column: AI Research → Tasks → Linked Scrum Item */}
+        <div className="min-w-0 h-full flex flex-col gap-6">
+          {isSupportAgent && <AiRecommendationPanel ticketId={ticket.id} />}
+          <TicketTasksSection
+            ticketId={ticket.id}
+            users={supportMembers || []}
+            currentUserId={user?.id || ""}
+            isClosed={isClosed}
+          />
+          <LinkedScrumItemCard
+            ticketId={ticket.id}
+            primary={ticketLinks.find((l) => l.is_primary) ?? null}
+            linkTypes={linkTypes}
+            excludeWorkItemIds={ticketLinks.map((l) => l.target_work_item_id)}
+            canEdit={!!isSupportAgent && !isClosed}
+          />
+          {ticketLinks.length > 1 && (
+            <TicketLinksSection
+              ticketId={ticket.id}
+              links={ticketLinks}
+              linkTypes={linkTypes}
+              canEdit={!!isSupportAgent && !isClosed}
+            />
+          )}
         </div>
       </div>
     </div>

@@ -11,7 +11,14 @@
 ![AI Adopted](https://img.shields.io/badge/AI-Fully_Adopted-FF6B35?style=flat-square)
 
 <p align="center">
-  <img src="./docs/screenshots/Dashboard.png" width="960" alt="MERA Dashboard" />
+  <img src="./docs/screenshots/carrousel.png" width="960" alt="MERA Dashboard" />
+</p>
+<p align="center">
+  <img src="./docs/screenshots/carrousel2.png" width="960" alt="MERA Dashboard" />
+</p>
+
+<p align="center">
+  <img src="./docs/screenshots/dashboard.png" width="960" alt="MERA Dashboard" />
 </p>
 
 ---
