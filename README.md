@@ -41,34 +41,40 @@ Most ops teams operate across a fragmented stack: a ticketing tool, a chat threa
 
 ## Screenshots
 
-<p align="center">
-  <img src="./docs/screenshots/all-tickets.png" width="474" alt="All Tickets — queue with rich filters, SLA countdown, and team assignment" />
-  &nbsp;
-  <img src="./docs/screenshots/scrum-project.png" width="474" alt="Scrum Board — sprints, work items, drag-and-drop kanban" />
-</p>
-<p align="center">
-  <sub>Ticket queue with SLA tracking, temperature, and multi-dim filters &nbsp;|&nbsp; Scrum board — sprints, epics, stories, drag-and-drop</sub>
-</p>
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="./docs/screenshots/all-tickets.png" alt="All Tickets" />
+      <br/><sub><b>Ticket Queue</b> — status, priority, SLA countdown, temperature, team filters</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="./docs/screenshots/scrum-project.png" alt="Scrum Board" />
+      <br/><sub><b>Scrum Board</b> — sprints, epics, stories, bugs, drag-and-drop kanban</sub>
+    </td>
+  </tr>
+</table>
 
 <br/>
 
 <p align="center">
-  <img src="./docs/screenshots/ai-knowledge-center.png" width="960" alt="AI Knowledge Center — resolutions and documents indexed as vector embeddings" />
-</p>
-<p align="center">
-  <sub>AI Knowledge Center — every closed ticket auto-indexed as a 768-dim embedding; PDFs chunked and ingested via edge functions</sub>
+  <img src="./docs/screenshots/ai-knowledge-center.png" width="960" alt="AI Knowledge Center" />
+  <br/><sub><b>AI Knowledge Center</b> — every closed ticket auto-indexed as a 768-dim embedding; PDFs chunked and ingested via Gemini edge functions</sub>
 </p>
 
 <br/>
 
-<p align="center">
-  <img src="./docs/screenshots/search.png" width="474" alt="Global Search — full-text across tickets, tasks, and projects" />
-  &nbsp;
-  <img src="./docs/screenshots/settings.png" width="474" alt="System Settings — users, roles, teams, SLA policies, ticket config" />
-</p>
-<p align="center">
-  <sub>Global full-text search with result previews &nbsp;|&nbsp; System settings — users, roles, teams, SLA policies, ticket config</sub>
-</p>
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="./docs/screenshots/search.png" alt="Global Search" />
+      <br/><sub><b>Global Search</b> — full-text across tickets, tasks, and projects</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="./docs/screenshots/settings.png" alt="System Settings" />
+      <br/><sub><b>System Settings</b> — users, roles, teams, SLA policies, ticket config</sub>
+    </td>
+  </tr>
+</table>
 
 ---
 
