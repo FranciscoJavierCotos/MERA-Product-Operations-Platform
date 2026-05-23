@@ -268,6 +268,30 @@ export function useNavigation() {
     return null;
   };
 
+  const getRecentPaths = (limit = 5): string[] => {
+    if (globalHistory.stack.length === 0) {
+      return [];
+    }
+
+    const paths: string[] = [];
+
+    for (let i = globalHistory.stack.length - 1; i >= 0; i--) {
+      const item = globalHistory.stack[i];
+
+      if (!item?.path || item.path === pathname || paths.includes(item.path)) {
+        continue;
+      }
+
+      paths.push(item.path);
+
+      if (paths.length >= limit) {
+        break;
+      }
+    }
+
+    return paths;
+  };
+
   return {
     goBack,
     canGoBack,
@@ -275,6 +299,7 @@ export function useNavigation() {
     getPageState,
     clearHistory,
     getPreviousPath,
+    getRecentPaths,
     currentPath: pathname,
   };
 }

@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Navbar } from "@/components/layout/navbar";
-import { Sidebar } from "@/components/layout/sidebar";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { getProfile } from "@/lib/supabase/queries/users";
 import { UnsavedChangesProvider } from "@/lib/contexts/unsaved-changes-context";
 
@@ -36,17 +35,7 @@ export default async function DashboardLayout({
 
   return (
     <UnsavedChangesProvider>
-      <div className="min-h-screen bg-gray-100">
-        <Sidebar role={displayProfile.role} />
-        <div className="md:pl-64 flex flex-col flex-1">
-          <Navbar user={displayProfile} />
-          <main className="flex-1">
-            <div className="py-6">
-              <div className="w-full px-4 sm:px-6 lg:px-8">{children}</div>
-            </div>
-          </main>
-        </div>
-      </div>
+      <DashboardShell user={displayProfile}>{children}</DashboardShell>
     </UnsavedChangesProvider>
   );
 }

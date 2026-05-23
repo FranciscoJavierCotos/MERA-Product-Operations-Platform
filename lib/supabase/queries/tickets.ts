@@ -80,16 +80,21 @@ const TICKET_SELECT_DETAIL = `
 
 function applyFilters(query: any, filters?: TicketFilters) {
   if (!filters) return query;
-  if (filters.search)           query = query.ilike("title", `%${filters.search}%`);
-  if (filters.status_id)        query = query.eq("status_id", filters.status_id);
-  if (filters.priority_id)      query = query.eq("priority_id", filters.priority_id);
-  if (filters.category_id)      query = query.eq("category_id", filters.category_id);
-  if (filters.temperature_id)   query = query.eq("temperature_id", filters.temperature_id);
-  if (filters.functional_team_id) query = query.eq("functional_team_id", filters.functional_team_id);
-  if (filters.support_team_id)  query = query.eq("team_id", filters.support_team_id);
-  if (filters.assigned_to)      query = query.eq("assigned_to", filters.assigned_to);
-  if (filters.created_from)     query = query.gte("created_at", `${filters.created_from}T00:00:00.000Z`);
-  if (filters.created_to)       query = query.lte("created_at", `${filters.created_to}T23:59:59.999Z`);
+  if (filters.search) query = query.ilike("title", `%${filters.search}%`);
+  if (filters.status_id) query = query.eq("status_id", filters.status_id);
+  if (filters.priority_id) query = query.eq("priority_id", filters.priority_id);
+  if (filters.category_id) query = query.eq("category_id", filters.category_id);
+  if (filters.temperature_id)
+    query = query.eq("temperature_id", filters.temperature_id);
+  if (filters.functional_team_id)
+    query = query.eq("functional_team_id", filters.functional_team_id);
+  if (filters.support_team_id)
+    query = query.eq("team_id", filters.support_team_id);
+  if (filters.assigned_to) query = query.eq("assigned_to", filters.assigned_to);
+  if (filters.created_from)
+    query = query.gte("created_at", `${filters.created_from}T00:00:00.000Z`);
+  if (filters.created_to)
+    query = query.lte("created_at", `${filters.created_to}T23:59:59.999Z`);
   return query;
 }
 
@@ -98,9 +103,12 @@ function applySort(query: any, filters?: TicketFilters) {
   const ascending = filters?.sort_dir === "asc";
   if (col && SORTABLE_COLUMNS.has(col)) {
     query = query.order(col, { ascending });
-    if (col !== "ticket_number") query = query.order("ticket_number", { ascending: false });
+    if (col !== "ticket_number")
+      query = query.order("ticket_number", { ascending: false });
   } else {
-    query = query.order("created_at", { ascending: false }).order("ticket_number", { ascending: false });
+    query = query
+      .order("created_at", { ascending: false })
+      .order("ticket_number", { ascending: false });
   }
   return query;
 }
@@ -119,9 +127,11 @@ export async function getTickets(
     .order("created_at", { ascending: false })
     .order("ticket_number", { ascending: false });
 
-  if (filters?.status_id)   query = query.eq("status_id", filters.status_id);
-  if (filters?.priority_id) query = query.eq("priority_id", filters.priority_id);
-  if (filters?.assigned_to) query = query.eq("assigned_to", filters.assigned_to);
+  if (filters?.status_id) query = query.eq("status_id", filters.status_id);
+  if (filters?.priority_id)
+    query = query.eq("priority_id", filters.priority_id);
+  if (filters?.assigned_to)
+    query = query.eq("assigned_to", filters.assigned_to);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -329,37 +339,78 @@ export async function getMyTicketNavigation(
 }
 
 export async function searchTickets(supabase: Client, query: string) {
-  const isExactMatch = query.startsWith('"') && query.endsWith('"');
-  const searchTerm = isExactMatch ? query.slice(1, -1) : query;
+  const normalizedQuery = query.trim();
+
+  if (!normalizedQuery) {
+    return [] as Ticket[];
+  }
+
+  const searchTerm = normalizedQuery.replace(/^"(.+)"$/, "$1").trim();
+
+  if (!searchTerm) {
+    return [] as Ticket[];
+  }
 
   const selectStr = `
     ${TICKET_SELECT}
   `;
 
-  if (isExactMatch) {
-    const { data, error } = await supabase
-      .from("tickets")
-      .select(selectStr)
-      .or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
-      .order("created_at", { ascending: false })
-      .order("ticket_number", { ascending: false });
+  const searchWithIlike = async () => {
+    const ticketNumberMatch = searchTerm.match(/^#?(\d+)$/);
+    if (ticketNumberMatch) {
+      const ticketNumber = Number(ticketNumberMatch[1]);
 
-    if (error) throw error;
-    return data as unknown as Ticket[];
-  } else {
-    const { data, error } = await supabase
-      .from("tickets")
-      .select(selectStr)
-      .textSearch("search_vector", searchTerm, {
-        type: "websearch",
-        config: "english",
-      })
-      .order("created_at", { ascending: false })
-      .order("ticket_number", { ascending: false });
+      const { data, error } = await supabase
+        .from("tickets")
+        .select(selectStr)
+        .eq("ticket_number", ticketNumber)
+        .order("created_at", { ascending: false })
+        .order("ticket_number", { ascending: false });
 
-    if (error) throw error;
-    return data as unknown as Ticket[];
-  }
+      if (error) throw error;
+      return (data ?? []) as unknown as Ticket[];
+    }
+
+    const terms = searchTerm
+      .split(/\s+/)
+      .map((term) => term.trim())
+      .filter(Boolean);
+
+    let titleQuery = supabase.from("tickets").select(selectStr);
+    let descriptionQuery = supabase.from("tickets").select(selectStr);
+
+    for (const term of terms) {
+      const pattern = `%${term}%`;
+      titleQuery = titleQuery.ilike("title", pattern);
+      descriptionQuery = descriptionQuery.ilike("description", pattern);
+    }
+
+    const [titleResult, descriptionResult] = await Promise.all([
+      titleQuery
+        .order("created_at", { ascending: false })
+        .order("ticket_number", { ascending: false }),
+      descriptionQuery
+        .order("created_at", { ascending: false })
+        .order("ticket_number", { ascending: false }),
+    ]);
+
+    if (titleResult.error) throw titleResult.error;
+    if (descriptionResult.error) throw descriptionResult.error;
+
+    const seen = new Set<string>();
+    const merged = [
+      ...(titleResult.data ?? []),
+      ...(descriptionResult.data ?? []),
+    ] as unknown as Ticket[];
+
+    return merged.filter((ticket) => {
+      if (seen.has(ticket.id)) return false;
+      seen.add(ticket.id);
+      return true;
+    });
+  };
+
+  return searchWithIlike();
 }
 
 export async function deleteTicket(supabase: Client, id: string) {

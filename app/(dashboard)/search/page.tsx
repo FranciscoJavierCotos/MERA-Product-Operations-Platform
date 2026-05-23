@@ -99,14 +99,14 @@ export default function SearchPage() {
         </CardHeader>
         <CardContent>
           <SearchBar
-            placeholder='Search tickets by title or description... (use "quotes" for exact match)'
+            placeholder="Search tickets by title, description, or #ticket-number"
             onSearch={handleSearch}
             defaultValue={searchQuery}
           />
           <div className="mt-4 text-xs text-gray-500">
             <p>
-              💡 <strong>Search tips:</strong> Type normally for fuzzy search,
-              or use &quot;quotes&quot; for exact phrase matching
+              💡 <strong>Search tips:</strong> Use keywords from the title or
+              description, or search directly with #ticket-number
             </p>
           </div>
 
@@ -122,8 +122,7 @@ export default function SearchPage() {
                 No tickets found matching &quot;{searchQuery}&quot;
               </p>
               <p className="text-xs mt-2">
-                Try adjusting your search terms or removing quotes for a broader
-                search
+                Try different keywords from the ticket title or description
               </p>
             </div>
           )}

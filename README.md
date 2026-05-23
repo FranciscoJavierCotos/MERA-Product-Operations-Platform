@@ -132,6 +132,7 @@ cp .env.example .env.local
 # and SUPABASE_SERVICE_ROLE_KEY from your Supabase project settings.
 
 # 3. Database — push the full schema (starts from 001_initial_schema.sql)
+# Initial schema location in this repo: supabase/migrations/001_initial_schema.sql
 npx supabase link --project-ref <ref>
 npx supabase db push          # applies all migrations in order
 npx supabase db seed          # optional: seed a default team + example data

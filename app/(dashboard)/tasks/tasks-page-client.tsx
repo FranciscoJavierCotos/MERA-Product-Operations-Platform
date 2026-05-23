@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { Task, TaskStats as TaskStatsType } from "@/types/task.types";
 import { Profile } from "@/types/user.types";
@@ -25,6 +25,7 @@ interface TasksPageClientProps {
   initialStats: TaskStatsType;
   users: Profile[];
   currentUserId: string;
+  initialCreateOpen?: boolean;
 }
 
 export function TasksPageClient({
@@ -32,6 +33,7 @@ export function TasksPageClient({
   initialStats,
   users,
   currentUserId,
+  initialCreateOpen = false,
 }: TasksPageClientProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -49,6 +51,12 @@ export function TasksPageClient({
   const completeTask = useCompleteTask();
   const reopenTask = useReopenTask();
   const deleteTask = useDeleteTask();
+
+  useEffect(() => {
+    if (initialCreateOpen) {
+      setIsFormOpen(true);
+    }
+  }, [initialCreateOpen]);
 
   const handleCreateTask = (data: CreateTaskFormData) => {
     createTask.mutate({
