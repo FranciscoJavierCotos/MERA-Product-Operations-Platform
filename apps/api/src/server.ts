@@ -1,5 +1,7 @@
 import Fastify from "fastify";
 import fastifyCors from "@fastify/cors";
+import fastifyHelmet from "@fastify/helmet";
+import fastifyRateLimit from "@fastify/rate-limit";
 import fastifySensible from "@fastify/sensible";
 import {
   serializerCompiler,
@@ -44,6 +46,17 @@ async function build() {
   app.setSerializerCompiler(serializerCompiler);
 
   await app.register(fastifySensible);
+  await app.register(fastifyHelmet, {
+    // CSP needs per-deployment tuning; all other Helmet defaults remain active
+    // (X-Content-Type-Options, X-Frame-Options, HSTS, X-DNS-Prefetch-Control …).
+    contentSecurityPolicy: false,
+  });
+  await app.register(fastifyRateLimit, {
+    // Global rate limit: 100 requests per IP per 15-minute window.
+    // Tighten specific routes (e.g. auth-adjacent paths) as needed.
+    max: 100,
+    timeWindow: "15 minutes",
+  });
   await app.register(fastifyCors, {
     origin: env.corsOrigins,
     credentials: true,
