@@ -5,7 +5,7 @@ supabase/migrations/*
 !supabase/migrations/001_initial_schema.sql
 
 # dependencies
-/node_modules
+node_modules
 /.pnp
 .pnp.js
 
@@ -13,8 +13,14 @@ supabase/migrations/*
 /coverage
 
 # next.js
-/.next/
-/out/
+.next/
+out/
+
+# api build output
+apps/api/dist/
+
+# contracts build output
+packages/contracts/dist/
 
 # production
 /build
