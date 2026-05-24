@@ -34,7 +34,9 @@ async function build() {
   const app = Fastify({
     logger: {
       level: env.LOG_LEVEL,
-      transport: env.isDev ? { target: "pino-pretty", options: { translateTime: "HH:MM:ss" } } : undefined,
+      transport: env.isDev
+        ? { target: "pino-pretty", options: { translateTime: "HH:MM:ss" } }
+        : undefined,
     },
   }).withTypeProvider<ZodTypeProvider>();
 
@@ -71,6 +73,8 @@ async function build() {
   return app;
 }
 
+export { build };
+
 async function start() {
   const app = await build();
   try {
@@ -83,4 +87,9 @@ async function start() {
   }
 }
 
-start();
+// Only start the server when run directly (not when imported by tests).
+import { fileURLToPath } from "url";
+const isMain = process.argv[1] === fileURLToPath(import.meta.url);
+if (isMain) {
+  start();
+}
