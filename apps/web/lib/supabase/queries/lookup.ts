@@ -1,5 +1,6 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "@/types/database.types";
+/** Thin client-side shim around the owned API. */
+
+import { apiBrowser } from "@/lib/api-client-browser";
 import type {
   TicketStatusRow,
   TicketPriorityRow,
@@ -9,203 +10,81 @@ import type {
   TicketTagRow,
 } from "@/types/ticket.types";
 
-type Client = SupabaseClient<Database>;
+type AnyClient = unknown;
 
-export async function getTicketStatuses(supabase: Client): Promise<TicketStatusRow[]> {
-  const { data, error } = await supabase
-    .from("ticket_statuses")
-    .select("*")
-    .order("display_order");
-  if (error) throw error;
-  return data as TicketStatusRow[];
+export async function getTicketStatuses(_sb: AnyClient) {
+  return apiBrowser.get<TicketStatusRow[]>("/lookup/statuses");
+}
+export async function getTicketPriorities(_sb: AnyClient) {
+  return apiBrowser.get<TicketPriorityRow[]>("/lookup/priorities");
+}
+export async function getTicketCategories(_sb: AnyClient) {
+  return apiBrowser.get<TicketCategoryRow[]>("/lookup/categories");
+}
+export async function getTicketSupportLevels(_sb: AnyClient) {
+  return apiBrowser.get<TicketSupportLevelRow[]>("/lookup/support-levels");
+}
+export async function getTicketTemperatures(_sb: AnyClient) {
+  return apiBrowser.get<TicketTemperatureRow[]>("/lookup/temperatures");
+}
+export async function getTags(_sb: AnyClient) {
+  return apiBrowser.get<TicketTagRow[]>("/lookup/tags");
 }
 
-export async function getTicketPriorities(supabase: Client): Promise<TicketPriorityRow[]> {
-  const { data, error } = await supabase
-    .from("ticket_priorities")
-    .select("*")
-    .order("display_order");
-  if (error) throw error;
-  return data as TicketPriorityRow[];
+// ── Mutations ───────────────────────────────────────────────────────────────
+
+export async function createTicketStatus(_sb: AnyClient, input: Omit<TicketStatusRow, "id">) {
+  return apiBrowser.post<TicketStatusRow>("/lookup/statuses", input);
 }
-
-export async function getTicketCategories(supabase: Client): Promise<TicketCategoryRow[]> {
-  const { data, error } = await supabase
-    .from("ticket_categories")
-    .select("*")
-    .order("display_order");
-  if (error) throw error;
-  return data as TicketCategoryRow[];
-}
-
-export async function getTicketSupportLevels(supabase: Client): Promise<TicketSupportLevelRow[]> {
-  const { data, error } = await supabase
-    .from("ticket_support_levels")
-    .select("*")
-    .order("display_order");
-  if (error) throw error;
-  return data as TicketSupportLevelRow[];
-}
-
-export async function getTicketTemperatures(supabase: Client): Promise<TicketTemperatureRow[]> {
-  const { data, error } = await supabase
-    .from("ticket_temperatures")
-    .select("*")
-    .order("display_order");
-  if (error) throw error;
-  return data as TicketTemperatureRow[];
-}
-
-export async function getTags(supabase: Client): Promise<TicketTagRow[]> {
-  const { data, error } = await supabase
-    .from("tags")
-    .select("*")
-    .order("name");
-  if (error) throw error;
-  return data as TicketTagRow[];
-}
-
-// ── Mutations ─────────────────────────────────────────────────────────────────
-
-// Ticket Statuses
-export async function createTicketStatus(
-  supabase: Client,
-  input: Omit<TicketStatusRow, "id">,
-): Promise<TicketStatusRow> {
-  const { data, error } = await (supabase.from("ticket_statuses") as any)
-    .insert([input])
-    .select("*")
-    .single();
-  if (error) throw error;
-  return data as TicketStatusRow;
-}
-
 export async function updateTicketStatus(
-  supabase: Client,
+  _sb: AnyClient,
   id: number,
   input: Partial<Omit<TicketStatusRow, "id">>,
-): Promise<TicketStatusRow> {
-  const { data, error } = await (supabase.from("ticket_statuses") as any)
-    .update(input)
-    .eq("id", id)
-    .select("*")
-    .single();
-  if (error) throw error;
-  return data as TicketStatusRow;
+) {
+  return apiBrowser.patch<TicketStatusRow>(`/lookup/statuses/${id}`, input);
+}
+export async function deleteTicketStatus(_sb: AnyClient, id: number) {
+  await apiBrowser.del(`/lookup/statuses/${id}`);
 }
 
-export async function deleteTicketStatus(
-  supabase: Client,
-  id: number,
-): Promise<void> {
-  const { error } = await (supabase.from("ticket_statuses") as any)
-    .delete()
-    .eq("id", id);
-  if (error) throw error;
+export async function createTicketPriority(_sb: AnyClient, input: Omit<TicketPriorityRow, "id">) {
+  return apiBrowser.post<TicketPriorityRow>("/lookup/priorities", input);
 }
-
-// Ticket Priorities
-export async function createTicketPriority(
-  supabase: Client,
-  input: Omit<TicketPriorityRow, "id">,
-): Promise<TicketPriorityRow> {
-  const { data, error } = await (supabase.from("ticket_priorities") as any)
-    .insert([input])
-    .select("*")
-    .single();
-  if (error) throw error;
-  return data as TicketPriorityRow;
-}
-
 export async function updateTicketPriority(
-  supabase: Client,
+  _sb: AnyClient,
   id: number,
   input: Partial<Omit<TicketPriorityRow, "id">>,
-): Promise<TicketPriorityRow> {
-  const { data, error } = await (supabase.from("ticket_priorities") as any)
-    .update(input)
-    .eq("id", id)
-    .select("*")
-    .single();
-  if (error) throw error;
-  return data as TicketPriorityRow;
+) {
+  return apiBrowser.patch<TicketPriorityRow>(`/lookup/priorities/${id}`, input);
+}
+export async function deleteTicketPriority(_sb: AnyClient, id: number) {
+  await apiBrowser.del(`/lookup/priorities/${id}`);
 }
 
-export async function deleteTicketPriority(
-  supabase: Client,
-  id: number,
-): Promise<void> {
-  const { error } = await (supabase.from("ticket_priorities") as any)
-    .delete()
-    .eq("id", id);
-  if (error) throw error;
+export async function createTicketCategory(_sb: AnyClient, input: Omit<TicketCategoryRow, "id">) {
+  return apiBrowser.post<TicketCategoryRow>("/lookup/categories", input);
 }
-
-// Ticket Categories
-export async function createTicketCategory(
-  supabase: Client,
-  input: Omit<TicketCategoryRow, "id">,
-): Promise<TicketCategoryRow> {
-  const { data, error } = await (supabase.from("ticket_categories") as any)
-    .insert([input])
-    .select("*")
-    .single();
-  if (error) throw error;
-  return data as TicketCategoryRow;
-}
-
 export async function updateTicketCategory(
-  supabase: Client,
+  _sb: AnyClient,
   id: number,
   input: Partial<Omit<TicketCategoryRow, "id">>,
-): Promise<TicketCategoryRow> {
-  const { data, error } = await (supabase.from("ticket_categories") as any)
-    .update(input)
-    .eq("id", id)
-    .select("*")
-    .single();
-  if (error) throw error;
-  return data as TicketCategoryRow;
+) {
+  return apiBrowser.patch<TicketCategoryRow>(`/lookup/categories/${id}`, input);
+}
+export async function deleteTicketCategory(_sb: AnyClient, id: number) {
+  await apiBrowser.del(`/lookup/categories/${id}`);
 }
 
-export async function deleteTicketCategory(
-  supabase: Client,
-  id: number,
-): Promise<void> {
-  const { error } = await (supabase.from("ticket_categories") as any)
-    .delete()
-    .eq("id", id);
-  if (error) throw error;
+export async function createTag(_sb: AnyClient, input: Omit<TicketTagRow, "id">) {
+  return apiBrowser.post<TicketTagRow>("/lookup/tags", input);
 }
-
-// Tags
-export async function createTag(
-  supabase: Client,
-  input: Omit<TicketTagRow, "id">,
-): Promise<TicketTagRow> {
-  const { data, error } = await (supabase.from("tags") as any)
-    .insert([input])
-    .select("*")
-    .single();
-  if (error) throw error;
-  return data as TicketTagRow;
-}
-
 export async function updateTag(
-  supabase: Client,
+  _sb: AnyClient,
   id: number,
   input: Partial<Omit<TicketTagRow, "id">>,
-): Promise<TicketTagRow> {
-  const { data, error } = await (supabase.from("tags") as any)
-    .update(input)
-    .eq("id", id)
-    .select("*")
-    .single();
-  if (error) throw error;
-  return data as TicketTagRow;
+) {
+  return apiBrowser.patch<TicketTagRow>(`/lookup/tags/${id}`, input);
 }
-
-export async function deleteTag(supabase: Client, id: number): Promise<void> {
-  const { error } = await (supabase.from("tags") as any).delete().eq("id", id);
-  if (error) throw error;
+export async function deleteTag(_sb: AnyClient, id: number) {
+  await apiBrowser.del(`/lookup/tags/${id}`);
 }

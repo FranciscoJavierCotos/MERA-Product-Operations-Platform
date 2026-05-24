@@ -28,6 +28,7 @@ import { slaRoutes } from "./routes/slas.js";
 import { knowledgeRoutes } from "./routes/knowledge.js";
 import { itemLinkRoutes } from "./routes/item-links.js";
 import { commentRoutes } from "./routes/comments.js";
+import { storageRoutes } from "./routes/storage.js";
 
 async function build() {
   const app = Fastify({
@@ -65,6 +66,7 @@ async function build() {
   await app.register(knowledgeRoutes);
   await app.register(itemLinkRoutes);
   await app.register(commentRoutes);
+  await app.register(storageRoutes);
 
   return app;
 }

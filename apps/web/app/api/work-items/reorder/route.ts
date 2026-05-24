@@ -1,22 +1,15 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { api, ApiError } from "@/lib/api-client";
 import { reorderWorkItemSchema } from "@/lib/validations/work-item.schema";
-import { reorderItem } from "@/lib/supabase/queries/work-items";
 import { rankBetween } from "@/lib/utils/rank";
 
 /**
  * Drag-reorder endpoint. High-frequency — bypasses Server Actions to
  * avoid full route revalidation per drag. The client computes neighbor
- * ranks and posts them; the server validates, derives the midpoint,
- * and writes status/sprint atomically.
+ * ranks and posts them; this route derives the midpoint and delegates
+ * to the owned API, which writes status/sprint atomically.
  */
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const json = await request.json().catch(() => null);
   const parsed = reorderWorkItemSchema.safeParse(json);
   if (!parsed.success) {
@@ -30,12 +23,16 @@ export async function POST(request: Request) {
   const rank = rankBetween(before_rank ?? null, after_rank ?? null);
 
   try {
-    const patch: { status?: typeof status; sprint_id?: typeof sprint_id } = {};
-    if (status !== undefined) patch.status = status;
-    if (sprint_id !== undefined) patch.sprint_id = sprint_id;
-    const item = await reorderItem(supabase, item_id, rank, patch);
+    const item = await api.patch(`/work-items/${item_id}/reorder`, {
+      rank,
+      status,
+      sprint_id,
+    });
     return NextResponse.json({ ok: true, item });
   } catch (err) {
+    if (err instanceof ApiError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Failed" },
       { status: 500 },

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { api, ApiError } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/server";
 import {
   projectSchema,
@@ -15,27 +16,10 @@ import {
   updateWorkItemSchema,
   workItemCommentSchema,
 } from "@/lib/validations/work-item.schema";
-import {
-  createProject,
-  updateProject,
-  archiveProject,
-  deleteProject,
-  getProjectById,
-} from "@/lib/supabase/queries/projects";
-import { getProfile } from "@/lib/supabase/queries/users";
-import {
-  createSprint,
-  updateSprint,
-  startSprint,
-  completeSprint,
-  deleteSprint,
-} from "@/lib/supabase/queries/sprints";
-import {
-  createWorkItem,
-  updateWorkItem,
-  getLastRank,
-} from "@/lib/supabase/queries/work-items";
-import { createWorkItemComment } from "@/lib/supabase/queries/work-item-comments";
+import type { Project } from "@/types/project.types";
+import type { Sprint } from "@/types/sprint.types";
+import type { WorkItem } from "@/types/work-item.types";
+import type { Profile } from "@/types/user.types";
 import { rankBetween } from "@/lib/utils/rank";
 
 type ActionResult<T = unknown> =
@@ -48,7 +32,14 @@ async function requireUser() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
-  return { supabase, user };
+  return { user };
+}
+
+function asError(err: unknown, fallback = "Failed"): string {
+  if (err instanceof ApiError) {
+    return err.message || fallback;
+  }
+  return err instanceof Error ? err.message : fallback;
 }
 
 // ────────────────────────────────────────────────
@@ -59,7 +50,7 @@ export async function createProjectAction(
   input: unknown,
 ): Promise<ActionResult<{ key: string }>> {
   try {
-    const { supabase, user } = await requireUser();
+    const { user } = await requireUser();
     const parsed = projectSchema.safeParse(input);
     if (!parsed.success) {
       return {
@@ -68,7 +59,7 @@ export async function createProjectAction(
       };
     }
 
-    const profile = await getProfile(supabase, user.id);
+    const profile = await api.get<Profile | null>(`/users/${user.id}`);
     if (!profile) {
       return {
         ok: false,
@@ -97,28 +88,20 @@ export async function createProjectAction(
       }
     }
 
-    const project = await createProject(supabase, {
-      ...projectInput,
-      created_by: user.id,
-    });
+    const project = await api.post<Project>("/projects", projectInput);
     revalidatePath("/projects");
     return { ok: true, data: { key: project.key } };
   } catch (err) {
     console.error("[createProjectAction]", err);
-    if (
-      err instanceof Error &&
-      err.message.includes('row-level security policy for table "projects"')
-    ) {
+    const message = asError(err);
+    if (message.includes('row-level security policy for table "projects"')) {
       return {
         ok: false,
         error:
           "You are not allowed to create this project with the selected team/lead. Choose your own team or set yourself as project lead.",
       };
     }
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : String(err),
-    };
+    return { ok: false, error: message };
   }
 }
 
@@ -127,7 +110,7 @@ export async function updateProjectAction(
   input: unknown,
 ): Promise<ActionResult> {
   try {
-    const { supabase } = await requireUser();
+    await requireUser();
     const parsed = updateProjectSchema.safeParse(input);
     if (!parsed.success) {
       return {
@@ -135,12 +118,12 @@ export async function updateProjectAction(
         error: parsed.error.issues[0]?.message ?? "Invalid input",
       };
     }
-    const project = await updateProject(supabase, projectId, parsed.data);
+    const project = await api.patch<Project>(`/projects/${projectId}`, parsed.data);
     revalidatePath("/projects");
     revalidatePath(`/projects/${project.key}`);
     return { ok: true, data: project };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Failed" };
+    return { ok: false, error: asError(err) };
   }
 }
 
@@ -148,15 +131,15 @@ export async function archiveProjectAction(
   projectId: string,
 ): Promise<ActionResult> {
   try {
-    const { supabase } = await requireUser();
-    const project = await getProjectById(supabase, projectId);
+    await requireUser();
+    const project = await api.get<Project | null>(`/projects/${projectId}`);
     if (!project) return { ok: false, error: "Project not found" };
-    await archiveProject(supabase, projectId);
+    await api.post(`/projects/${projectId}/archive`);
     revalidatePath("/projects");
     revalidatePath(`/projects/${project.key}`);
     return { ok: true, data: null };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Failed" };
+    return { ok: false, error: asError(err) };
   }
 }
 
@@ -164,26 +147,22 @@ export async function deleteProjectAction(
   projectId: string,
 ): Promise<ActionResult> {
   try {
-    const { supabase, user } = await requireUser();
+    const { user } = await requireUser();
 
-    // Only admins may permanently delete a project.
-    const profile = await getProfile(supabase, user.id);
+    const profile = await api.get<Profile | null>(`/users/${user.id}`);
     if (!profile || profile.role !== "admin") {
       return { ok: false, error: "Only admins can delete projects." };
     }
 
-    const project = await getProjectById(supabase, projectId);
+    const project = await api.get<Project | null>(`/projects/${projectId}`);
     if (!project) return { ok: false, error: "Project not found." };
 
-    await deleteProject(supabase, projectId);
+    await api.del(`/projects/${projectId}`);
 
     revalidatePath("/projects");
     return { ok: true, data: null };
   } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : "Failed to delete project.",
-    };
+    return { ok: false, error: asError(err, "Failed to delete project.") };
   }
 }
 
@@ -196,7 +175,7 @@ export async function createSprintAction(
   input: unknown,
 ): Promise<ActionResult> {
   try {
-    const { supabase } = await requireUser();
+    await requireUser();
     const parsed = sprintSchema.safeParse(input);
     if (!parsed.success) {
       return {
@@ -204,12 +183,13 @@ export async function createSprintAction(
         error: parsed.error.issues[0]?.message ?? "Invalid input",
       };
     }
-    const sprint = await createSprint(supabase, parsed.data);
+    const { project_id, ...body } = parsed.data;
+    const sprint = await api.post<Sprint>(`/projects/${project_id}/sprints`, body);
     revalidatePath(`/projects/${projectKey}/sprints`);
     revalidatePath(`/projects/${projectKey}`);
     return { ok: true, data: sprint };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Failed" };
+    return { ok: false, error: asError(err) };
   }
 }
 
@@ -219,7 +199,7 @@ export async function updateSprintAction(
   input: unknown,
 ): Promise<ActionResult> {
   try {
-    const { supabase } = await requireUser();
+    await requireUser();
     const parsed = updateSprintSchema.safeParse(input);
     if (!parsed.success) {
       return {
@@ -227,12 +207,12 @@ export async function updateSprintAction(
         error: parsed.error.issues[0]?.message ?? "Invalid input",
       };
     }
-    const sprint = await updateSprint(supabase, sprintId, parsed.data);
+    const sprint = await api.patch<Sprint>(`/sprints/${sprintId}`, parsed.data);
     revalidatePath(`/projects/${projectKey}/sprints`);
     revalidatePath(`/projects/${projectKey}`);
     return { ok: true, data: sprint };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Failed" };
+    return { ok: false, error: asError(err) };
   }
 }
 
@@ -241,14 +221,14 @@ export async function deleteSprintAction(
   sprintId: string,
 ): Promise<ActionResult> {
   try {
-    const { supabase } = await requireUser();
-    await deleteSprint(supabase, sprintId);
+    await requireUser();
+    await api.del(`/sprints/${sprintId}`);
     revalidatePath(`/projects/${projectKey}/sprints`);
     revalidatePath(`/projects/${projectKey}`);
     revalidatePath(`/projects/${projectKey}/backlog`);
     return { ok: true, data: null };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Failed" };
+    return { ok: false, error: asError(err) };
   }
 }
 
@@ -257,13 +237,13 @@ export async function startSprintAction(
   sprintId: string,
 ): Promise<ActionResult> {
   try {
-    const { supabase } = await requireUser();
-    await startSprint(supabase, sprintId);
+    await requireUser();
+    await api.post(`/sprints/${sprintId}/start`);
     revalidatePath(`/projects/${projectKey}/sprints`);
     revalidatePath(`/projects/${projectKey}`);
     return { ok: true, data: null };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Failed" };
+    return { ok: false, error: asError(err) };
   }
 }
 
@@ -272,14 +252,14 @@ export async function completeSprintAction(
   sprintId: string,
 ): Promise<ActionResult> {
   try {
-    const { supabase } = await requireUser();
-    await completeSprint(supabase, sprintId);
+    await requireUser();
+    await api.post(`/sprints/${sprintId}/complete`);
     revalidatePath(`/projects/${projectKey}/sprints`);
     revalidatePath(`/projects/${projectKey}`);
     revalidatePath(`/projects/${projectKey}/backlog`);
     return { ok: true, data: null };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Failed" };
+    return { ok: false, error: asError(err) };
   }
 }
 
@@ -292,7 +272,7 @@ export async function createWorkItemAction(
   input: unknown,
 ): Promise<ActionResult<{ item_key: string }>> {
   try {
-    const { supabase, user } = await requireUser();
+    await requireUser();
     const parsed = workItemSchema.safeParse(input);
     if (!parsed.success) {
       return {
@@ -302,24 +282,25 @@ export async function createWorkItemAction(
     }
 
     // Append to bottom of the target bucket (backlog or sprint).
-    const lastRank = await getLastRank(
-      supabase,
-      parsed.data.project_id,
-      parsed.data.sprint_id ?? null,
+    const { rank: lastRank } = await api.get<{ rank: string | null }>(
+      "/work-items/rank/last",
+      {
+        projectId: parsed.data.project_id,
+        sprintId: parsed.data.sprint_id ?? undefined,
+      },
     );
     const rank = rankBetween(lastRank, null);
 
-    const item = await createWorkItem(supabase, {
+    const item = await api.post<WorkItem>("/work-items", {
       ...parsed.data,
       rank,
-      reporter_id: user.id,
     });
 
     revalidatePath(`/projects/${projectKey}`);
     revalidatePath(`/projects/${projectKey}/backlog`);
     return { ok: true, data: { item_key: item.item_key } };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Failed" };
+    return { ok: false, error: asError(err) };
   }
 }
 
@@ -329,7 +310,7 @@ export async function updateWorkItemAction(
   input: unknown,
 ): Promise<ActionResult> {
   try {
-    const { supabase } = await requireUser();
+    await requireUser();
     const parsed = updateWorkItemSchema.safeParse(input);
     if (!parsed.success) {
       return {
@@ -337,12 +318,12 @@ export async function updateWorkItemAction(
         error: parsed.error.issues[0]?.message ?? "Invalid input",
       };
     }
-    const item = await updateWorkItem(supabase, workItemId, parsed.data);
+    const item = await api.patch<WorkItem>(`/work-items/${workItemId}`, parsed.data);
     revalidatePath(`/projects/${projectKey}`);
     revalidatePath(`/projects/${projectKey}/backlog`);
     return { ok: true, data: item };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Failed" };
+    return { ok: false, error: asError(err) };
   }
 }
 
@@ -355,7 +336,7 @@ export async function createWorkItemCommentAction(
   input: unknown,
 ): Promise<ActionResult> {
   try {
-    const { supabase, user } = await requireUser();
+    await requireUser();
     const parsed = workItemCommentSchema.safeParse(input);
     if (!parsed.success) {
       return {
@@ -363,14 +344,13 @@ export async function createWorkItemCommentAction(
         error: parsed.error.issues[0]?.message ?? "Invalid input",
       };
     }
-    const comment = await createWorkItemComment(supabase, {
-      work_item_id: parsed.data.work_item_id,
-      user_id: user.id,
-      content: parsed.data.content,
-    });
+    const comment = await api.post(
+      `/work-items/${parsed.data.work_item_id}/comments`,
+      { content: parsed.data.content },
+    );
     revalidatePath(`/projects/${projectKey}`);
     return { ok: true, data: comment };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Failed" };
+    return { ok: false, error: asError(err) };
   }
 }

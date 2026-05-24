@@ -1,52 +1,26 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "@/types/database.types";
-import { Profile } from "@/types/user.types";
+/** Thin client-side shim around the owned API. */
 
-type Client = SupabaseClient<Database>;
+import { apiBrowser } from "@/lib/api-client-browser";
+import type { Profile } from "@/types/user.types";
 
-export async function getProfile(supabase: Client, userId: string) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", userId)
-    .maybeSingle();
+type AnyClient = unknown;
 
-  if (error) throw error;
-  return data as Profile | null;
+export async function getProfile(_sb: AnyClient, userId: string) {
+  return apiBrowser.get<Profile | null>(`/users/${userId}`);
 }
 
-export async function getAllProfiles(supabase: Client) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .order("full_name");
+export async function getAllProfiles(_sb: AnyClient) {
+  return apiBrowser.get<Profile[]>("/users");
+}
 
-  if (error) throw error;
-  return data as Profile[];
+export async function getSupportMembers(_sb: AnyClient) {
+  return apiBrowser.get<Profile[]>("/users/support");
 }
 
 export async function updateProfile(
-  supabase: Client,
+  _sb: AnyClient,
   userId: string,
-  updates: Partial<Profile>
+  updates: Partial<Profile>,
 ) {
-  const { data, error } = await (supabase.from("profiles") as any)
-    .update(updates)
-    .eq("id", userId)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data as Profile;
-}
-
-export async function getSupportMembers(supabase: Client) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .in("role", ["admin", "support_lead", "support_member"])
-    .order("full_name");
-
-  if (error) throw error;
-  return data as Profile[];
+  return apiBrowser.patch<Profile>(`/users/${userId}`, updates);
 }

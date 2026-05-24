@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import * as kb from "../services/knowledge";
+import * as kbAdmin from "../services/knowledge-admin";
 
 const IdParam = z.object({ id: z.string().uuid() });
 
@@ -77,5 +78,200 @@ export const knowledgeRoutes: FastifyPluginAsyncZod = async (app) => {
         threshold: req.body.threshold,
         count: req.body.count,
       }),
+  );
+
+  // ─── Admin mutations ─────────────────────────────────────────────────────
+
+  const TicketIdParam = z.object({ ticketId: z.string().uuid() });
+  const DocIdParam = z.object({ documentId: z.string().uuid() });
+  const VersionIdParam = z.object({ versionId: z.string().uuid() });
+  const CollectionIdParam = z.object({ collectionId: z.string().uuid() });
+
+  app.post(
+    "/knowledge/documents",
+    {
+      schema: {
+        tags: ["knowledge"],
+        body: z.object({
+          title: z.string().min(1),
+          description: z.string().nullable().optional(),
+          collection_id: z.string().uuid().nullable().optional(),
+          tag_ids: z.array(z.string().uuid()).optional(),
+        }),
+      },
+    },
+    async (req) => kbAdmin.createDocument(req.supabase, req.user.id, req.body),
+  );
+
+  app.patch(
+    "/knowledge/documents/:documentId",
+    {
+      schema: {
+        tags: ["knowledge"],
+        params: DocIdParam,
+        body: z.object({}).passthrough(),
+      },
+    },
+    async (req) =>
+      kbAdmin.updateDocument(req.supabase, req.user.id, req.params.documentId, req.body),
+  );
+
+  app.post(
+    "/knowledge/documents/:documentId/archive",
+    {
+      schema: {
+        tags: ["knowledge"],
+        params: DocIdParam,
+        body: z.object({ archive: z.boolean() }),
+      },
+    },
+    async (req) =>
+      kbAdmin.archiveDocument(req.supabase, req.user.id, req.params.documentId, req.body.archive),
+  );
+
+  app.delete(
+    "/knowledge/documents/:documentId",
+    { schema: { tags: ["knowledge"], params: DocIdParam } },
+    async (req) => kbAdmin.deleteDocument(req.supabase, req.user.id, req.params.documentId),
+  );
+
+  app.get(
+    "/knowledge/documents/:documentId/next-version",
+    { schema: { tags: ["knowledge"], params: DocIdParam } },
+    async (req) => ({
+      version_number: await kbAdmin.getNextVersionNumber(req.supabase, req.params.documentId),
+    }),
+  );
+
+  app.post(
+    "/knowledge/document-versions",
+    {
+      schema: {
+        tags: ["knowledge"],
+        body: z.object({
+          document_id: z.string().uuid(),
+          version_number: z.number().int().min(1),
+          storage_path: z.string(),
+          original_filename: z.string(),
+          mime_type: z.string(),
+          file_size_bytes: z.number().int().min(0),
+        }),
+      },
+    },
+    async (req) => kbAdmin.recordDocumentVersion(req.supabase, req.user.id, req.body),
+  );
+
+  app.post(
+    "/knowledge/document-versions/:versionId/reprocess",
+    { schema: { tags: ["knowledge"], params: VersionIdParam } },
+    async (req) => kbAdmin.reprocessVersion(req.supabase, req.user.id, req.params.versionId),
+  );
+
+  app.post(
+    "/knowledge/collections",
+    {
+      schema: {
+        tags: ["knowledge"],
+        body: z.object({
+          id: z.string().uuid().optional(),
+          name: z.string().min(1),
+          slug: z.string().min(1),
+          description: z.string().nullable().optional(),
+        }),
+      },
+    },
+    async (req) => kbAdmin.upsertCollection(req.supabase, req.user.id, req.body),
+  );
+
+  app.post(
+    "/knowledge/collections/:collectionId/archive",
+    {
+      schema: {
+        tags: ["knowledge"],
+        params: CollectionIdParam,
+        body: z.object({ archive: z.boolean() }),
+      },
+    },
+    async (req) =>
+      kbAdmin.archiveCollection(
+        req.supabase,
+        req.user.id,
+        req.params.collectionId,
+        req.body.archive,
+      ),
+  );
+
+  app.patch(
+    "/knowledge/retrieval-config",
+    {
+      schema: {
+        tags: ["knowledge"],
+        body: z.object({
+          similarity_threshold: z.number(),
+          max_results: z.number().int(),
+          source_weights: z.record(z.number()),
+          sources_enabled: z.record(z.boolean()),
+        }),
+      },
+    },
+    async (req) => kbAdmin.updateRetrievalConfig(req.supabase, req.user.id, req.body),
+  );
+
+  app.post(
+    "/knowledge/resolutions/:ticketId/toggle-ai",
+    {
+      schema: {
+        tags: ["knowledge"],
+        params: TicketIdParam,
+        body: z.object({ enabled: z.boolean() }),
+      },
+    },
+    async (req) =>
+      kbAdmin.toggleResolutionAi(
+        req.supabase,
+        req.user.id,
+        req.params.ticketId,
+        req.body.enabled,
+      ),
+  );
+
+  app.post(
+    "/knowledge/resolutions/:ticketId/archive",
+    {
+      schema: {
+        tags: ["knowledge"],
+        params: TicketIdParam,
+        body: z.object({ archive: z.boolean() }),
+      },
+    },
+    async (req) =>
+      kbAdmin.archiveResolution(
+        req.supabase,
+        req.user.id,
+        req.params.ticketId,
+        req.body.archive,
+      ),
+  );
+
+  app.post(
+    "/knowledge/resolutions/:ticketId/reembed",
+    { schema: { tags: ["knowledge"], params: TicketIdParam } },
+    async (req) => kbAdmin.reembedResolution(req.supabase, req.user.id, req.params.ticketId),
+  );
+
+  app.post(
+    "/knowledge/retrieval-log",
+    {
+      schema: {
+        tags: ["knowledge"],
+        body: z.object({
+          ticket_id: z.string().uuid(),
+          query_text: z.string(),
+          results: z.unknown(),
+          result_count: z.number().int().min(0),
+        }),
+      },
+    },
+    async (req) => kbAdmin.writeRetrievalLog(req.supabase, req.user.id, req.body as any),
   );
 };

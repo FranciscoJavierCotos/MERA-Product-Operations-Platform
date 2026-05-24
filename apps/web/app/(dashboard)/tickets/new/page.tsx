@@ -3,15 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { createTicket } from "@/lib/supabase/queries/tickets";
-import { getSupportMembers } from "@/lib/supabase/queries/users";
-import { getFunctionalTeams } from "@/lib/supabase/queries/teams";
-import {
-  getTicketStatuses,
-  getTicketPriorities,
-  getTicketCategories,
-  getTicketSupportLevels,
-} from "@/lib/supabase/queries/lookup";
+import { apiBrowser } from "@/lib/api-client-browser";
 import { uploadCommentImage } from "@/lib/supabase/queries/comments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,12 +93,12 @@ export default function NewTicketPage() {
       try {
         const [members, teams, fetchedStatuses, fetchedPriorities, fetchedCategories, supportLevels] =
           await Promise.all([
-            getSupportMembers(supabase),
-            getFunctionalTeams(supabase),
-            getTicketStatuses(supabase),
-            getTicketPriorities(supabase),
-            getTicketCategories(supabase),
-            getTicketSupportLevels(supabase),
+            apiBrowser.get<Profile[]>("/users/support"),
+            apiBrowser.get<Team[]>("/teams/functional"),
+            apiBrowser.get<TicketStatusRow[]>("/lookup/statuses"),
+            apiBrowser.get<TicketPriorityRow[]>("/lookup/priorities"),
+            apiBrowser.get<TicketCategoryRow[]>("/lookup/categories"),
+            apiBrowser.get<{ id: number; name: string }[]>("/lookup/support-levels"),
           ]);
         setSupportMembers(members);
         setFunctionalTeams(teams);
@@ -157,7 +149,7 @@ export default function NewTicketPage() {
 
       const resolvedStatusId = assignedTo ? (statusId ?? defaultStatusId) : defaultStatusId;
 
-      const ticket = await createTicket(supabase, {
+      const ticket = await apiBrowser.post<{ id: string }>("/tickets", {
         title,
         description,
         category_id: categoryId,
@@ -165,7 +157,6 @@ export default function NewTicketPage() {
         priority_id: priorityId,
         status_id: resolvedStatusId,
         assigned_to: assignedTo || null,
-        created_by: user.id,
         functional_team_id: functionalTeamId,
         team_id: L1_SUPPORT_DESK_ID,
         support_level_id: l1SupportLevelId,

@@ -1,14 +1,24 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "@/types/database.types";
+/**
+ * Thin client-side shim around the owned API.
+ *
+ * Every function here delegates to apiBrowser; the Supabase client
+ * argument is accepted only to keep the existing call signatures so
+ * the migration stayed small. The arg is unused. Phase 6 will remove
+ * the arg from call sites and delete this file entirely.
+ *
+ * Re-exports the types Server Components still depend on.
+ */
+
+import { apiBrowser } from "@/lib/api-client-browser";
 import type {
   Ticket,
   TicketComment,
   TicketHistory,
 } from "@/types/ticket.types";
 
-type Client = SupabaseClient<Database>;
+type AnyClient = unknown;
 
-interface MyTicketNavigation {
+export interface MyTicketNavigation {
   firstTicketId: string | null;
   previousTicketId: string | null;
   nextTicketId: string | null;
@@ -29,394 +39,9 @@ export interface TicketFilters {
   sort_dir?: string;
 }
 
-const SORTABLE_COLUMNS = new Set([
-  "ticket_number",
-  "title",
-  "category_id",
-  "status_id",
-  "priority_id",
-  "temperature_id",
-  "created_at",
-  "updated_at",
-]);
-
-const TICKET_SELECT = `
-  id, ticket_number, title, description, resolution, cc_email,
-  status_id, priority_id, category_id, support_level_id, temperature_id,
-  created_by, assigned_to, team_id, functional_team_id,
-  client_email, client_name, attachments, custom_fields,
-  time_worked_minutes, created_at, updated_at, resolved_at, closed_at,
-  status:ticket_statuses(id, name, label, badge_variant, is_final, display_order),
-  priority:ticket_priorities(id, name, label, color_class, display_order),
-  category:ticket_categories(id, name, label, display_order),
-  support_level:ticket_support_levels(id, name, label, description, color_class, display_order),
-  temperature:ticket_temperatures(id, name, label, emoji, color_class, display_order),
-  tags:ticket_tags(tag:tags(id, name, slug, color_class)),
-  assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email, avatar_url),
-  creator:profiles!tickets_created_by_fkey(id, full_name, email),
-  functional_team:teams!tickets_functional_team_id_fkey(id, name),
-  support_team:teams!tickets_team_id_fkey(id, name),
-  sla_instance:sla_instances(id, response_due_at, resolution_due_at, responded_at, paused_at, total_paused_minutes, policy:sla_policies(name, priority_id, response_time_minutes, resolution_time_minutes))
-`;
-
-const TICKET_SELECT_DETAIL = `
-  id, ticket_number, title, description, resolution, cc_email,
-  status_id, priority_id, category_id, support_level_id, temperature_id,
-  created_by, assigned_to, team_id, functional_team_id,
-  client_email, client_name, attachments, custom_fields,
-  time_worked_minutes, created_at, updated_at, resolved_at, closed_at,
-  status:ticket_statuses(id, name, label, badge_variant, is_final, display_order),
-  priority:ticket_priorities(id, name, label, color_class, display_order),
-  category:ticket_categories(id, name, label, display_order),
-  support_level:ticket_support_levels(id, name, label, description, color_class, display_order),
-  temperature:ticket_temperatures(id, name, label, emoji, color_class, display_order),
-  tags:ticket_tags(tag:tags(id, name, slug, color_class)),
-  assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email, avatar_url, role),
-  creator:profiles!tickets_created_by_fkey(id, full_name, email),
-  functional_team:teams!tickets_functional_team_id_fkey(id, name, category),
-  support_team:teams!tickets_team_id_fkey(id, name, category),
-  sla_instance:sla_instances(id, response_due_at, resolution_due_at, responded_at, paused_at, total_paused_minutes, policy:sla_policies(name, priority_id, response_time_minutes, resolution_time_minutes))
-`;
-
-function applyFilters(query: any, filters?: TicketFilters) {
-  if (!filters) return query;
-  if (filters.search) query = query.ilike("title", `%${filters.search}%`);
-  if (filters.status_id) query = query.eq("status_id", filters.status_id);
-  if (filters.priority_id) query = query.eq("priority_id", filters.priority_id);
-  if (filters.category_id) query = query.eq("category_id", filters.category_id);
-  if (filters.temperature_id)
-    query = query.eq("temperature_id", filters.temperature_id);
-  if (filters.functional_team_id)
-    query = query.eq("functional_team_id", filters.functional_team_id);
-  if (filters.support_team_id)
-    query = query.eq("team_id", filters.support_team_id);
-  if (filters.assigned_to) query = query.eq("assigned_to", filters.assigned_to);
-  if (filters.created_from)
-    query = query.gte("created_at", `${filters.created_from}T00:00:00.000Z`);
-  if (filters.created_to)
-    query = query.lte("created_at", `${filters.created_to}T23:59:59.999Z`);
-  return query;
-}
-
-function applySort(query: any, filters?: TicketFilters) {
-  const col = filters?.sort_column;
-  const ascending = filters?.sort_dir === "asc";
-  if (col && SORTABLE_COLUMNS.has(col)) {
-    query = query.order(col, { ascending });
-    if (col !== "ticket_number")
-      query = query.order("ticket_number", { ascending: false });
-  } else {
-    query = query
-      .order("created_at", { ascending: false })
-      .order("ticket_number", { ascending: false });
-  }
-  return query;
-}
-
-export async function getTickets(
-  supabase: Client,
-  filters?: {
-    status_id?: number;
-    priority_id?: number;
-    assigned_to?: string;
-  },
-) {
-  let query = supabase
-    .from("tickets")
-    .select(TICKET_SELECT)
-    .order("created_at", { ascending: false })
-    .order("ticket_number", { ascending: false });
-
-  if (filters?.status_id) query = query.eq("status_id", filters.status_id);
-  if (filters?.priority_id)
-    query = query.eq("priority_id", filters.priority_id);
-  if (filters?.assigned_to)
-    query = query.eq("assigned_to", filters.assigned_to);
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data as unknown as Ticket[];
-}
-
 export interface PaginatedTickets {
   data: Ticket[];
   totalCount: number;
-}
-
-export async function getTicketsPaginated(
-  supabase: Client,
-  page: number,
-  pageSize: number,
-  filters?: TicketFilters,
-): Promise<PaginatedTickets> {
-  const safePage = Math.max(1, Math.floor(page));
-  const safeSize = Math.max(1, Math.floor(pageSize));
-  const from = (safePage - 1) * safeSize;
-  const to = from + safeSize - 1;
-
-  let query = supabase
-    .from("tickets")
-    .select(TICKET_SELECT, { count: "exact" });
-
-  query = applyFilters(query, filters);
-  query = applySort(query, filters);
-
-  const { data, error, count } = await query.range(from, to);
-  if (error) throw error;
-
-  return {
-    data: (data ?? []) as unknown as Ticket[],
-    totalCount: count ?? 0,
-  };
-}
-
-export async function getMyTicketsPaginated(
-  supabase: Client,
-  userId: string,
-  page: number,
-  pageSize: number,
-  filters?: Omit<TicketFilters, "assigned_to">,
-): Promise<PaginatedTickets> {
-  const safePage = Math.max(1, Math.floor(page));
-  const safeSize = Math.max(1, Math.floor(pageSize));
-  const from = (safePage - 1) * safeSize;
-  const to = from + safeSize - 1;
-
-  let query = supabase
-    .from("tickets")
-    .select(TICKET_SELECT, { count: "exact" })
-    .eq("assigned_to", userId);
-
-  query = applyFilters(query, filters);
-  query = applySort(query, filters);
-
-  const { data, error, count } = await query.range(from, to);
-  if (error) throw error;
-
-  return {
-    data: (data ?? []) as unknown as Ticket[],
-    totalCount: count ?? 0,
-  };
-}
-
-export async function getTicketById(
-  supabase: Client,
-  id: string,
-): Promise<Ticket | null> {
-  const { data, error } = await supabase
-    .from("tickets")
-    .select(TICKET_SELECT_DETAIL)
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!data) return null;
-  return data as unknown as Ticket;
-}
-
-export async function getTicketComments(supabase: Client, ticketId: string) {
-  const { data, error } = await supabase
-    .from("ticket_comments")
-    .select(
-      `
-      *,
-      user:profiles(id, full_name, email, avatar_url)
-    `,
-    )
-    .eq("ticket_id", ticketId)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-  return data as unknown as TicketComment[];
-}
-
-export async function getTicketHistory(supabase: Client, ticketId: string) {
-  const { data, error } = await supabase
-    .from("ticket_history")
-    .select(
-      `
-      *,
-      user:profiles(id, full_name, avatar_url)
-    `,
-    )
-    .eq("ticket_id", ticketId)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-  return data as unknown as TicketHistory[];
-}
-
-export async function createTicket(
-  supabase: Client,
-  ticket: Database["public"]["Tables"]["tickets"]["Insert"],
-) {
-  const { data, error } = await (supabase.from("tickets") as any)
-    .insert([ticket])
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function updateTicket(
-  supabase: Client,
-  id: string,
-  updates: Partial<Database["public"]["Tables"]["tickets"]["Update"]>,
-) {
-  const { data, error } = await (supabase.from("tickets") as any)
-    .update(updates)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function createComment(
-  supabase: Client,
-  comment: Database["public"]["Tables"]["ticket_comments"]["Insert"],
-) {
-  const { data, error } = await (supabase.from("ticket_comments") as any)
-    .insert([comment])
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function getMyTickets(supabase: Client, userId: string) {
-  const { data, error } = await supabase
-    .from("tickets")
-    .select(TICKET_SELECT)
-    .eq("assigned_to", userId)
-    .order("created_at", { ascending: false })
-    .order("ticket_number", { ascending: false });
-
-  if (error) throw error;
-  return data as unknown as Ticket[];
-}
-
-export async function getMyTicketNavigation(
-  supabase: Client,
-  userId: string,
-  currentTicketId: string,
-): Promise<MyTicketNavigation> {
-  const { data: rawData, error } = await (supabase.from("tickets") as any)
-    .select("id, ticket_number")
-    .eq("assigned_to", userId)
-    .order("ticket_number", { ascending: true });
-
-  if (error) throw error;
-
-  const data = rawData as Array<{ id: string; ticket_number: number }> | null;
-
-  if (!data || data.length === 0) {
-    return {
-      firstTicketId: null,
-      previousTicketId: null,
-      nextTicketId: null,
-    };
-  }
-
-  const currentIndex = data.findIndex((row) => row.id === currentTicketId);
-
-  if (currentIndex === -1) {
-    return {
-      firstTicketId: data[0]?.id ?? null,
-      previousTicketId: null,
-      nextTicketId: null,
-    };
-  }
-
-  return {
-    firstTicketId: data[0]?.id ?? null,
-    previousTicketId: data[currentIndex - 1]?.id ?? null,
-    nextTicketId: data[currentIndex + 1]?.id ?? null,
-  };
-}
-
-export async function searchTickets(supabase: Client, query: string) {
-  const normalizedQuery = query.trim();
-
-  if (!normalizedQuery) {
-    return [] as Ticket[];
-  }
-
-  const searchTerm = normalizedQuery.replace(/^"(.+)"$/, "$1").trim();
-
-  if (!searchTerm) {
-    return [] as Ticket[];
-  }
-
-  const selectStr = `
-    ${TICKET_SELECT}
-  `;
-
-  const searchWithIlike = async () => {
-    const ticketNumberMatch = searchTerm.match(/^#?(\d+)$/);
-    if (ticketNumberMatch) {
-      const ticketNumber = Number(ticketNumberMatch[1]);
-
-      const { data, error } = await supabase
-        .from("tickets")
-        .select(selectStr)
-        .eq("ticket_number", ticketNumber)
-        .order("created_at", { ascending: false })
-        .order("ticket_number", { ascending: false });
-
-      if (error) throw error;
-      return (data ?? []) as unknown as Ticket[];
-    }
-
-    const terms = searchTerm
-      .split(/\s+/)
-      .map((term) => term.trim())
-      .filter(Boolean);
-
-    let titleQuery = supabase.from("tickets").select(selectStr);
-    let descriptionQuery = supabase.from("tickets").select(selectStr);
-
-    for (const term of terms) {
-      const pattern = `%${term}%`;
-      titleQuery = titleQuery.ilike("title", pattern);
-      descriptionQuery = descriptionQuery.ilike("description", pattern);
-    }
-
-    const [titleResult, descriptionResult] = await Promise.all([
-      titleQuery
-        .order("created_at", { ascending: false })
-        .order("ticket_number", { ascending: false }),
-      descriptionQuery
-        .order("created_at", { ascending: false })
-        .order("ticket_number", { ascending: false }),
-    ]);
-
-    if (titleResult.error) throw titleResult.error;
-    if (descriptionResult.error) throw descriptionResult.error;
-
-    const seen = new Set<string>();
-    const merged = [
-      ...(titleResult.data ?? []),
-      ...(descriptionResult.data ?? []),
-    ] as unknown as Ticket[];
-
-    return merged.filter((ticket) => {
-      if (seen.has(ticket.id)) return false;
-      seen.add(ticket.id);
-      return true;
-    });
-  };
-
-  return searchWithIlike();
-}
-
-export async function deleteTicket(supabase: Client, id: string) {
-  const { error } = await supabase.from("tickets").delete().eq("id", id);
-  if (error) throw error;
-  return { success: true };
 }
 
 export interface ResolutionMatch {
@@ -427,32 +52,133 @@ export interface ResolutionMatch {
   similarity: number;
 }
 
+// ── Reads ────────────────────────────────────────────────────────────────────
+
+export async function getTickets(
+  _sb: AnyClient,
+  filters?: { status_id?: number; priority_id?: number; assigned_to?: string },
+): Promise<Ticket[]> {
+  return apiBrowser.get<Ticket[]>("/tickets", filters);
+}
+
+export async function getTicketsPaginated(
+  _sb: AnyClient,
+  page: number,
+  pageSize: number,
+  filters?: TicketFilters,
+): Promise<PaginatedTickets> {
+  return apiBrowser.get<PaginatedTickets>("/tickets/paginated", {
+    page,
+    pageSize,
+    ...filters,
+  });
+}
+
+export async function getMyTicketsPaginated(
+  _sb: AnyClient,
+  _userId: string,
+  page: number,
+  pageSize: number,
+  filters?: Omit<TicketFilters, "assigned_to">,
+): Promise<PaginatedTickets> {
+  return apiBrowser.get<PaginatedTickets>("/tickets/me/paginated", {
+    page,
+    pageSize,
+    ...filters,
+  });
+}
+
+export async function getTicketById(_sb: AnyClient, id: string) {
+  return apiBrowser.get<Ticket | null>(`/tickets/${id}`);
+}
+
+export async function getTicketComments(_sb: AnyClient, ticketId: string) {
+  return apiBrowser.get<TicketComment[]>(`/tickets/${ticketId}/comments`);
+}
+
+export async function getTicketHistory(_sb: AnyClient, ticketId: string) {
+  return apiBrowser.get<TicketHistory[]>(`/tickets/${ticketId}/history`);
+}
+
+export async function getMyTickets(_sb: AnyClient, _userId: string) {
+  return apiBrowser.get<Ticket[]>("/tickets/me");
+}
+
+export async function getMyTicketNavigation(
+  _sb: AnyClient,
+  _userId: string,
+  currentTicketId: string,
+) {
+  return apiBrowser.get<MyTicketNavigation>("/tickets/me/navigation", {
+    currentTicketId,
+  });
+}
+
+export async function searchTickets(_sb: AnyClient, query: string) {
+  if (!query.trim()) return [] as Ticket[];
+  return apiBrowser.get<Ticket[]>("/tickets/search", { q: query });
+}
+
 export async function findSimilarResolutions(
-  supabase: Client,
+  _sb: AnyClient,
   embedding: number[],
   limit = 5,
   excludeTicketId?: string,
-): Promise<ResolutionMatch[]> {
-  const { data, error } = await (supabase.rpc as any)("match_resolutions", {
-    query_embedding: embedding,
-    match_count: limit,
-    exclude_ticket_id: excludeTicketId ?? null,
+) {
+  return apiBrowser.post<ResolutionMatch[]>("/tickets/similar-resolutions", {
+    embedding,
+    limit,
+    excludeTicketId,
   });
-  if (error) throw error;
-  return (data ?? []) as ResolutionMatch[];
+}
+
+// ── Mutations ───────────────────────────────────────────────────────────────
+
+export async function createTicket(
+  _sb: AnyClient,
+  ticket: Record<string, unknown>,
+) {
+  return apiBrowser.post<Ticket>("/tickets", ticket);
+}
+
+export async function updateTicket(
+  _sb: AnyClient,
+  id: string,
+  updates: Record<string, unknown>,
+) {
+  return apiBrowser.patch<Ticket>(`/tickets/${id}`, updates);
+}
+
+export async function deleteTicket(_sb: AnyClient, id: string) {
+  await apiBrowser.del(`/tickets/${id}`);
+  return { success: true } as const;
 }
 
 export async function updateTimeWorked(
-  supabase: Client,
+  _sb: AnyClient,
   ticketId: string,
   timeWorkedMinutes: number,
 ) {
-  const { data, error } = await (supabase.from("tickets") as any)
-    .update({ time_worked_minutes: timeWorkedMinutes })
-    .eq("id", ticketId)
-    .select()
-    .single();
+  return apiBrowser.patch<Ticket>(`/tickets/${ticketId}/time-worked`, {
+    time_worked_minutes: timeWorkedMinutes,
+  });
+}
 
-  if (error) throw error;
-  return data;
+export async function createComment(
+  _sb: AnyClient,
+  comment: {
+    ticket_id: string;
+    content: string;
+    time_worked_minutes?: number;
+    is_internal?: boolean;
+  },
+) {
+  return apiBrowser.post<TicketComment>(
+    `/tickets/${comment.ticket_id}/comments`,
+    {
+      content: comment.content,
+      time_worked_minutes: comment.time_worked_minutes,
+      is_internal: comment.is_internal,
+    },
+  );
 }

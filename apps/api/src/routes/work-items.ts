@@ -9,6 +9,12 @@ const SprintIdParam = z.object({ sprintId: z.string().uuid() });
 
 const ProjectQuery = z.object({ projectId: z.string().uuid() });
 
+const RankQuery = z.object({
+  projectId: z.string().uuid(),
+  sprintId: z.string().uuid().nullable().optional(),
+  status: z.string().optional(),
+});
+
 const CreateBody = z.object({
   project_id: z.string().uuid(),
   sprint_id: z.string().uuid().nullable().optional(),
@@ -41,6 +47,30 @@ export const workItemRoutes: FastifyPluginAsyncZod = async (app) => {
     "/work-items/backlog",
     { schema: { tags: ["work-items"], querystring: ProjectQuery } },
     async (req) => workItems.listBacklog(req.supabase, req.query.projectId),
+  );
+  app.get(
+    "/work-items/rank/first",
+    { schema: { tags: ["work-items"], querystring: RankQuery } },
+    async (req) => ({
+      rank: await workItems.getFirstRank(
+        req.supabase,
+        req.query.projectId,
+        req.query.sprintId ?? null,
+        req.query.status as any,
+      ),
+    }),
+  );
+  app.get(
+    "/work-items/rank/last",
+    { schema: { tags: ["work-items"], querystring: RankQuery } },
+    async (req) => ({
+      rank: await workItems.getLastRank(
+        req.supabase,
+        req.query.projectId,
+        req.query.sprintId ?? null,
+        req.query.status as any,
+      ),
+    }),
   );
   app.get(
     "/work-items/sprint/:sprintId",
