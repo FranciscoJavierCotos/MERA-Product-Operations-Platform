@@ -1630,6 +1630,79 @@ CREATE TRIGGER item_links_work_item_history
   FOR EACH ROW EXECUTE FUNCTION log_item_link_work_item_history();
 
 
+-- ── 11p. Security: prevent role self-elevation ───────────────
+-- Blocks any non-admin authenticated session from changing the
+-- `role` column on any profiles row. This is defense-in-depth on
+-- top of the API-layer field check in the PATCH /users/:id route.
+--
+-- Why a trigger and not column-level REVOKE?
+--   Column privileges interact awkwardly with Supabase's
+--   anon/authenticated role hierarchy and would conflict with
+--   the profiles_admin_update RLS policy. A trigger is more
+--   explicit and auditable.
+--
+-- Why SECURITY DEFINER?
+--   The function does a SELECT on profiles to determine the
+--   caller's role. SECURITY DEFINER ensures this lookup always
+--   succeeds regardless of the calling session's RLS context.
+--
+-- Introduced in migration 033 and back-ported to this baseline
+-- so fresh installations are secure from the first run.
+
+CREATE OR REPLACE FUNCTION prevent_role_self_elevation()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_caller_id   uuid;
+  v_caller_role user_role;
+BEGIN
+  -- auth.uid() returns the JWT subject of the authenticated session.
+  -- Under service_role it is NULL — allow all service_role operations.
+  v_caller_id := auth.uid();
+  IF v_caller_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  -- Short-circuit: role column is not actually changing.
+  IF NEW.role IS NOT DISTINCT FROM OLD.role THEN
+    RETURN NEW;
+  END IF;
+
+  -- Look up the *caller's* current role.
+  -- SECURITY DEFINER ensures this SELECT always succeeds.
+  SELECT role INTO v_caller_role
+  FROM profiles
+  WHERE id = v_caller_id;
+
+  -- Admins may change any role on any row.
+  IF v_caller_role = 'admin' THEN
+    RETURN NEW;
+  END IF;
+
+  -- Non-admin is attempting a role change — block it.
+  RAISE EXCEPTION
+    'security_violation: role changes require admin privileges (caller: %, target: %)',
+    v_caller_id, NEW.id
+  USING ERRCODE = 'insufficient_privilege';
+
+  RETURN NULL;
+END;
+$$;
+
+CREATE TRIGGER trg_prevent_role_self_elevation
+  BEFORE UPDATE ON profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION prevent_role_self_elevation();
+
+COMMENT ON FUNCTION prevent_role_self_elevation() IS
+  'SECURITY DEFINER trigger: blocks non-admin authenticated users from '
+  'changing the role column on any profiles row. Admin callers and '
+  'service_role sessions (NULL auth.uid) are allowed through.';
+
+
 -- ============================================================
 -- 12. STORED PROCEDURES / RPC FUNCTIONS
 -- ============================================================

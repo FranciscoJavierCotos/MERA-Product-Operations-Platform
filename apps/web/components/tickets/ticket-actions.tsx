@@ -41,6 +41,7 @@ import { useUnsavedChangesContextOptional } from "@/lib/contexts/unsaved-changes
 import { RichTextEditor } from "./rich-text-editor";
 import { uploadCommentImage } from "@/lib/supabase/queries/comments";
 import { useToast } from "@/lib/hooks/use-toast";
+import { sanitizedHtml } from "@/lib/utils/sanitize";
 
 interface DeleteButtonProps {
   ticketId: string;
@@ -484,7 +485,7 @@ export function EditableTitleAndDescription({
   return (
     <div
       className="prose prose-sm max-w-none"
-      dangerouslySetInnerHTML={{ __html: initialDescription }}
+      dangerouslySetInnerHTML={sanitizedHtml(initialDescription)}
     />
   );
 }
@@ -636,7 +637,7 @@ export function EditableDescription({
   return (
     <div
       className="prose prose-sm max-w-none"
-      dangerouslySetInnerHTML={{ __html: initialDescription }}
+      dangerouslySetInnerHTML={sanitizedHtml(initialDescription)}
     />
   );
 }

@@ -7,6 +7,7 @@ import {
   EditButton,
 } from "@/components/tickets/ticket-actions";
 import { ResolutionCard } from "@/components/tickets/resolution-card";
+import { sanitizedHtml } from "@/lib/utils/sanitize";
 
 interface TicketDetailClientProps {
   ticketId: string;
@@ -55,7 +56,7 @@ export function TicketDetailClient({
           ) : (
             <div
               className="prose prose-sm max-w-none break-words"
-              dangerouslySetInnerHTML={{ __html: description }}
+              dangerouslySetInnerHTML={sanitizedHtml(description)}
             />
           )}
         </CardContent>

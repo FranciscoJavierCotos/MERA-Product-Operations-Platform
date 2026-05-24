@@ -5,6 +5,7 @@ import { TicketComment } from "@/types/ticket.types";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { formatRelativeTime, formatDateTime } from "@/lib/utils/date";
+import { sanitizedHtml } from "@/lib/utils/sanitize";
 import {
   Edit2,
   Trash2,
@@ -318,11 +319,13 @@ export function CommentItem({
                 className={`prose prose-sm max-w-none text-gray-700 break-words ${
                   !isExpanded ? "line-clamp-3" : ""
                 }`}
-                dangerouslySetInnerHTML={{
-                  __html: isExpanded
-                    ? comment.content
-                    : getPreviewContent(comment.content),
-                }}
+                dangerouslySetInnerHTML={
+                  // getPreviewContent strips <img> tags for the collapsed preview.
+                  // Sanitize *after* that strip so the allowlist pass runs last.
+                  isExpanded
+                    ? sanitizedHtml(comment.content)
+                    : sanitizedHtml(getPreviewContent(comment.content))
+                }
               />
               {/* LinkedIn-style show more/less */}
               {shouldShowReadMore && (

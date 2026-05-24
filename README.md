@@ -3,6 +3,7 @@
 > An open-source, AI-native workspace for product operations teams. Tickets, SLAs, knowledge retrieval, and Scrum delivery — unified in a single system where the database is the source of truth.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16_App_Router-black?style=flat-square)
+![Fastify](https://img.shields.io/badge/Fastify-5_API-000000?style=flat-square&logo=fastify)
 ![React](https://img.shields.io/badge/React-19-149ECA?style=flat-square)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5_strict-3178C6?style=flat-square)
 ![Supabase](https://img.shields.io/badge/Supabase-Postgres_+_RLS-3ECF8E?style=flat-square)
@@ -107,41 +108,47 @@ Ticket closed → BEFORE trigger strips HTML → resolution_plain
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                        Browser (React 19)                        │
-│  Server Components  │  Client Components  │  TanStack Query      │
-└────────────┬──────────────────────────┬───────────────────────── ┘
-             │ Server Actions           │ Realtime WebSocket
+┌─────────────────────────────────────────────────────────────────┐
+│                       Browser (React 19)                        │
+│  Server Components  │  Client Components  │  TanStack Query     │
+└────────────┬──────────────────────────┬────────────────────────┘
+             │ Server Actions           │ apiBrowser.*
              ▼                          ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                     Next.js 16 (App Router)                      │
-│  tickets · tasks · projects · knowledge · auth proxy middleware  │
-└────────────┬──────────────────────────┬────────────────────────┬ ┘
-             │ @supabase/ssr            │ Realtime               │ Storage
-             ▼                          ▼                        ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                        Supabase Platform                         │
-│  Postgres 15 + RLS + Triggers │ Realtime (WS) │ Storage (S3)    │
-│  pgvector · pg_net → edge fns │ per-ticket ch │ attachments/PDFs│
-│                               │               │                  │
-│  Edge Functions (Deno)                                           │
-│    embed-resolution   — resolution → embedding on ticket close   │
-│    ingest-document    — PDF → chunks → embeddings                │
-│    embed-query        — query → embedding for retrieval          │
-│         ↓  Google Gemini  gemini-embedding-001  (768 dims)       │
-└──────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                    Next.js 16 (App Router)                      │
+│  api.* (server-side)  ────────────────────────────────────────  │
+│  Auth only: @supabase/ssr — cookie session, no DB access        │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │ Authorization: Bearer <jwt>
+                           ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   Fastify 5 API  (apps/api)                     │
+│  JWT validation → per-request Supabase client (RLS preserved)   │
+│  Routes: tickets · tasks · projects · sprints · knowledge · …  │
+│  OpenAPI docs at :8080/docs · Zod validation on every endpoint  │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │ user-scoped client (auth.uid() intact)
+                           ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                       Supabase Platform                         │
+│  Postgres 15 + RLS + Triggers │ Storage (S3) │ Auth             │
+│  pgvector · pg_net → Edge Functions (Deno)                      │
+│    embed-resolution · ingest-document · embed-query             │
+│         ↓  Google Gemini  gemini-embedding-001  (768 dims)      │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 **Key architectural decisions:**
 
-| Decision                                                                                                        | Why it matters                                                                                                       |
-| --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| **Postgres triggers carry business logic** — history, SLA state, time accumulation, resolution validation       | Application code is replaceable; the database is the contract. Invariants hold regardless of which client writes     |
-| **RLS as the security boundary**                                                                                | Frontend checks are UX only. Stripping the UI must not strip access — auditable, declarative, lives next to the data |
-| **Lookup tables, not enums** — status, priority, category, temperature are DB rows with color and display order | Adding a status is a row insert, not a deploy                                                                        |
-| **SLA status is a pure function** of stored timestamps — no cron, no recompute                                  | Never wrong, never drifts, zero infrastructure overhead                                                              |
-| **`pg_net` fans out to edge functions**                                                                         | Keeps embeddings async without queue infrastructure                                                                  |
-| **Server Components first** — client islands only where stateful                                                | Cheap server data fetches, no waterfall on the client                                                                |
+| Decision | Why it matters |
+| --- | --- |
+| **Owned API layer (Fastify)** — all data access lives in `apps/api`; the web app only holds auth cookies | Supabase becomes an implementation detail. The API can be versioned, rate-limited, tested, and replaced independently. OpenAPI docs come for free |
+| **Postgres triggers carry business logic** — history, SLA state, time accumulation, resolution validation | Application code is replaceable; the database is the contract. Invariants hold regardless of which client writes |
+| **RLS as the security boundary** | Frontend checks are UX only. The API validates JWTs and scopes clients — but RLS is the final word, auditable and declarative |
+| **Lookup tables, not enums** — status, priority, category, temperature are DB rows with color and display order | Adding a status is a row insert, not a deploy |
+| **SLA status is a pure function** of stored timestamps — no cron, no recompute | Never wrong, never drifts, zero infrastructure overhead |
+| **`pg_net` fans out to edge functions** | Keeps embeddings async without queue infrastructure |
+| **Server Components first** — client islands only where stateful | Cheap server data fetches, no waterfall on the client |
 
 ---
 
@@ -149,12 +156,13 @@ Ticket closed → BEFORE trigger strips HTML → resolution_plain
 
 | Layer        | Technology                                                                   |
 | ------------ | ---------------------------------------------------------------------------- |
-| Framework    | **Next.js 16** — App Router, Server Actions, Server Components               |
+| Frontend     | **Next.js 16** — App Router, Server Actions, Server Components               |
+| API          | **Fastify 5** — TypeScript strict, Zod validation, OpenAPI at `/docs`        |
 | UI           | **React 19**, **shadcn/ui** + Radix, **Tailwind 3**, **Tiptap v3**           |
 | Language     | **TypeScript 5** strict — `database.types.ts` is generated and authoritative |
-| Data         | **Supabase** — Postgres + Auth + Storage + Realtime + Edge Functions         |
+| Data         | **Supabase** — Postgres + Auth + Storage + Edge Functions                    |
 | Vector       | **pgvector** (768-dim) + **Gemini `gemini-embedding-001`**                   |
-| Forms        | **react-hook-form** + **Zod** — schemas shared between client and server     |
+| Forms        | **react-hook-form** + **Zod**                                                |
 | Client cache | **TanStack Query v5** — used surgically for optimistic mutations             |
 | DnD          | **@dnd-kit** — accessible drag-and-drop on sprint board                      |
 
@@ -163,37 +171,41 @@ Ticket closed → BEFORE trigger strips HTML → resolution_plain
 ## Quick Start
 
 ```bash
-# 1. Clone & install
+# 1. Clone & install (pnpm workspaces)
 git clone https://github.com/<your-handle>/mera
-cd mera && npm install        # Node >= 20
+cd mera && pnpm install        # Node >= 20, pnpm >= 9
 
-# 2. Environment
-cp .env.example .env.local
-# Fill in NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
-# and SUPABASE_SERVICE_ROLE_KEY from your Supabase project settings.
+# 2. Environment — two apps, two env files
+# apps/web/.env.local
+#   NEXT_PUBLIC_SUPABASE_URL=
+#   NEXT_PUBLIC_SUPABASE_ANON_KEY=
+#   API_URL=http://localhost:8080          # server-side
+#   NEXT_PUBLIC_API_URL=http://localhost:8080  # client-side
 
-# 3. Database — push the full schema (starts from 001_initial_schema.sql)
-# Initial schema location in this repo: supabase/migrations/001_initial_schema.sql
+# apps/api/.env.local
+#   PORT=8080
+#   SUPABASE_URL=
+#   SUPABASE_ANON_KEY=
+#   CORS_ORIGINS=http://localhost:3000
+
+# 3. Database — push the full schema
 npx supabase link --project-ref <ref>
 npx supabase db push          # applies all migrations in order
-npx supabase db seed          # optional: seed a default team + example data
+npx supabase db seed          # optional: seed default team + example data
 
-# 4. Configure pg_net webhook URLs (run once in Supabase SQL editor)
-# These let DB triggers call your Edge Functions after ticket closes / doc uploads.
-# ALTER DATABASE postgres SET app.supabase_url    = 'https://<ref>.supabase.co';
+# 4. Configure pg_net for edge function triggers (run once in SQL editor)
+# ALTER DATABASE postgres SET app.supabase_url = 'https://<ref>.supabase.co';
 # ALTER DATABASE postgres SET app.supabase_anon_key = '<your-anon-key>';
 
-# 5. Edge functions (AI features — required for embeddings & KB ingestion)
+# 5. Edge functions (AI features)
 npx supabase secrets set GEMINI_API_KEY=<your-gemini-key>
 npx supabase functions deploy embed-resolution --project-ref <ref>
 npx supabase functions deploy embed-query      --project-ref <ref>
 npx supabase functions deploy ingest-document  --project-ref <ref>
 
-# 6. Run
-npm run dev                   # http://localhost:3000
+# 6. Run both apps
+pnpm dev       # web :3000  ·  API :8080  ·  OpenAPI :8080/docs
 ```
-
-Scripts: `npm run dev | build | start | lint`
 
 ---
 
@@ -209,11 +221,12 @@ MERA is open to collaboration. If you've stumbled across this project and feel l
 
 **Development conventions (short version):**
 
-- Data access only through `lib/supabase/queries/*` — never inline `.from(...)` in a component
-- Every mutation validates with the matching Zod schema before touching Supabase
-- Schema changes = new file under `supabase/migrations/` + regenerate `types/database.types.ts`
+- **Web → API**: use `api.get/post/...` (server-side) or `apiBrowser.get/post/...` (client-side) — never call Supabase directly from `apps/web`
+- **API → DB**: all data access in `apps/api/src/services/`; routes are thin handlers that call services
+- Every mutation validates with Zod at the API route level; forms also validate client-side
+- Schema changes = new file under `supabase/migrations/` + regenerate `database.types.ts` in both apps
 - History tables are read-only from app code — triggers write them
-- Before "done": `npm run lint` clean + exercise the flow in a browser
+- Before "done": `pnpm --filter web typecheck` + `pnpm --filter api typecheck` clean; exercise the flow in a browser
 
 Good software tends to grow from good conversations. Open an issue or reach out.
 

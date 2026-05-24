@@ -10,6 +10,7 @@ import { updateTicket } from "@/lib/supabase/queries/tickets";
 import { useUnsavedChangesContextOptional } from "@/lib/contexts/unsaved-changes-context";
 import { uploadCommentImage } from "@/lib/supabase/queries/comments";
 import { RichTextEditor } from "./rich-text-editor";
+import { sanitizedHtml } from "@/lib/utils/sanitize";
 import { EditButton } from "./ticket-actions";
 
 interface ResolutionCardProps {
@@ -162,7 +163,7 @@ export function ResolutionCard({
         ) : initialResolution && !isHtmlEmpty(initialResolution) ? (
           <div
             className="prose prose-sm max-w-none break-words"
-            dangerouslySetInnerHTML={{ __html: initialResolution }}
+            dangerouslySetInnerHTML={sanitizedHtml(initialResolution)}
           />
         ) : (
           <p className="text-sm text-emerald-900/60 italic">
