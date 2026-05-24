@@ -210,14 +210,14 @@ export function CommentItem({
         />
 
         {/* Main bubble container - everything is inside */}
-        <div className="flex-1 min-w-0 bg-gray-50 rounded-2xl px-4 py-3 border border-gray-100">
+        <div className="flex-1 min-w-0 bg-gray-50 dark:bg-secondary/40 rounded-2xl px-4 py-3 border border-gray-100 dark:border-gray-700/50">
           {/* Header with author, time, and action buttons - all inside bubble */}
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-sm text-gray-900">
+              <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                 {comment.user?.full_name || "Unknown"}
               </span>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
                 {formatDateTime(comment.created_at)} â€¢{" "}
                 {formatRelativeTime(comment.created_at)}
               </span>

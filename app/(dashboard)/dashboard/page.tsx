@@ -22,6 +22,57 @@ import Link from "next/link";
 import { DashboardUpcomingTasks } from "./dashboard-upcoming-tasks";
 import { SlaSummaryWidget } from "./sla-summary-widget";
 import { ProjectsOverviewWidget } from "./projects-overview-widget";
+import { cn } from "@/lib/utils/cn";
+
+function KpiCard({
+  label,
+  value,
+  icon,
+  accent,
+  footer,
+}: {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+  accent: "primary" | "cyan" | "green";
+  footer?: React.ReactNode;
+}) {
+  const accentRing = {
+    primary:
+      "dark:before:bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.22),transparent_55%)] dark:hover:shadow-[0_0_0_1px_hsl(var(--primary)/0.3),0_20px_44px_-22px_hsl(var(--primary)/0.55)]",
+    cyan:
+      "dark:before:bg-[radial-gradient(circle_at_top_right,hsl(var(--cyber-cyan)/0.18),transparent_55%)] dark:hover:shadow-[0_0_0_1px_hsl(var(--cyber-cyan)/0.3),0_20px_44px_-22px_hsl(var(--cyber-cyan)/0.45)]",
+    green:
+      "dark:before:bg-[radial-gradient(circle_at_top_right,hsl(142_70%_45%/0.18),transparent_55%)] dark:hover:shadow-[0_0_0_1px_hsl(142_70%_45%/0.3),0_20px_44px_-22px_hsl(142_70%_45%/0.45)]",
+  }[accent];
+  const iconAccent = {
+    primary: "dark:text-primary-300 dark:drop-shadow-[0_0_8px_hsl(var(--primary)/0.55)]",
+    cyan: "dark:text-cyan-300 dark:drop-shadow-[0_0_8px_hsl(var(--cyber-cyan)/0.55)]",
+    green: "dark:text-emerald-300 dark:drop-shadow-[0_0_8px_hsl(142_70%_50%/0.55)]",
+  }[accent];
+
+  return (
+    <Card
+      className={cn(
+        "relative overflow-hidden dark:before:absolute dark:before:inset-0 dark:before:pointer-events-none dark:before:opacity-80",
+        accentRing,
+      )}
+    >
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+        <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground dark:text-gray-400/80">
+          {label}
+        </CardTitle>
+        <span className={cn("text-muted-foreground transition-colors", iconAccent)}>
+          {icon}
+        </span>
+      </CardHeader>
+      <CardContent className="relative">
+        <div className="text-3xl font-bold dark:cyber-number">{value}</div>
+        {footer}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -48,60 +99,45 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="mt-2 text-sm text-gray-700">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 dark:tracking-tight">Dashboard</h1>
+        <p className="mt-2 text-sm text-gray-700 dark:text-gray-400">
           Overview of your support ticket system
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tickets</CardTitle>
-            <Ticket className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalTickets}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Open Tickets</CardTitle>
-            <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.openTickets}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">My Tasks</CardTitle>
-            <CheckSquare className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.myTasks}</div>
-            {overdueTasks > 0 && (
-              <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
+        <KpiCard
+          label="Total Tickets"
+          value={stats.totalTickets}
+          icon={<Ticket className="h-4 w-4" />}
+          accent="primary"
+        />
+        <KpiCard
+          label="Open Tickets"
+          value={stats.openTickets}
+          icon={<LayoutDashboard className="h-4 w-4" />}
+          accent="cyan"
+        />
+        <KpiCard
+          label="My Tasks"
+          value={stats.myTasks}
+          icon={<CheckSquare className="h-4 w-4" />}
+          accent="primary"
+          footer={
+            overdueTasks > 0 ? (
+              <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1 mt-1.5 font-medium">
                 <AlertTriangle className="h-3 w-3" />
                 {overdueTasks} overdue
               </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Resolved Today
-            </CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.resolvedToday}</div>
-          </CardContent>
-        </Card>
+            ) : null
+          }
+        />
+        <KpiCard
+          label="Resolved Today"
+          value={stats.resolvedToday}
+          icon={<CheckCircle2 className="h-4 w-4" />}
+          accent="green"
+        />
       </div>
 
       {/* Active Projects Overview */}
@@ -125,22 +161,22 @@ export default async function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
               {recentTickets && recentTickets.length > 0 ? (
                 recentTicketsSorted.map((ticket: any) => (
                   <Link
                     key={ticket.id}
                     href={`/tickets/${ticket.id}`}
-                    className="flex items-center justify-between gap-3 py-2 px-1 hover:bg-gray-50 rounded-md -mx-1 transition-colors"
+                    className="flex items-center justify-between gap-3 py-2 px-1 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-md -mx-1 transition-colors"
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="shrink-0 text-xs font-mono text-gray-400">
+                      <span className="shrink-0 text-xs font-mono text-gray-400 dark:text-gray-500">
                         {formatTicketNumber(ticket.ticket_number)}
                       </span>
-                      <span className="text-sm font-medium text-gray-800 truncate">
+                      <span className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
                         {ticket.title}
                       </span>
-                      <span className="hidden sm:inline text-xs text-gray-400 shrink-0">
+                      <span className="hidden sm:inline text-xs text-gray-400 dark:text-gray-500 shrink-0">
                         {ticket.assigned_user?.full_name || "Unassigned"}
                         {(ticket.functional_team?.name ||
                           ticket.support_team?.name) && (
@@ -168,7 +204,7 @@ export default async function DashboardPage() {
                   </Link>
                 ))
               ) : (
-                <p className="text-sm text-gray-500 text-center py-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
                   No recent tickets
                 </p>
               )}

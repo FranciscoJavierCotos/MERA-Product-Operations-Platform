@@ -117,8 +117,8 @@ export function TasksPageClient({
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">My Tasks</h1>
-        <p className="mt-2 text-sm text-gray-700">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">My Tasks</h1>
+        <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
           Manage your tasks and track your progress
         </p>
       </div>

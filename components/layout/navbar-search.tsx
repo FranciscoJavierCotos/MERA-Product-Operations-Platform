@@ -252,20 +252,20 @@ export function NavbarSearch({
               setShowSuggestions(false);
             }
           }}
-          className="h-10 border-gray-200 bg-gray-50 pl-10 pr-20 transition-colors focus:bg-white"
+          className="h-10 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-secondary/40 pl-10 pr-20 transition-colors focus:bg-white dark:focus:bg-secondary/60 dark:text-gray-100 dark:placeholder:text-gray-500"
         />
 
         <button
           type="button"
           onClick={() => onOpenCommandPalette?.()}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-gray-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 hover:bg-gray-50"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-secondary/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-secondary"
           aria-label="Open command palette"
         >
           Ctrl K
         </button>
 
         {showSuggestions && suggestionItems.length > 0 && (
-          <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-lg border bg-white shadow-lg">
+          <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-lg border dark:border-gray-700 bg-white dark:bg-popover shadow-lg">
             <ul className="max-h-72 overflow-y-auto py-1">
               {suggestionItems.map((item, index) => {
                 const Icon = item.icon;
@@ -280,8 +280,8 @@ export function NavbarSearch({
                       className={cn(
                         "flex w-full items-start gap-2 px-3 py-2 text-left transition-colors",
                         index === activeSuggestionIndex
-                          ? "bg-primary-50 text-gray-900"
-                          : "hover:bg-gray-50",
+                          ? "bg-primary-50 dark:bg-primary/20 text-gray-900 dark:text-gray-100"
+                          : "hover:bg-gray-50 dark:hover:bg-secondary/60",
                       )}
                     >
                       <Icon className="mt-0.5 h-4 w-4 text-gray-400" />

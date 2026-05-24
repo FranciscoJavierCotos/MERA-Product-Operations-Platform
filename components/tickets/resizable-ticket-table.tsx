@@ -242,7 +242,7 @@ export function ResizableTicketTable({
                   {col.sortCol ? (
                     <button
                       onClick={() => handleSort(col.sortCol!)}
-                      className="flex items-center gap-1.5 font-medium cursor-pointer hover:text-gray-900 transition-colors whitespace-nowrap"
+                      className="flex items-center gap-1.5 font-medium cursor-pointer hover:text-gray-900 dark:hover:text-gray-100 transition-colors whitespace-nowrap"
                     >
                       {col.label}
                       <SortIcon
@@ -250,7 +250,7 @@ export function ResizableTicketTable({
                           "h-3.5 w-3.5 shrink-0 transition-colors",
                           isActive
                             ? "text-primary"
-                            : "text-gray-300 group-hover:text-gray-500",
+                            : "text-gray-300 group-hover:text-gray-500 dark:text-gray-600 dark:group-hover:text-gray-400",
                         )}
                       />
                     </button>
@@ -265,7 +265,7 @@ export function ResizableTicketTable({
                     <div
                       className={cn(
                         "h-full w-px transition-colors",
-                        isDragging ? "bg-primary-400" : "bg-gray-200 group-hover/resize:bg-primary-400",
+                        isDragging ? "bg-primary-400" : "bg-gray-200 dark:bg-gray-700 group-hover/resize:bg-primary-400",
                       )}
                     />
                   </div>
@@ -295,7 +295,7 @@ export function ResizableTicketTable({
             <tr>
               <td
                 colSpan={columns.length}
-                className="text-center text-gray-500 py-8"
+                className="text-center text-gray-500 dark:text-gray-400 py-8"
               >
                 {variant === "all"
                   ? "No tickets found"

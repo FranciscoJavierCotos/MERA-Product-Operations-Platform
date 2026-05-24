@@ -50,21 +50,23 @@
   }
 
   .dark {
-    --background: 222.2 47% 11.2%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 47% 11.2%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 47% 11.2%;
-    --popover-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    /* Deep midnight palette — richer blacks, layered elevations */
+    --background: 230 55% 4%;        /* #04070f — true midnight */
+    --foreground: 213 35% 94%;       /* near-white with cool tint */
+    --card: 228 42% 8%;              /* #0a1122 — elevated card surface */
+    --card-foreground: 213 35% 94%;
+    --popover: 228 50% 6%;           /* deeper popover */
+    --popover-foreground: 213 35% 94%;
+    --secondary: 228 32% 14%;        /* secondary surface */
+    --secondary-foreground: 213 35% 94%;
+    --muted: 228 30% 11%;            /* muted backgrounds */
+    --muted-foreground: 215 20% 60%; /* dimmed text — slightly brighter */
+    --accent: 243 55% 24%;           /* violet-tinted accent */
+    --accent-foreground: 213 35% 94%;
+    --border: 228 28% 18%;           /* subtle dark border */
+    --input: 228 30% 13%;            /* input field bg */
 
+    /* Brand violet — brighter in dark for contrast */
     --primary: 239 84% 67%;
     --primary-foreground: 244 47% 14%;
     --primary-50: 244 47% 14%;
@@ -79,16 +81,324 @@
     --primary-900: 228 96% 89%;
     --ring: 239 84% 67%;
 
-    --destructive: 0 62.8% 30.6%;
+    /* Cyber accents — second-string highlights tuned to the violet brand */
+    --cyber-cyan: 188 95% 60%;
+    --cyber-magenta: 295 85% 65%;
+    --cyber-grid: 230 60% 14%;
+
+    /* Semantic — readable on dark backgrounds */
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
-    --success: 142 64% 30%;
+    --success: 142 64% 42%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 80% 45%;
+    --warning: 38 85% 52%;
     --warning-foreground: 0 0% 100%;
-    --info: 217 60% 50%;
+    --info: 217 71% 60%;
     --info-foreground: 0 0% 100%;
   }
 }
+
+/* ─────────────────────────────────────────────
+   Dark mode: ambient atmosphere & cyber polish
+   ───────────────────────────────────────────── */
+
+/* Body-level ambient blooms — subtle violet/cyan radial light from corners.
+   Anchored to viewport (fixed) so they never scroll. */
+.dark body {
+  background-color: hsl(var(--background));
+  background-image:
+    radial-gradient(
+      ellipse 80% 50% at 15% 0%,
+      hsl(243 80% 30% / 0.18),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 70% 45% at 100% 100%,
+      hsl(243 75% 35% / 0.12),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 50% 35% at 80% 10%,
+      hsl(188 90% 40% / 0.06),
+      transparent 65%
+    );
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* Slightly tighter, sharper text hierarchy in dark mode */
+.dark {
+  font-feature-settings: "ss01", "cv11";
+}
+
+/* Premium card surface: subtle top-edge highlight + faint inner gradient.
+   Applied to anything using bg-card via the [&] approach is impractical,
+   so we layer it on the .Card class via a utility consumers can opt into. */
+.dark .surface-elevated {
+  background-image: linear-gradient(
+    180deg,
+    hsl(228 40% 12% / 0.85),
+    hsl(228 45% 8% / 0.85)
+  );
+  border-color: hsl(228 30% 20% / 0.8);
+  box-shadow:
+    inset 0 1px 0 0 hsl(228 60% 30% / 0.25),
+    0 1px 0 0 hsl(0 0% 0% / 0.4),
+    0 8px 24px -12px hsl(230 60% 2% / 0.6);
+}
+
+/* Default Card upgrade — applied via [data-cyber] is verbose, so we just
+   target the shadcn Card directly. Cards already get bg-card + border. */
+.dark [class*="rounded-lg"][class*="bg-card"],
+.dark [class*="rounded-xl"][class*="bg-card"] {
+  background-image: linear-gradient(
+    180deg,
+    hsl(228 38% 11% / 1),
+    hsl(228 44% 8% / 1)
+  );
+  box-shadow:
+    inset 0 1px 0 0 hsl(228 60% 30% / 0.18),
+    0 1px 0 0 hsl(0 0% 0% / 0.5),
+    0 12px 32px -16px hsl(230 70% 2% / 0.7);
+}
+
+/* Cyber edge — animated gradient border using two layered backgrounds */
+.cyber-edge {
+  position: relative;
+  isolation: isolate;
+}
+.cyber-edge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 0.55),
+    hsl(var(--cyber-cyan) / 0.25) 40%,
+    transparent 60%,
+    hsl(var(--primary) / 0.4)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 240ms ease;
+}
+.dark .cyber-edge:hover::before,
+.dark .cyber-edge:focus-within::before {
+  opacity: 1;
+}
+
+/* Holographic separator — used in headers / dividers */
+.dark .holo-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--primary) / 0.5) 30%,
+    hsl(var(--cyber-cyan) / 0.4) 50%,
+    hsl(var(--primary) / 0.5) 70%,
+    transparent
+  );
+  border: 0;
+}
+
+/* Glow utilities */
+.dark .glow-primary {
+  box-shadow:
+    0 0 0 1px hsl(var(--primary) / 0.4),
+    0 0 24px -4px hsl(var(--primary) / 0.45);
+}
+.dark .glow-primary-soft {
+  box-shadow: 0 0 32px -8px hsl(var(--primary) / 0.35);
+}
+.dark .text-glow {
+  text-shadow: 0 0 18px hsl(var(--primary) / 0.45);
+}
+
+/* Cyber number — used on big KPI values */
+.dark .cyber-number {
+  background: linear-gradient(
+    180deg,
+    hsl(213 40% 98%) 0%,
+    hsl(213 30% 78%) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* Progress bar fill: gradient with subtle glow */
+.dark .progress-fill-primary {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--primary) / 0.85),
+    hsl(var(--primary)) 60%,
+    hsl(var(--cyber-cyan) / 0.85)
+  );
+  box-shadow:
+    0 0 12px -2px hsl(var(--primary) / 0.55),
+    inset 0 0 0 1px hsl(var(--primary) / 0.25);
+}
+.dark .progress-fill-success {
+  background: linear-gradient(
+    90deg,
+    hsl(142 65% 42%),
+    hsl(160 70% 50%)
+  );
+  box-shadow: 0 0 12px -3px hsl(150 70% 45% / 0.5);
+}
+.dark .progress-track {
+  background: linear-gradient(
+    180deg,
+    hsl(228 35% 10%),
+    hsl(228 40% 7%)
+  );
+  box-shadow: inset 0 1px 0 0 hsl(0 0% 0% / 0.5);
+}
+
+/* Status-tinted edge accents — used by SLA stat cards */
+.dark .edge-red {
+  box-shadow:
+    inset 0 0 0 1px hsl(0 70% 50% / 0.35),
+    0 0 24px -8px hsl(0 80% 55% / 0.35);
+}
+.dark .edge-orange {
+  box-shadow:
+    inset 0 0 0 1px hsl(28 90% 55% / 0.35),
+    0 0 24px -8px hsl(28 90% 55% / 0.3);
+}
+.dark .edge-green {
+  box-shadow:
+    inset 0 0 0 1px hsl(142 65% 45% / 0.35),
+    0 0 24px -8px hsl(142 70% 50% / 0.3);
+}
+.dark .edge-primary {
+  box-shadow:
+    inset 0 0 0 1px hsl(var(--primary) / 0.35),
+    0 0 28px -8px hsl(var(--primary) / 0.4);
+}
+
+/* Magnetic hover — soft lift with primary halo */
+.dark .magnetic {
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms ease,
+    border-color 220ms ease;
+}
+.dark .magnetic:hover {
+  transform: translateY(-1px);
+  border-color: hsl(var(--primary) / 0.5) !important;
+  box-shadow:
+    inset 0 1px 0 0 hsl(228 60% 30% / 0.3),
+    0 0 0 1px hsl(var(--primary) / 0.25),
+    0 12px 32px -16px hsl(var(--primary) / 0.4),
+    0 18px 40px -20px hsl(230 80% 2% / 0.8) !important;
+}
+
+/* Cyber scrollbar */
+.dark ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: hsl(228 45% 5%);
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    hsl(228 35% 22%),
+    hsl(228 40% 14%)
+  );
+  border-radius: 6px;
+  border: 2px solid hsl(228 45% 5%);
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    hsl(243 60% 45%),
+    hsl(243 75% 35%)
+  );
+}
+
+/* Selection */
+.dark ::selection {
+  background: hsl(var(--primary) / 0.35);
+  color: hsl(213 40% 98%);
+}
+
+/* ─────────────────────────────────────────────
+   Dark-mode fallbacks for DB-driven badge colors
+   (priorities, statuses, temperatures, support
+   levels, tags — `color_class` strings stored in
+   migrations are light-mode-only). Elements with
+   explicit `dark:` variants win via cascade order.
+   ───────────────────────────────────────────── */
+.dark .bg-gray-100    { background-color: hsl(228 28% 16% / 0.85); }
+.dark .bg-slate-100   { background-color: hsl(215 30% 16% / 0.85); }
+.dark .bg-zinc-100    { background-color: hsl(230 8%  18% / 0.85); }
+.dark .bg-neutral-100 { background-color: hsl(0 0%   16% / 0.85); }
+.dark .bg-red-100     { background-color: hsl(0   65% 22% / 0.45); }
+.dark .bg-orange-100  { background-color: hsl(24  70% 22% / 0.5);  }
+.dark .bg-amber-100   { background-color: hsl(38  75% 22% / 0.5);  }
+.dark .bg-yellow-100  { background-color: hsl(48  75% 22% / 0.45); }
+.dark .bg-lime-100    { background-color: hsl(82  65% 20% / 0.45); }
+.dark .bg-green-100   { background-color: hsl(142 55% 20% / 0.45); }
+.dark .bg-emerald-100 { background-color: hsl(160 60% 20% / 0.45); }
+.dark .bg-teal-100    { background-color: hsl(175 55% 20% / 0.45); }
+.dark .bg-cyan-100    { background-color: hsl(190 65% 22% / 0.45); }
+.dark .bg-sky-100     { background-color: hsl(204 70% 22% / 0.45); }
+.dark .bg-blue-100    { background-color: hsl(217 70% 24% / 0.45); }
+.dark .bg-indigo-100  { background-color: hsl(232 65% 28% / 0.45); }
+.dark .bg-violet-100  { background-color: hsl(258 65% 28% / 0.45); }
+.dark .bg-purple-100  { background-color: hsl(270 60% 28% / 0.45); }
+.dark .bg-fuchsia-100 { background-color: hsl(290 65% 28% / 0.45); }
+.dark .bg-pink-100    { background-color: hsl(330 60% 28% / 0.45); }
+.dark .bg-rose-100    { background-color: hsl(345 65% 26% / 0.45); }
+
+.dark .text-gray-800,
+.dark .text-slate-800,
+.dark .text-zinc-800,
+.dark .text-neutral-800 { color: hsl(213 22% 82%); }
+.dark .text-red-800     { color: hsl(0   90% 80%); }
+.dark .text-orange-800  { color: hsl(24  95% 72%); }
+.dark .text-amber-800   { color: hsl(38  92% 72%); }
+.dark .text-yellow-800  { color: hsl(48  92% 75%); }
+.dark .text-lime-800    { color: hsl(82  72% 72%); }
+.dark .text-green-800   { color: hsl(142 65% 72%); }
+.dark .text-emerald-800 { color: hsl(160 70% 72%); }
+.dark .text-teal-800    { color: hsl(175 70% 72%); }
+.dark .text-cyan-800    { color: hsl(190 78% 72%); }
+.dark .text-sky-800     { color: hsl(204 88% 78%); }
+.dark .text-blue-800    { color: hsl(217 88% 80%); }
+.dark .text-indigo-800  { color: hsl(232 85% 82%); }
+.dark .text-violet-800  { color: hsl(258 82% 82%); }
+.dark .text-purple-800  { color: hsl(270 78% 82%); }
+.dark .text-fuchsia-800 { color: hsl(290 78% 82%); }
+.dark .text-pink-800    { color: hsl(330 75% 82%); }
+.dark .text-rose-800    { color: hsl(345 80% 80%); }
+
+/* Match hover backgrounds so badges don't flash a bright color on hover */
+.dark .hover\:bg-gray-100:hover    { background-color: hsl(228 28% 20% / 0.9); }
+.dark .hover\:bg-red-100:hover     { background-color: hsl(0   65% 28% / 0.55); }
+.dark .hover\:bg-orange-100:hover  { background-color: hsl(24  70% 28% / 0.55); }
+.dark .hover\:bg-amber-100:hover   { background-color: hsl(38  75% 28% / 0.55); }
+.dark .hover\:bg-yellow-100:hover  { background-color: hsl(48  75% 28% / 0.55); }
+.dark .hover\:bg-green-100:hover   { background-color: hsl(142 55% 26% / 0.55); }
+.dark .hover\:bg-emerald-100:hover { background-color: hsl(160 60% 26% / 0.55); }
+.dark .hover\:bg-blue-100:hover    { background-color: hsl(217 70% 30% / 0.55); }
+.dark .hover\:bg-sky-100:hover     { background-color: hsl(204 70% 28% / 0.55); }
+.dark .hover\:bg-indigo-100:hover  { background-color: hsl(232 65% 32% / 0.55); }
+.dark .hover\:bg-violet-100:hover  { background-color: hsl(258 65% 32% / 0.55); }
+.dark .hover\:bg-purple-100:hover  { background-color: hsl(270 60% 32% / 0.55); }
+.dark .hover\:bg-pink-100:hover    { background-color: hsl(330 60% 32% / 0.55); }
 
 @layer base {
   * {

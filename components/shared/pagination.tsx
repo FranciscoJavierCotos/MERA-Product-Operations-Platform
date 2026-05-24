@@ -68,17 +68,18 @@ export function Pagination({
     <div
       className={cn(
         "flex flex-col gap-3 border-t bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+        "dark:bg-transparent dark:border-border/60",
         className,
       )}
     >
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-gray-600 dark:text-gray-400">
         {totalCount === 0 ? (
           "No results"
         ) : (
           <>
-            Showing <span className="font-medium">{rangeStart}</span>–
-            <span className="font-medium">{rangeEnd}</span> of{" "}
-            <span className="font-medium">{totalCount}</span>
+            Showing <span className="font-medium dark:text-gray-200">{rangeStart}</span>–
+            <span className="font-medium dark:text-gray-200">{rangeEnd}</span> of{" "}
+            <span className="font-medium dark:text-gray-200">{totalCount}</span>
           </>
         )}
       </p>
@@ -105,7 +106,7 @@ export function Pagination({
           <ChevronLeft className="h-4 w-4" />
         </Button>
 
-        <div className="flex items-center gap-2 text-sm text-gray-700">
+        <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
           <span>Page</span>
           <Input
             type="text"

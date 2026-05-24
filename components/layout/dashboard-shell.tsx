@@ -34,7 +34,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
   }, [hasLoadedPreference, isCollapsed]);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 dark:bg-background">
       <Sidebar
         role={user.role}
         isCollapsed={isCollapsed}

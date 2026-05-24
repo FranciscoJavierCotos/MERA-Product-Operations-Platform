@@ -144,15 +144,15 @@ export function TicketFilterBar({
   return (
     <div
       className={cn(
-        "rounded-lg border bg-white shadow-sm transition-opacity",
+        "rounded-lg border bg-white dark:bg-card shadow-sm transition-opacity",
         isPending && "opacity-75",
       )}
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <Filter className="h-3.5 w-3.5 text-gray-400" />
-          <span className="text-sm font-semibold text-gray-600">Filters</span>
+          <Filter className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
+          <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">Filters</span>
           {activeCount > 0 && (
             <Badge className="bg-primary-100 px-1.5 py-0 text-xs font-semibold text-primary-700 hover:bg-primary-100">
               {activeCount} active

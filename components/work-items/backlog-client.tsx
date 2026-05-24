@@ -74,11 +74,11 @@ export function BacklogClient({
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {initialItems.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center text-sm text-gray-500">
+        <div className="rounded-lg border border-dashed border-gray-300 dark:border-border bg-white dark:bg-card p-10 text-center text-sm text-gray-500 dark:text-gray-400">
           Backlog is empty. Add your first work item.
         </div>
       ) : (
-        <ul className="divide-y rounded-lg border bg-white">
+        <ul className="divide-y divide-border rounded-lg border border-border bg-white dark:bg-card">
           {initialItems.map((item) => (
             <li key={item.id} className="p-3 flex items-center gap-3">
               <div className="flex-1 cursor-pointer" onClick={() => setDetailItem(item)}>

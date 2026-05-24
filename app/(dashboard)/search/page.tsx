@@ -87,8 +87,8 @@ export default function SearchPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Search</h1>
-        <p className="mt-2 text-sm text-gray-700">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Search</h1>
+        <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
           Search for tickets, tasks, and more
         </p>
       </div>
@@ -154,7 +154,7 @@ export default function SearchPage() {
                             className="hover:underline"
                           >
                             <div>
-                              <p className="font-medium text-gray-900">
+                              <p className="font-medium text-gray-900 dark:text-gray-100">
                                 #{ticket.ticket_number}{" "}
                                 {highlightText(ticket.title, searchQuery)}
                               </p>

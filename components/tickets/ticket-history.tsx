@@ -211,7 +211,7 @@ export function TicketHistory({
   }
 
   return (
-    <Card className="border-slate-200/70 bg-white">
+    <Card className="border-slate-200/70 bg-white dark:bg-card dark:border-slate-700/50">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-lg">

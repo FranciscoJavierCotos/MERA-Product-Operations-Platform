@@ -18,7 +18,10 @@ export async function SlaSummaryWidget() {
 
   return (
     <div className="space-y-3">
-      <h2 className="text-lg font-semibold text-gray-900">SLA Overview</h2>
+      <div className="flex items-baseline gap-3">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 dark:tracking-tight">SLA Overview</h2>
+        <div className="hidden dark:block flex-1 holo-divider" />
+      </div>
 
       <div className="flex gap-4 items-stretch">
         {/* Stat cards — left column, stretch to fill list height */}
@@ -58,7 +61,7 @@ export async function SlaSummaryWidget() {
         {urgentTickets.length > 0 ? (
           <Card className="flex-1 min-w-0">
             <CardContent className="pt-4 pb-3 px-4">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                 Most Urgent SLAs
               </p>
               <div className="space-y-1">
@@ -75,13 +78,13 @@ export async function SlaSummaryWidget() {
                     <Link
                       key={row.ticket_id}
                       href={`/tickets/${ticket.id}`}
-                      className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-colors"
+                      className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-gray-50 dark:hover:bg-muted/50 border border-transparent hover:border-gray-200 dark:hover:border-border transition-colors"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-xs text-gray-400 shrink-0 tabular-nums">
+                        <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0 tabular-nums">
                           {formatTicketNumber(ticket.ticket_number)}
                         </span>
-                        <span className="text-sm text-gray-700 truncate">
+                        <span className="text-sm text-gray-700 dark:text-gray-200 truncate">
                           {ticket.title}
                         </span>
                       </div>
@@ -115,10 +118,10 @@ export async function SlaSummaryWidget() {
 
 /* ── Compact stat card ── */
 const colorMap = {
-  red:     { border: "border-red-200",    text: "text-red-700",    sub: "text-red-400"    },
-  orange:  { border: "border-orange-200", text: "text-orange-700", sub: "text-orange-400" },
-  neutral: { border: "border-gray-200",   text: "text-gray-600",   sub: "text-gray-400"   },
-  green:   { border: "border-green-200",  text: "text-green-700",  sub: "text-green-400"  },
+  red:     { border: "border-red-200 dark:border-red-900/50",       text: "text-red-700 dark:text-red-400",       sub: "text-red-400 dark:text-red-500/80",    edge: "dark:edge-red",     icon: "dark:drop-shadow-[0_0_6px_hsl(0_80%_55%/0.6)]"   },
+  orange:  { border: "border-orange-200 dark:border-orange-900/50", text: "text-orange-700 dark:text-orange-400", sub: "text-orange-400 dark:text-orange-500/80", edge: "dark:edge-orange", icon: "dark:drop-shadow-[0_0_6px_hsl(28_90%_55%/0.6)]"  },
+  neutral: { border: "border-gray-200 dark:border-border",          text: "text-gray-600 dark:text-gray-300",     sub: "text-gray-400 dark:text-gray-500",     edge: "",                  icon: ""                                                },
+  green:   { border: "border-green-200 dark:border-green-900/50",   text: "text-green-700 dark:text-green-400",   sub: "text-green-400 dark:text-green-500/80",   edge: "dark:edge-green",   icon: "dark:drop-shadow-[0_0_6px_hsl(142_70%_50%/0.6)]" },
 } as const;
 
 function StatCard({
@@ -138,15 +141,15 @@ function StatCard({
 }) {
   const c = colorMap[color];
   return (
-    <Card className={cn("border", c.border, grow && "flex-1")}>
-      <CardContent className="flex items-center justify-between h-full px-4 py-0">
+    <Card className={cn("border relative overflow-hidden", c.border, c.edge, grow && "flex-1")}>
+      <CardContent className="flex items-center justify-between h-full px-4 py-0 relative">
         <div className="min-w-0">
-          <p className={cn("text-sm font-semibold", c.text)}>{label}</p>
+          <p className={cn("text-sm font-semibold tracking-tight", c.text)}>{label}</p>
           {sub && <p className={cn("text-xs leading-tight mt-0.5", c.sub)}>{sub}</p>}
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-3">
-          <span className={cn("text-2xl font-bold tabular-nums", c.text)}>{value}</span>
-          {icon}
+          <span className={cn("text-3xl font-bold tabular-nums dark:tracking-tight", c.text)}>{value}</span>
+          <span className={c.icon}>{icon}</span>
         </div>
       </CardContent>
     </Card>

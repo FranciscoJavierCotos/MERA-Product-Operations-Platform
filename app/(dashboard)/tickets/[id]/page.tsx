@@ -169,10 +169,10 @@ export default async function TicketDetailPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
             {formatTicketNumber(ticket.ticket_number)}
           </h1>
-          <span className="text-2xl font-semibold text-gray-800">
+          <span className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
             {ticket.title}
           </span>
         </div>
@@ -205,7 +205,7 @@ export default async function TicketDetailPage({
             {/* Second column */}
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium text-gray-700">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Functional Department
                 </h3>
                 <div className="mt-2">
@@ -222,7 +222,7 @@ export default async function TicketDetailPage({
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-700">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Support Team
                 </h3>
                 <div className="mt-2">
@@ -240,7 +240,7 @@ export default async function TicketDetailPage({
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-700">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Assigned To
                 </h3>
                 <div className="mt-2">
@@ -266,7 +266,7 @@ export default async function TicketDetailPage({
             {/* Third column */}
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium text-gray-700">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Ticket Status
                 </h3>
                 <div className="mt-2">
@@ -282,7 +282,7 @@ export default async function TicketDetailPage({
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-700">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Ticket Priority
                 </h3>
                 <div className="mt-2">
@@ -297,7 +297,7 @@ export default async function TicketDetailPage({
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-700">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Client Temperature
                 </h3>
                 <div className="mt-2">
@@ -315,7 +315,7 @@ export default async function TicketDetailPage({
             {/* Fourth column */}
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium text-gray-700">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Created By
                 </h3>
                 <p className="mt-2 text-sm">
@@ -324,7 +324,7 @@ export default async function TicketDetailPage({
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-700">Created</h3>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Created</h3>
                 <p className="mt-2 text-sm">
                   {formatDateTime(ticket.created_at)} (
                   {formatRelativeTime(ticket.created_at)})
@@ -332,7 +332,7 @@ export default async function TicketDetailPage({
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-700">Updated</h3>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Updated</h3>
                 <p className="mt-2 text-sm">
                   {formatDateTime(ticket.updated_at)} (
                   {formatRelativeTime(ticket.updated_at)})
@@ -343,7 +343,7 @@ export default async function TicketDetailPage({
             {/* Fifth column — Category, CC, Time Worked */}
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium text-gray-700">Category</h3>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Category</h3>
                 <div className="mt-2">
                   <TicketCategoryDropdown
                     ticketId={ticket.id}
@@ -356,7 +356,7 @@ export default async function TicketDetailPage({
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-700">CC</h3>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">CC</h3>
                 <div className="mt-2">
                   <CcEmailInput
                     ticketId={ticket.id}
@@ -368,7 +368,7 @@ export default async function TicketDetailPage({
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-700">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Time Worked
                 </h3>
                 <div className="mt-2">

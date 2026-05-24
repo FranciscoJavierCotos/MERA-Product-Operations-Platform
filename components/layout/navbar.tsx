@@ -4,7 +4,9 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Sun, Moon } from "lucide-react";
 import { getInitials } from "@/lib/utils/format";
 import { Profile } from "@/types/user.types";
 import { GoBackButton } from "./go-back-button";
@@ -84,6 +87,7 @@ export function Navbar({ user }: NavbarProps) {
   const pathname = usePathname();
   const supabase = createClient();
   const { clearHistory } = useNavigation();
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [workStatus, setWorkStatus] = useState<WorkStatus>("available");
@@ -163,23 +167,23 @@ export function Navbar({ user }: NavbarProps) {
 
   return (
     <>
-      <div className="sticky top-0 z-40 border-b border-gray-200/80 bg-white/90 backdrop-blur-sm">
+      <div className="sticky top-0 z-40 border-b border-gray-200/80 bg-white/90 backdrop-blur-sm dark:border-border/40 dark:bg-[hsl(230_55%_5%/0.78)] dark:backdrop-blur-xl dark:backdrop-saturate-150 dark:shadow-[0_1px_0_0_hsl(var(--primary)/0.08),0_8px_24px_-12px_hsl(0_0%_0%/0.6)]">
         <div className="h-16 px-4 sm:px-6 lg:px-8">
           <div className="flex h-full items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               <GoBackButton showText={false} className="shrink-0" />
-              <div className="hidden h-6 w-px bg-gray-200 sm:block" />
+              <div className="hidden h-6 w-px bg-gray-200 dark:bg-gray-700 sm:block" />
 
               <div className="flex min-w-0 items-center gap-3">
-                <div className="rounded-md bg-primary-50 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-primary-700">
+                <div className="rounded-md bg-primary-50 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-primary-700 dark:bg-primary/[0.08] dark:text-primary-300 dark:border dark:border-primary/20 dark:shadow-none">
                   MERA
                 </div>
 
                 <div className="hidden sm:flex sm:flex-col sm:leading-tight">
-                  <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  <span className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-primary-300/60 dark:tracking-[0.18em] dark:text-[10px]">
                     Workspace
                   </span>
-                  <span className="text-sm font-semibold text-gray-900">
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                     {getPageLabel(pathname)}
                   </span>
                 </div>
@@ -208,7 +212,7 @@ export function Navbar({ user }: NavbarProps) {
                         </AvatarFallback>
                       </Avatar>
                       <span
-                        className="absolute -bottom-0.5 -right-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-white bg-white"
+                        className="absolute -bottom-0.5 -right-0.5 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-white bg-white dark:border-gray-950 dark:bg-gray-950"
                         aria-hidden="true"
                       >
                         <span
@@ -257,6 +261,30 @@ export function Navbar({ user }: NavbarProps) {
                         </DropdownMenuRadioItem>
                       ))}
                     </DropdownMenuRadioGroup>
+
+                    <DropdownMenuSeparator />
+
+                    {/* Dark mode toggle */}
+                    <DropdownMenuItem
+                      onSelect={(e) => e.preventDefault()}
+                      className="flex items-center justify-between cursor-default focus:bg-accent/50"
+                    >
+                      <div className="flex items-center gap-2 text-sm">
+                        {theme === "dark" ? (
+                          <Moon className="h-4 w-4 text-primary-400" />
+                        ) : (
+                          <Sun className="h-4 w-4 text-amber-500" />
+                        )}
+                        <span>Dark mode</span>
+                      </div>
+                      <Switch
+                        checked={theme === "dark"}
+                        onCheckedChange={(checked) =>
+                          setTheme(checked ? "dark" : "light")
+                        }
+                        aria-label="Toggle dark mode"
+                      />
+                    </DropdownMenuItem>
 
                     <DropdownMenuSeparator />
 

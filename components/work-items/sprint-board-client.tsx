@@ -285,9 +285,9 @@ export function SprintBoardClient({
   if (!activeSprint && !nextSprint) {
     return (
       <div className="space-y-4">
-        <div className="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center">
-          <Inbox className="h-8 w-8 mx-auto text-gray-400" />
-          <p className="text-gray-600 mt-2">No active sprint.</p>
+        <div className="rounded-lg border border-dashed border-gray-300 dark:border-border bg-white dark:bg-card p-10 text-center">
+          <Inbox className="h-8 w-8 mx-auto text-gray-400 dark:text-gray-500" />
+          <p className="text-gray-600 dark:text-gray-400 mt-2">No active sprint.</p>
           <p className="text-sm text-gray-500">
             Plan items in the{" "}
             <Link
@@ -329,7 +329,7 @@ export function SprintBoardClient({
               </p>
               <h2 className="text-lg font-semibold">{activeSprint.name}</h2>
               {activeSprint.goal && (
-                <p className="text-sm text-gray-600">{activeSprint.goal}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{activeSprint.goal}</p>
               )}
             </div>
             <Button size="sm" onClick={() => openCreate(activeSprint.id)}>
@@ -377,11 +377,11 @@ export function SprintBoardClient({
               <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
                 Next sprint
               </p>
-              <h2 className="text-lg font-semibold text-gray-700">
+              <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
                 {nextSprint.name}
               </h2>
               {nextSprint.goal && (
-                <p className="text-sm text-gray-500">{nextSprint.goal}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{nextSprint.goal}</p>
               )}
             </div>
             <Button
@@ -478,16 +478,16 @@ function BoardColumnUI({
     <div
       ref={setNodeRef}
       className={`rounded-lg border p-3 min-h-[200px] ${
-        muted ? "bg-gray-50/50" : "bg-gray-50"
-      } ${isOver ? "border-primary" : "border-gray-200"}`}
+        muted ? "bg-gray-50/50 dark:bg-muted/20" : "bg-gray-50 dark:bg-muted/40"
+      } ${isOver ? "border-primary" : "border-gray-200 dark:border-border"}`}
     >
       <div className="flex items-center justify-between mb-3">
         <h3
-          className={`text-xs font-semibold uppercase tracking-wide ${muted ? "text-gray-400" : "text-gray-600"}`}
+          className={`text-xs font-semibold uppercase tracking-wide ${muted ? "text-gray-400 dark:text-gray-500" : "text-gray-600 dark:text-gray-400"}`}
         >
           {WORK_ITEM_STATUS_LABELS[status]}
         </h3>
-        <span className="text-xs text-gray-400">{items.length}</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500">{items.length}</span>
       </div>
       <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
         <div className="space-y-2">
@@ -551,7 +551,7 @@ function BacklogPreview({
   onOpen: (item: WorkItemWithRelations) => void;
 }) {
   return (
-    <div className="rounded-lg border bg-white p-4">
+    <div className="rounded-lg border border-border bg-white dark:bg-card p-4">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-medium">Backlog preview</h3>
         <Link
