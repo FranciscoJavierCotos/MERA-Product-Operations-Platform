@@ -18,6 +18,35 @@
 import DOMPurify from "isomorphic-dompurify";
 import type { Config } from "dompurify";
 
+// DOMPurify has an internal DATA_URI_TAGS list (img, audio, video, …) that
+// exempts those tags from the ALLOWED_URI_REGEXP check, letting `data:` URIs
+// through even when they are not explicitly allowed. There is no config option
+// to override this list, so we use an afterSanitizeAttributes hook instead.
+//
+// The guard prevents the hook from being registered more than once if the
+// module is evaluated multiple times (e.g. Vitest re-imports, HMR).
+let _hooksInstalled = false;
+function ensureHooks(): void {
+  if (_hooksInstalled) return;
+  _hooksInstalled = true;
+
+  const DATA_URI_RE = /^data:/i;
+
+  DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+    const el = node as Element;
+    if (typeof el.getAttribute !== "function") return;
+
+    // Strip data: URIs from src (img) and href (a) — our images come from
+    // Supabase Storage (https://), never from embedded data URIs.
+    for (const attr of ["src", "href"]) {
+      const val = el.getAttribute(attr);
+      if (val && DATA_URI_RE.test(val)) {
+        el.removeAttribute(attr);
+      }
+    }
+  });
+}
+
 // Conservative allowlist that covers every tag Tiptap's StarterKit and the
 // extensions used by this app (Headings, CodeBlock/lowlight, Image, Link,
 // BulletList, OrderedList, Blockquote, Strike, etc.) can produce.
@@ -51,9 +80,11 @@ const PURIFY_CONFIG: Config = {
   ALLOWED_ATTR,
   // Block data-* attributes — prevents attribute-based injection patterns.
   ALLOW_DATA_ATTR: false,
-  // html profile: allows standard HTML elements only; blocks SVG and MathML
-  // namespaces entirely (closes <svg onload=…> and <math> vectors).
-  USE_PROFILES: { html: true },
+  // NOTE: DO NOT add USE_PROFILES here. When USE_PROFILES is set, DOMPurify
+  // resets ALLOWED_TAGS and ALLOWED_ATTR to the profile's full HTML list,
+  // completely overriding our restrictive allowlists and re-admitting tags
+  // like <details>, style= attributes, and data: URIs. Our explicit
+  // ALLOWED_TAGS already blocks SVG/MathML (they are simply not listed).
 };
 
 /**
@@ -66,6 +97,7 @@ const PURIFY_CONFIG: Config = {
  */
 export function sanitizeHtml(dirty: string): string {
   if (!dirty) return "";
+  ensureHooks();
   // DOMPurify v3 returns `TrustedHTML | string` when the Trusted Types API is
   // available; in our app we do not configure a Trusted Types policy so the
   // value is always a plain string at runtime. The cast is safe here.
