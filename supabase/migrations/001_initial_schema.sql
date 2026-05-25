@@ -40,35 +40,6 @@ CREATE TYPE work_item_status    AS ENUM ('todo', 'in_progress', 'in_review', 'do
 
 
 -- ============================================================
--- 3. SHARED HELPER FUNCTIONS (used in RLS policies)
--- ============================================================
-
-CREATE OR REPLACE FUNCTION is_admin(uid UUID)
-RETURNS BOOLEAN
-LANGUAGE SQL
-STABLE
-SECURITY DEFINER
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM profiles WHERE id = uid AND role = 'admin'
-  );
-$$;
-
-CREATE OR REPLACE FUNCTION is_support_or_admin(uid UUID)
-RETURNS BOOLEAN
-LANGUAGE SQL
-STABLE
-SECURITY DEFINER
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM profiles
-    WHERE id = uid
-      AND role IN ('admin', 'support_lead', 'support_member')
-  );
-$$;
-
-
--- ============================================================
 -- 4. LOOKUP TABLES  (SMALLINT PKs, seeded with defaults)
 -- These are the source of truth for status/priority/etc values.
 -- Adding a new status is a row INSERT, not a deploy.
@@ -225,6 +196,34 @@ CREATE TABLE profiles (
 
 CREATE INDEX idx_profiles_role    ON profiles (role);
 CREATE INDEX idx_profiles_team_id ON profiles (team_id);
+
+-- ── Helper functions (depend on profiles) ────────────────────
+-- Defined here so the profiles table already exists when Postgres
+-- validates the SQL function bodies (PostgreSQL 16+ validates eagerly).
+
+CREATE OR REPLACE FUNCTION is_admin(uid UUID)
+RETURNS BOOLEAN
+LANGUAGE SQL
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM profiles WHERE id = uid AND role = 'admin'
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION is_support_or_admin(uid UUID)
+RETURNS BOOLEAN
+LANGUAGE SQL
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM profiles
+    WHERE id = uid
+      AND role IN ('admin', 'support_lead', 'support_member')
+  );
+$$;
 
 -- ── 5b. Tickets ──────────────────────────────────────────────
 
