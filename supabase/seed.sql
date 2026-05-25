@@ -23,7 +23,7 @@ DECLARE
   admin_id   uuid := '00000000-0000-0000-0000-000000000010';
   member_id  uuid := '00000000-0000-0000-0000-000000000011';
   client_id  uuid := '00000000-0000-0000-0000-000000000012';
-  team_id    uuid := '00000000-0000-0000-0000-000000000001';
+  v_team_id  uuid := '00000000-0000-0000-0000-000000000001';
   test_pass  text := crypt('Test1234!', gen_salt('bf', 10));
 BEGIN
   -- ── Insert auth.users rows ──────────────────────────────────
@@ -68,12 +68,12 @@ BEGIN
   -- ── Update roles and team assignment explicitly.            ─
   UPDATE public.profiles SET
     role    = 'admin',
-    team_id = team_id
+    team_id = v_team_id
   WHERE id = admin_id;
 
   UPDATE public.profiles SET
     role    = 'support_member',
-    team_id = team_id
+    team_id = v_team_id
   WHERE id = member_id;
 
   UPDATE public.profiles SET
