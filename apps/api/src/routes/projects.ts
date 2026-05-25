@@ -13,7 +13,7 @@ const CreateBody = z.object({
   sprint_duration_weeks: z.number().int().min(1).max(4).optional(),
   team_id: z.string().uuid().nullable().optional(),
   lead_id: z.string().uuid().nullable().optional(),
-}).passthrough();
+}).strict();
 
 const UpdateBody = z.object({
   name: z.string().optional(),
@@ -23,7 +23,7 @@ const UpdateBody = z.object({
   sprint_duration_weeks: z.number().int().min(1).max(4).optional(),
   team_id: z.string().uuid().nullable().optional(),
   lead_id: z.string().uuid().nullable().optional(),
-}).passthrough();
+}).strict();
 
 export const projectRoutes: FastifyPluginAsyncZod = async (app) => {
   app.get("/projects", { schema: { tags: ["projects"] } }, async (req) =>

@@ -26,7 +26,7 @@ const CreateBody = z.object({
   priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
   action_tag: z.string().optional().nullable(),
   time_spent_minutes: z.number().int().optional().nullable(),
-}).passthrough();
+}).strict();
 
 const UpdateBody = CreateBody.partial();
 

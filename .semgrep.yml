@@ -1,0 +1,160 @@
+# Semgrep rules for MERA Product Operations
+#
+# Category coverage (OWASP Top 10 for Node/TypeScript):
+#   A01 - Broken Access Control
+#   A02 - Cryptographic Failures
+#   A03 - Injection (SQL, NoSQL, XSS, command)
+#   A05 - Security Misconfiguration
+#   A07 - Authentication & Identification Failures
+#   A09 - Security Logging / Monitoring
+#
+# Run locally: semgrep --config .semgrep.yml --lang ts apps/
+# Run in CI via: semgrep/semgrep-action@v1 (see .github/workflows/test.yml)
+
+rules:
+  # ── A03: Injection — eval ─────────────────────────────────────────────────
+  - id: no-eval
+    patterns:
+      - pattern: eval(...)
+    message: |
+      Dangerous use of eval(). Executing arbitrary strings as code is a
+      remote code execution risk. Use a safe alternative.
+    languages: [javascript, typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      owasp: "A03:2021 - Injection"
+      cwe: "CWE-95"
+
+  # ── A03: Injection — new Function() ──────────────────────────────────────
+  - id: no-new-function
+    patterns:
+      - pattern: new Function(...)
+    message: |
+      new Function() executes arbitrary strings as code. Use a safer alternative.
+    languages: [javascript, typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      owasp: "A03:2021 - Injection"
+      cwe: "CWE-95"
+
+  # ── A03: Injection — child_process without shell:false ────────────────────
+  - id: no-shell-exec
+    pattern-either:
+      - patterns:
+          - pattern: require("child_process").exec(...)
+      - patterns:
+          - pattern: require("child_process").execSync(...)
+      - patterns:
+          - pattern: |
+              import { exec } from "child_process";
+              ...
+              exec(...)
+    message: |
+      Shell command execution detected. Prefer execFile() / spawn() with
+      shell: false to avoid shell injection. Never concatenate user input
+      into command strings.
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      owasp: "A03:2021 - Injection"
+      cwe: "CWE-78"
+
+  # ── A02: Cryptographic Failures — weak hash algorithms ───────────────────
+  - id: no-weak-hash
+    patterns:
+      - pattern: crypto.createHash("md5")
+      - pattern: crypto.createHash("sha1")
+    message: |
+      MD5 and SHA-1 are cryptographically weak. Use SHA-256 or better for
+      security-sensitive hashing (passwords, tokens, integrity checks).
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      owasp: "A02:2021 - Cryptographic Failures"
+      cwe: "CWE-327"
+
+  # ── A02: Cryptographic Failures — Math.random for security ───────────────
+  - id: no-math-random-for-secrets
+    patterns:
+      - pattern: Math.random()
+    message: |
+      Math.random() is not cryptographically secure. Use
+      crypto.randomBytes() / crypto.randomUUID() for tokens, session IDs,
+      or any security-sensitive random value.
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      owasp: "A02:2021 - Cryptographic Failures"
+      cwe: "CWE-338"
+
+  # ── A07: Auth — hardcoded credentials ─────────────────────────────────────
+  - id: no-hardcoded-secret
+    pattern-either:
+      - pattern: |
+          const password = "..."
+      - pattern: |
+          const secret = "..."
+      - pattern: |
+          const apiKey = "..."
+      - pattern: |
+          const token = "..."
+    pattern-not-either:
+      # Allow empty strings and test/placeholder strings
+      - pattern: |
+          const $X = ""
+      - pattern: |
+          const $X = "your-..."
+      - pattern: |
+          const $X = "<...>"
+    message: |
+      Potential hardcoded secret detected. Store credentials in environment
+      variables or a secrets manager — never in source code.
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      owasp: "A07:2021 - Identification and Authentication Failures"
+      cwe: "CWE-798"
+
+  # ── A05: Misconfiguration — console.log in production paths ──────────────
+  - id: no-console-log-in-api
+    patterns:
+      - pattern: console.log(...)
+    paths:
+      include:
+        - "apps/api/src/**"
+    message: |
+      console.log() in API code bypasses the structured pino logger and
+      cannot be filtered or redacted. Use req.log.info() / app.log.info()
+      instead.
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      owasp: "A09:2021 - Security Logging and Monitoring Failures"
+
+  # ── A01: Broken Access Control — bypassing Zod validation with "as any" ──
+  - id: no-as-any-in-route-handler
+    patterns:
+      - pattern: |
+          async ($req) => {
+            ...
+            $service($req.supabase, ... as any ...);
+          }
+    paths:
+      include:
+        - "apps/api/src/routes/**"
+    message: |
+      Using "as any" to cast request body data bypasses runtime type
+      validation. Prefer fully-typed schemas so the type system and
+      runtime validator agree on the shape of the data.
+    languages: [typescript]
+    severity: INFO
+    metadata:
+      category: security
+      owasp: "A01:2021 - Broken Access Control"

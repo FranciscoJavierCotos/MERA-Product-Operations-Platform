@@ -11,6 +11,13 @@
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)
 ![AI Adopted](https://img.shields.io/badge/AI-Fully_Adopted-FF6B35?style=flat-square)
 
+![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-unit_+_integration-6E9F18?style=flat-square&logo=vitest&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-E2E-2EAD33?style=flat-square&logo=playwright&logoColor=white)
+![Semgrep](https://img.shields.io/badge/Semgrep-OWASP_Top_10-1B2A4E?style=flat-square)
+![Gitleaks](https://img.shields.io/badge/Gitleaks-Secret_Scan-FF4F64?style=flat-square)
+![pnpm audit](https://img.shields.io/badge/pnpm_audit-fail_on_HIGH%2B-F69220?style=flat-square&logo=pnpm&logoColor=white)
+
 <p align="center">
   <img src="./docs/screenshots/Ad.png" width="960" alt="MERA Dashboard" />
 </p>
@@ -209,6 +216,95 @@ pnpm dev       # web :3000  ·  API :8080  ·  OpenAPI :8080/docs
 
 ---
 
+## Testing
+
+MERA ships with a three-tier test strategy. Each tier runs at a different level of the stack and at a different cadence, so the cheap ones gate the slow ones.
+
+| Tier            | Tool         | Where                                                                                  | What it proves                                                                                              | Command                  |
+| --------------- | ------------ | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------ |
+| **Unit**        | Vitest       | [apps/web/lib/utils/__tests__/](apps/web/lib/utils/__tests__/) · [apps/api/src/unit/](apps/api/src/unit/) | Pure functions behave as specified. Zero network, zero DB. Sub-second.                                       | `pnpm test:unit`         |
+| **Integration** | Vitest       | [apps/api/src/__tests__/](apps/api/src/__tests__/)                                     | Each Fastify route boots in-process against a real local Postgres with RLS enabled and the full trigger set. | `pnpm test:integration`  |
+| **E2E**         | Playwright   | [e2e/tests/](e2e/tests/)                                                               | Real Chromium against the running stack — auth, ticket lifecycle, sprint board, client isolation, admin.    | `pnpm test:e2e`          |
+
+### What integration tests actually cover
+
+The integration suite is the load-bearing tier — it's the one that catches RLS drift, trigger regressions, and schema mistakes that typechecking can't see. Current coverage:
+
+- **Auth & access control** — JWT validation, role gating, RLS enforcement, security headers
+- **Ticket lifecycle** — CRUD, pagination, resolution flow (HTML → plain → embedding trigger), strict schema rejection
+- **Tasks** — full lifecycle and aggregate stats
+- **Comments** — CRUD, internal-vs-external visibility
+- **Projects / sprints / work-items** — Scrum surface end-to-end
+- **SLA policies & instances** — pause/resume on customer-blocked statuses
+- **Storage** — signed-upload URL minting, bucket isolation
+- **Knowledge** — KB CRUD, retrieval config, audit logging
+
+Tests run against a real local Supabase stack started by `supabase start` — no mocks, no stubs. This is the explicit trade-off: slower than unit tests, but the only way to be sure RLS still works after a migration.
+
+### E2E
+
+Playwright covers the journeys that span web + API + DB in a single user flow:
+
+- **Auth guard** — unauthenticated requests redirect; authenticated sessions persist via captured `storageState`
+- **Ticket lifecycle** — agent opens a ticket, fills resolution, closes, sees it indexed
+- **Client isolation** — `role = 'client'` sees only their own tickets, no internal comments
+- **Sprint board** — drag-and-drop reorder persists across reload
+- **Admin settings** — admin-only screens gate correctly
+
+E2E uses the three seeded test users (`admin@`, `support@`, `client@test.mera.local`) from [supabase/seed.sql](supabase/seed.sql).
+
+```bash
+pnpm test:e2e          # all specs
+pnpm test:e2e:headed   # watch the browser drive itself
+pnpm test:e2e:ui       # Playwright's interactive runner
+pnpm test:e2e:debug    # step-through with inspector
+```
+
+See [e2e/README.md](e2e/README.md) for prereqs (a local stack, both dev servers, and `playwright install chromium`).
+
+---
+
+## Continuous Integration
+
+CI runs on every push to `main` / `develop` and on every PR targeting them. The pipeline is defined in a single file — [.github/workflows/test.yml](.github/workflows/test.yml) — and uses Node 22 + pnpm 11.2.2 across all jobs.
+
+| Job              | What it does                                                                                                                                                              | Fails the build on                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| **Typecheck**    | `tsc --noEmit` for both `apps/web` and `apps/api`                                                                                                                          | Any TS error                                        |
+| **Unit**         | Vitest suites in both apps (no Supabase needed)                                                                                                                            | Any failing assertion                               |
+| **Audit**        | `pnpm audit --audit-level=high`                                                                                                                                            | Any HIGH or CRITICAL CVE in the dependency tree     |
+| **Semgrep**      | SAST against the project-local rules in [.semgrep.yml](.semgrep.yml) — covers OWASP Top 10 for Node/TypeScript (injection, broken access control, crypto, misconfig, …)   | Any ERROR-severity finding                          |
+| **Secret Scan**  | Gitleaks with the built-in ruleset + project allowlist [.gitleaks.toml](.gitleaks.toml) — fixtures and seeded dev keys are filtered                                        | Any real leaked credential                          |
+| **Integration**  | Boots a real local Supabase stack (`supabase start` → `supabase db reset`), runs the full Vitest integration suite against the live API + DB. Cached Docker images for speed | Any failing route, RLS regression, or trigger drift |
+
+```
+┌─ Typecheck ─┬─► Unit
+              ├─► Audit
+              └─► Integration (push→main or any PR)
+
+┌─ Semgrep      (parallel)
+└─ Secret Scan  (parallel)
+```
+
+**Design notes:**
+
+- **Integration is gated by branch**: it runs on every PR and on push to `main`, but is skipped on push to `develop` so feature work stays fast. The real Supabase boot + migrations + Vitest run is the slowest job by an order of magnitude.
+- **Security jobs are independent**: Semgrep and Gitleaks don't wait for typecheck — a leaked secret should block a merge even if the code doesn't compile.
+- **Docker image cache**: the Supabase image set is cached by `supabase/config.toml` hash, cutting ~4–6 minutes per integration run.
+- **E2E is not in CI yet**: Playwright currently runs locally only. It's on the roadmap to add a `workflow_dispatch` job once the cold-start cost of booting both Next dev server + Fastify + Supabase in CI is amortized.
+
+### Security posture in CI
+
+Three layers run on every PR, in parallel where possible:
+
+1. **Dependencies** — `pnpm audit` blocks HIGH/CRITICAL CVEs at install time.
+2. **Static analysis** — Semgrep enforces a project-local OWASP ruleset for Node/TypeScript. Rules live in [.semgrep.yml](.semgrep.yml) and are version-controlled like any other code.
+3. **Secrets** — Gitleaks scans full history (`fetch-depth: 0`) so a secret introduced earlier in the branch is still caught. Fixtures, mocks, and the public Supabase local-stack anon key are explicitly allowlisted via [.gitleaks.toml](.gitleaks.toml) so they don't generate noise.
+
+A passing CI run is the merge contract: typecheck clean, all unit + integration tests green, no HIGH+ deps, no Semgrep ERROR, no secrets.
+
+---
+
 ## Contributing
 
 MERA is open to collaboration. If you've stumbled across this project and feel like contributing — whether that's a bug report, a feature idea, a pull request, or just a thought — you're genuinely welcome here.
@@ -226,7 +322,8 @@ MERA is open to collaboration. If you've stumbled across this project and feel l
 - Every mutation validates with Zod at the API route level; forms also validate client-side
 - Schema changes = new file under `supabase/migrations/` + regenerate `database.types.ts` in both apps
 - History tables are read-only from app code — triggers write them
-- Before "done": `pnpm --filter web typecheck` + `pnpm --filter api typecheck` clean; exercise the flow in a browser
+- Before "done": `pnpm --filter web typecheck` + `pnpm --filter api typecheck` + `pnpm test:unit` clean; for API/route changes, add an integration test and run `pnpm test:integration` against a local Supabase; exercise the flow in a browser
+- New routes should ship with at least one integration test (happy path + an auth/RLS edge case). User-facing journeys that span both apps deserve an E2E spec
 
 Good software tends to grow from good conversations. Open an issue or reach out.
 
@@ -241,7 +338,8 @@ Good software tends to grow from good conversations. Open an issue or reach out.
 - [ ] Customer-facing portal (`role = 'client'`)
 - [ ] Webhook integrations + outbound notifications (`integrations` table is already in place)
 - [ ] Multi-tenant org boundary (currently single-org)
-- [ ] Automated RLS policy regression tests in CI
+- [ ] Playwright E2E job in CI (currently local-only)
+- [ ] Coverage gate (`vitest --coverage`) wired into the unit/integration jobs
 
 ---
 

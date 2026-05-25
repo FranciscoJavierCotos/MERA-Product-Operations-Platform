@@ -10,7 +10,7 @@ const CreateBody = z.object({
   goal: z.string().nullable().optional(),
   start_date: z.string().nullable().optional(),
   end_date: z.string().nullable().optional(),
-}).passthrough();
+}).strict();
 
 const UpdateBody = z.object({
   name: z.string().optional(),
@@ -18,7 +18,7 @@ const UpdateBody = z.object({
   start_date: z.string().nullable().optional(),
   end_date: z.string().nullable().optional(),
   status: z.string().optional(),
-}).passthrough();
+}).strict();
 
 export const sprintRoutes: FastifyPluginAsyncZod = async (app) => {
   app.get(

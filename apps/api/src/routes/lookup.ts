@@ -10,26 +10,26 @@ const StatusBody = z.object({
   badge_variant: z.string().optional(),
   is_final: z.boolean().optional(),
   display_order: z.number().int(),
-}).passthrough();
+}).strict();
 
 const PriorityBody = z.object({
   name: z.string(),
   label: z.string(),
   color_class: z.string().optional(),
   display_order: z.number().int(),
-}).passthrough();
+}).strict();
 
 const CategoryBody = z.object({
   name: z.string(),
   label: z.string(),
   display_order: z.number().int(),
-}).passthrough();
+}).strict();
 
 const TagBody = z.object({
   name: z.string(),
   slug: z.string(),
   color_class: z.string().optional(),
-}).passthrough();
+}).strict();
 
 export const lookupRoutes: FastifyPluginAsyncZod = async (app) => {
   // Reads
@@ -53,10 +53,10 @@ export const lookupRoutes: FastifyPluginAsyncZod = async (app) => {
   );
 
   // Statuses
-  app.post("/lookup/statuses", { schema: { tags: ["lookup"], body: StatusBody.passthrough() } }, async (req) =>
+  app.post("/lookup/statuses", { schema: { tags: ["lookup"], body: StatusBody } }, async (req) =>
     lookup.createTicketStatus(req.supabase, req.body as any),
   );
-  app.patch("/lookup/statuses/:id", { schema: { tags: ["lookup"], params: IdParam, body: StatusBody.partial().passthrough() } }, async (req) =>
+  app.patch("/lookup/statuses/:id", { schema: { tags: ["lookup"], params: IdParam, body: StatusBody.partial() } }, async (req) =>
     lookup.updateTicketStatus(req.supabase, req.params.id, req.body as any),
   );
   app.delete("/lookup/statuses/:id", { schema: { tags: ["lookup"], params: IdParam } }, async (req) => {
@@ -68,7 +68,7 @@ export const lookupRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post("/lookup/priorities", { schema: { tags: ["lookup"], body: PriorityBody } }, async (req) =>
     lookup.createTicketPriority(req.supabase, req.body as any),
   );
-  app.patch("/lookup/priorities/:id", { schema: { tags: ["lookup"], params: IdParam, body: PriorityBody.partial().passthrough() } }, async (req) =>
+  app.patch("/lookup/priorities/:id", { schema: { tags: ["lookup"], params: IdParam, body: PriorityBody.partial() } }, async (req) =>
     lookup.updateTicketPriority(req.supabase, req.params.id, req.body as any),
   );
   app.delete("/lookup/priorities/:id", { schema: { tags: ["lookup"], params: IdParam } }, async (req) => {
@@ -80,7 +80,7 @@ export const lookupRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post("/lookup/categories", { schema: { tags: ["lookup"], body: CategoryBody } }, async (req) =>
     lookup.createTicketCategory(req.supabase, req.body as any),
   );
-  app.patch("/lookup/categories/:id", { schema: { tags: ["lookup"], params: IdParam, body: CategoryBody.partial().passthrough() } }, async (req) =>
+  app.patch("/lookup/categories/:id", { schema: { tags: ["lookup"], params: IdParam, body: CategoryBody.partial() } }, async (req) =>
     lookup.updateTicketCategory(req.supabase, req.params.id, req.body as any),
   );
   app.delete("/lookup/categories/:id", { schema: { tags: ["lookup"], params: IdParam } }, async (req) => {
@@ -92,7 +92,7 @@ export const lookupRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post("/lookup/tags", { schema: { tags: ["lookup"], body: TagBody } }, async (req) =>
     lookup.createTag(req.supabase, req.body as any),
   );
-  app.patch("/lookup/tags/:id", { schema: { tags: ["lookup"], params: IdParam, body: TagBody.partial().passthrough() } }, async (req) =>
+  app.patch("/lookup/tags/:id", { schema: { tags: ["lookup"], params: IdParam, body: TagBody.partial() } }, async (req) =>
     lookup.updateTag(req.supabase, req.params.id, req.body as any),
   );
   app.delete("/lookup/tags/:id", { schema: { tags: ["lookup"], params: IdParam } }, async (req) => {

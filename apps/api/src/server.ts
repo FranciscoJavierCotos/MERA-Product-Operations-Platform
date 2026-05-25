@@ -36,6 +36,12 @@ async function build() {
   const app = Fastify({
     logger: {
       level: env.LOG_LEVEL,
+      // Prevent JWT tokens from appearing in plain-text log output.
+      // pino redacts the listed paths before serialising the log record.
+      redact: {
+        paths: ["req.headers.authorization"],
+        censor: "[REDACTED]",
+      },
       transport: env.isDev
         ? { target: "pino-pretty", options: { translateTime: "HH:MM:ss" } }
         : undefined,

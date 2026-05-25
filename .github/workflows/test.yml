@@ -63,7 +63,83 @@ jobs:
       - name: Unit tests — api
         run: pnpm --filter api test:unit
 
-  # ── 3. Integration tests (real local Supabase stack) ──────────────────────
+  # ── 3. Dependency security audit ──────────────────────────────────────────
+  # Fails the build if any HIGH or CRITICAL vulnerability is found.
+  # Run on every push/PR so new vulnerabilities are caught immediately.
+  audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    needs: typecheck
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v5
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit dependencies (fail on HIGH+)
+        # --audit-level=high causes pnpm to exit non-zero if any HIGH or
+        # CRITICAL vulnerability is present in the dependency tree.
+        run: pnpm audit --audit-level=high
+
+  # ── 4. Semgrep SAST (OWASP ruleset) ───────────────────────────────────────
+  # Runs the project-local .semgrep.yml rules against the source tree.
+  # Findings at ERROR severity fail the build; WARNING/INFO are advisory.
+  semgrep:
+    name: Semgrep (OWASP)
+    runs-on: ubuntu-latest
+    # Semgrep is independent — run it in parallel with the other jobs
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run Semgrep with project rules
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: .semgrep.yml
+        env:
+          # SEMGREP_APP_TOKEN is optional; set it in repo secrets for
+          # dashboard reporting on semgrep.dev. Omit for local-rules-only mode.
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+  # ── 5. Secret scanning (Gitleaks) ─────────────────────────────────────────
+  # Scans the repo for leaked credentials (API keys, tokens, passwords,
+  # private keys, JWTs, cloud credentials). Mock / dummy / test-fixture
+  # values are allowlisted via .gitleaks.toml so they don't block merges.
+  # Fails the build when any real secret is detected — gates merges and
+  # deployments. Runs in parallel; no dependency on typecheck.
+  secret-scan:
+    name: Secret Scan (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Fetch full history so the gitleaks-action can diff PRs against
+          # their base ref and catch secrets introduced by older commits
+          # in the same branch (a shallow clone only sees the tip).
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          # GITHUB_TOKEN is auto-provided by Actions; gitleaks-action uses
+          # it to post a check-run summary on the commit/PR.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Point at the project-local allowlist (mock/fixture filters).
+          GITLEAKS_CONFIG: .gitleaks.toml
+          # Disable the optional gitleaks.io license check — keeps the
+          # job working for public repos without an org license token.
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
+          GITLEAKS_ENABLE_SUMMARY: true
+
+  # ── 6. Integration tests (real local Supabase stack) ──────────────────────
   # Only on: push→main, or any PR. Skipped for push→develop (typecheck+unit is enough).
   integration:
     name: Integration Tests

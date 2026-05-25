@@ -1,0 +1,98 @@
+# Gitleaks configuration for MERA Product Operations
+#
+# Scans pushed code for leaked secrets (API keys, tokens, passwords,
+# private keys, JWTs, cloud credentials, etc.) and fails CI when real
+# secrets are detected. Mock / dummy / test-fixture values are allowlisted
+# so they do not block merges.
+#
+# Run locally: gitleaks detect --config .gitleaks.toml --redact --verbose
+# Run in CI   via .github/workflows/test.yml (job: secret-scan).
+
+# Inherit Gitleaks' built-in ruleset (AWS, GCP, GitHub, GitLab, Slack,
+# Stripe, Twilio, OpenAI, generic high-entropy strings, private keys, etc.)
+# and layer the project-specific allowlist below on top.
+[extend]
+useDefault = true
+
+# ── Global allowlist ────────────────────────────────────────────────────────
+# Matches that hit ANY of `paths`, `regexes`, or `stopwords` are dropped
+# from the findings. Use this for non-secret fixtures only — never to hide
+# a real leaked credential.
+[allowlist]
+description = "Project-wide false-positive filters"
+
+# File / path patterns that contain only example or test data.
+paths = [
+    # Lockfiles are huge, have no secrets, but produce noise on hashes.
+    '''pnpm-lock\.yaml''',
+    '''package-lock\.json''',
+    '''yarn\.lock''',
+
+    # Test fixtures, integration tests, E2E specs — all populated with
+    # locally-issued Supabase tokens, dummy JWTs and stub credentials.
+    '''.*__tests__/.*''',
+    '''.*\.test\.(ts|tsx|js|jsx)$''',
+    '''.*\.spec\.(ts|tsx|js|jsx)$''',
+    '''^e2e/.*''',
+
+    # Local supabase config / seed data — emits demo anon keys that are
+    # public by design (anon JWTs for the local stack are not secrets).
+    '''^supabase/seed\.sql$''',
+    '''^supabase/config\.toml$''',
+
+    # Generated TypeScript types from Supabase — schema only, no secrets.
+    '''.*database\.types\.ts$''',
+
+    # Env templates — by convention only hold placeholder values.
+    '''.*\.env\.example$''',
+    '''.*\.env\.sample$''',
+    '''.*\.env\.template$''',
+
+    # Documentation often contains illustrative tokens.
+    '''.*README\.md$''',
+    '''^docs/.*\.md$''',
+    '''^\.claude/.*''',
+]
+
+# Regex patterns that mark a finding as a known mock / placeholder.
+# Any secret value that matches one of these is treated as non-sensitive.
+regexes = [
+    # Common placeholder tokens used in docs and snippets.
+    '''(?i)(your[-_ ]?(api[-_ ]?key|token|secret|password))''',
+    '''(?i)(example|sample|placeholder|changeme|change[-_ ]?me)''',
+    '''(?i)(dummy|mock|fake|stub|fixture|test[-_ ]?only)''',
+    '''(?i)xxx+[-_]?(key|token|secret)?''',
+
+    # Template / interpolation markers ( ${VAR}, {{ VAR }}, <YOUR_KEY> ).
+    '''\$\{[A-Z0-9_]+\}''',
+    '''\{\{\s*[A-Z0-9_]+\s*\}\}''',
+    '''<[A-Z0-9_-]+>''',
+
+    # The well-known PUBLIC JWT issued by `supabase start` for local dev.
+    # This anon key is published in Supabase's own docs — not a secret.
+    '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJpc3MiOiJzdXBhYmFzZS1kZW1v''',
+
+    # Obvious test-only Bearer values inside test code (e.g. "abc123",
+    # "tampered.jwt.value", "not-a-real-token"). Limited to short strings.
+    '''(?i)(not[-_]?a[-_]?real|invalid|tampered)[-_]?(token|jwt|key|secret)''',
+]
+
+# Stopwords cause a finding to be dropped when the surrounding line
+# contains the word. Useful for catching "API_KEY = 'test'" style examples.
+stopwords = [
+    "dummy",
+    "mock",
+    "fake",
+    "stub",
+    "fixture",
+    "example",
+    "placeholder",
+    "changeme",
+    "your-api-key",
+    "your-token",
+    "your-secret",
+    "test-only",
+    "demo-only",
+    "localhost",
+    "127.0.0.1",
+]

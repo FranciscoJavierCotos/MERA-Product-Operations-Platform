@@ -11,7 +11,7 @@ const PolicyBody = z.object({
   response_time_minutes: z.number().int().min(0),
   resolution_time_minutes: z.number().int().min(0),
   is_active: z.boolean().optional(),
-}).passthrough();
+}).strict();
 
 export const slaRoutes: FastifyPluginAsyncZod = async (app) => {
   app.get("/sla/policies", { schema: { tags: ["sla"] } }, async (req) =>
@@ -42,7 +42,7 @@ export const slaRoutes: FastifyPluginAsyncZod = async (app) => {
 
   app.patch(
     "/sla/policies/:id",
-    { schema: { tags: ["sla"], params: IdParam, body: PolicyBody.partial().passthrough() } },
+    { schema: { tags: ["sla"], params: IdParam, body: PolicyBody.partial() } },
     async (req) => slas.updateSlaPolicy(req.supabase, req.params.id, req.body as any),
   );
 

@@ -109,7 +109,13 @@ export const knowledgeRoutes: FastifyPluginAsyncZod = async (app) => {
       schema: {
         tags: ["knowledge"],
         params: DocIdParam,
-        body: z.object({}).passthrough(),
+        // Explicit allowlist — .strict() rejects any key not listed here.
+        body: z.object({
+          title: z.string().min(1).optional(),
+          description: z.string().nullable().optional(),
+          collection_id: z.string().uuid().nullable().optional(),
+          current_version_id: z.string().uuid().nullable().optional(),
+        }).strict(),
       },
     },
     async (req) =>

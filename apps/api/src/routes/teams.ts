@@ -13,14 +13,14 @@ const TeamBody = z.object({
   name: z.string().min(1),
   description: z.string().nullable().optional(),
   category: z.enum(["functional", "l1_support", "l2_technical", "l3_engineering"]).nullable().optional(),
-}).passthrough();
+}).strict();
 
 const CollaboratorBody = z.object({
   functional_team_id: z.string().uuid().optional(),
   support_team_id: z.string().uuid().optional(),
   support_level: z.enum(["L1", "L2", "L3"]).optional(),
   notes: z.string().optional(),
-}).passthrough();
+}).strict();
 
 const CollaboratorIdParam = z.object({
   collaboratorId: z.string().uuid(),
@@ -31,7 +31,7 @@ const EscalationBody = z.object({
   to_team_id: z.string().uuid(),
   to_support_level: z.enum(["L1", "L2", "L3"]),
   reason: z.string().nullable().optional(),
-}).passthrough();
+}).strict();
 
 export const teamRoutes: FastifyPluginAsyncZod = async (app) => {
   app.get("/teams", { schema: { tags: ["teams"] } }, async (req) =>
@@ -79,7 +79,7 @@ export const teamRoutes: FastifyPluginAsyncZod = async (app) => {
   );
   app.patch(
     "/teams/:id",
-    { schema: { tags: ["teams"], params: IdParam, body: TeamBody.partial().passthrough() } },
+    { schema: { tags: ["teams"], params: IdParam, body: TeamBody.partial() } },
     async (req) => teams.updateTeam(req.supabase, req.params.id, req.body as any),
   );
   app.delete("/teams/:id", { schema: { tags: ["teams"], params: IdParam } }, async (req) => {

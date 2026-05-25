@@ -43,7 +43,7 @@ const TicketCreateBody = z.object({
   functional_team_id: z.string().uuid().optional(),
   team_id: z.string().uuid().optional(),
   support_level_id: z.number().int().optional(),
-}).passthrough();
+}).strict();
 
 const TicketUpdateBody = z.object({
   title: z.string().optional(),
@@ -58,7 +58,7 @@ const TicketUpdateBody = z.object({
   team_id: z.string().uuid().nullable().optional(),
   assigned_to: z.string().uuid().nullable().optional(),
   cc_email: z.string().nullable().optional(),
-}).passthrough();
+}).strict();
 
 const TimeWorkedBody = z.object({
   time_worked_minutes: z.number().int().min(0),

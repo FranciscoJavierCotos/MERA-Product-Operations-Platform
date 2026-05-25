@@ -18,7 +18,7 @@ const CreateLinkBody = z.object({
   link_type: z.string(),
   is_primary: z.boolean().optional(),
   note: z.string().nullable().optional(),
-}).passthrough();
+}).strict();
 
 export const itemLinkRoutes: FastifyPluginAsyncZod = async (app) => {
   app.get("/item-links/types", { schema: { tags: ["item-links"] } }, async (req) =>

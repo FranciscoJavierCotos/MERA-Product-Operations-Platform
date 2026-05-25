@@ -26,9 +26,21 @@ const CreateBody = z.object({
   assigned_to: z.string().uuid().nullable().optional(),
   parent_id: z.string().uuid().nullable().optional(),
   rank: z.string(),
-}).passthrough();
+}).strict();
 
-const UpdateBody = z.object({}).passthrough();
+// Enumerate every field that callers are allowed to patch on a work-item.
+// .strict() means any unknown key is rejected with 400 (mass-assignment guard).
+const UpdateBody = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().nullable().optional(),
+  type: z.string().optional(),
+  priority_id: z.number().int().nullable().optional(),
+  story_points: z.number().int().nullable().optional(),
+  assigned_to: z.string().uuid().nullable().optional(),
+  parent_id: z.string().uuid().nullable().optional(),
+  sprint_id: z.string().uuid().nullable().optional(),
+  rank: z.string().optional(),
+}).strict();
 
 const StatusBody = z.object({ status: z.string() });
 const MoveBody = z.object({ sprint_id: z.string().uuid().nullable() });
