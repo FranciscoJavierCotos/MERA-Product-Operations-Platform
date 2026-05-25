@@ -87,7 +87,8 @@ kubeconfig
 # yarn
 .yarn/install-state.gz
 
-.github
+.github/*
+!.github/workflows
 .claude
 
 # Documentation
