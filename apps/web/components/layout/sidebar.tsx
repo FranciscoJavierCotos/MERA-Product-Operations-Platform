@@ -80,7 +80,7 @@ export function Sidebar({
               <h1 className="text-white text-xl font-bold tracking-tight dark:text-glow">
                 MERA
               </h1>
-              <span className="text-gray-400 text-xs leading-none dark:text-primary-300/70 dark:uppercase dark:tracking-[0.18em] dark:text-[10px] dark:font-medium dark:mt-0.5">
+              <span className="text-gray-400 text-xs leading-none dark:text-white dark:uppercase dark:tracking-[0.18em] dark:text-[10px] dark:font-bold dark:mt-0.5 dark:drop-shadow-[0_0_12px_hsl(var(--primary)/0.7)]">
                 Product Operations
               </span>
             </div>

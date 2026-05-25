@@ -105,8 +105,8 @@ export function TaskItem({
       className={cn(
         "group flex items-center gap-3 px-3 py-2.5 border rounded-lg transition-colors",
         isCompleted
-          ? "bg-gray-50 border-gray-200"
-          : "bg-white hover:bg-gray-50",
+          ? "bg-gray-50 border-gray-200 dark:bg-white/[0.02] dark:border-border/50"
+          : "bg-white hover:bg-gray-50 dark:bg-card dark:border-border/60 dark:hover:bg-white/[0.04] dark:hover:border-primary/30",
       )}
     >
       {/* Checkbox */}
@@ -117,7 +117,7 @@ export function TaskItem({
           onChange={handleCheckboxChange}
           disabled={isCompleted}
           className={cn(
-            "h-4 w-4 rounded border-gray-300 text-primary focus:ring-ring",
+            "h-4 w-4 rounded border-gray-300 text-primary focus:ring-ring dark:border-border dark:bg-background",
             isCompleted && "cursor-not-allowed opacity-50",
           )}
           aria-label={`Mark "${task.title}" as ${
@@ -132,19 +132,23 @@ export function TaskItem({
         <div className="flex items-center gap-2 min-w-0">
           <h3
             className={cn(
-              "text-sm font-medium truncate",
-              isCompleted ? "text-gray-500 line-through" : "text-gray-900",
+              "text-sm font-semibold truncate",
+              isCompleted
+                ? "text-gray-500 dark:text-gray-500 line-through"
+                : "text-gray-900 dark:text-white",
             )}
           >
             {task.title}
           </h3>
           {task.description && (
             <>
-              <span className="text-gray-300">·</span>
+              <span className="text-gray-300 dark:text-gray-600">·</span>
               <span
                 className={cn(
                   "text-sm truncate",
-                  isCompleted ? "text-gray-400" : "text-gray-500",
+                  isCompleted
+                    ? "text-gray-400 dark:text-gray-600"
+                    : "text-gray-500 dark:text-gray-300",
                 )}
               >
                 {task.description}
@@ -170,12 +174,12 @@ export function TaskItem({
               className={cn(
                 "inline-flex items-center gap-1 text-[10px] font-medium",
                 isCompleted
-                  ? "text-gray-400"
+                  ? "text-gray-400 dark:text-gray-600"
                   : dueDateInfo.isOverdue
-                    ? "text-red-600"
+                    ? "text-red-600 dark:text-red-400"
                     : dueDateInfo.isDueSoon
-                      ? "text-amber-600"
-                      : "text-gray-500",
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-gray-500 dark:text-gray-400",
               )}
             >
               <Calendar className="h-3 w-3" />
@@ -185,7 +189,7 @@ export function TaskItem({
           )}
 
           {/* Separator */}
-          <span className="text-gray-300 mx-0.5">·</span>
+          <span className="text-gray-300 dark:text-gray-600 mx-0.5">·</span>
 
           {/* Assigned user */}
           {task.assigned_user && (
@@ -195,7 +199,7 @@ export function TaskItem({
                 avatarUrl={task.assigned_user.avatar_url}
                 className="h-5 w-5"
               />
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-500 dark:text-gray-300">
                 {task.assigned_user.full_name.split(" ")[0]}
               </span>
             </div>
@@ -204,10 +208,10 @@ export function TaskItem({
           {/* Related ticket */}
           {showTicketLink && task.ticket_id && task.ticket && (
             <>
-              <span className="text-gray-300">·</span>
+              <span className="text-gray-300 dark:text-gray-600">·</span>
               <Link
                 href={`/tickets/${task.ticket_id}`}
-                className="text-xs text-primary hover:underline truncate max-w-[200px]"
+                className="text-xs text-primary dark:text-primary-400 hover:underline truncate max-w-[200px]"
                 onClick={(e) => e.stopPropagation()}
                 title={`#${task.ticket.ticket_number} - ${task.ticket.title}`}
               >
@@ -221,8 +225,8 @@ export function TaskItem({
             task.time_spent_minutes !== undefined &&
             task.time_spent_minutes > 0 && (
               <>
-                <span className="text-gray-300">·</span>
-                <span className="inline-flex items-center gap-0.5 text-xs text-gray-500">
+                <span className="text-gray-300 dark:text-gray-600">·</span>
+                <span className="inline-flex items-center gap-0.5 text-xs text-gray-500 dark:text-gray-400">
                   <Clock className="h-3 w-3" />
                   {task.time_spent_minutes}m
                 </span>

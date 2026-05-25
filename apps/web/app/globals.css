@@ -66,9 +66,11 @@
     --border: 228 28% 18%;           /* subtle dark border */
     --input: 228 30% 13%;            /* input field bg */
 
-    /* Brand violet — brighter in dark for contrast */
+    /* Brand violet — brighter in dark for contrast.
+       Foreground stays white: primary surfaces (buttons, dropdown checks,
+       active tabs) read as solid violet + white, never dark text on violet. */
     --primary: 239 84% 67%;
-    --primary-foreground: 244 47% 14%;
+    --primary-foreground: 0 0% 100%;
     --primary-50: 244 47% 14%;
     --primary-100: 244 47% 18%;
     --primary-200: 244 55% 25%;
@@ -384,6 +386,52 @@
 .dark .text-fuchsia-800 { color: hsl(290 78% 82%); }
 .dark .text-pink-800    { color: hsl(330 75% 82%); }
 .dark .text-rose-800    { color: hsl(345 80% 80%); }
+
+/* text-X-700 mappings — used by badge components (priority, action tags).
+   Without these, badges render with the literal Tailwind 700 hue against the
+   dimmed X-100 backgrounds, giving low-contrast unreadable pills. */
+.dark .text-gray-700,
+.dark .text-slate-700,
+.dark .text-zinc-700,
+.dark .text-neutral-700 { color: hsl(213 25% 85%); }
+.dark .text-red-700     { color: hsl(0   92% 78%); }
+.dark .text-orange-700  { color: hsl(24  95% 70%); }
+.dark .text-amber-700   { color: hsl(38  94% 70%); }
+.dark .text-yellow-700  { color: hsl(48  94% 72%); }
+.dark .text-lime-700    { color: hsl(82  75% 70%); }
+.dark .text-green-700   { color: hsl(142 68% 70%); }
+.dark .text-emerald-700 { color: hsl(160 72% 70%); }
+.dark .text-teal-700    { color: hsl(175 72% 70%); }
+.dark .text-cyan-700    { color: hsl(190 82% 70%); }
+.dark .text-sky-700     { color: hsl(204 90% 76%); }
+.dark .text-blue-700    { color: hsl(217 90% 78%); }
+.dark .text-indigo-700  { color: hsl(232 88% 80%); }
+.dark .text-violet-700  { color: hsl(258 85% 80%); }
+.dark .text-purple-700  { color: hsl(270 82% 80%); }
+.dark .text-fuchsia-700 { color: hsl(290 80% 80%); }
+.dark .text-pink-700    { color: hsl(330 78% 80%); }
+.dark .text-rose-700    { color: hsl(345 82% 78%); }
+
+/* Borders for badge pills — the explicit border-X-200 classes resolve to the
+   literal pale Tailwind colors, which look harsh on dark bg. Subdue them. */
+.dark .border-gray-200,
+.dark .border-slate-200,
+.dark .border-zinc-200,
+.dark .border-neutral-200 { border-color: hsl(228 28% 22% / 0.7); }
+.dark .border-red-200     { border-color: hsl(0   65% 40% / 0.4); }
+.dark .border-orange-200  { border-color: hsl(24  75% 42% / 0.4); }
+.dark .border-amber-200   { border-color: hsl(38  80% 42% / 0.4); }
+.dark .border-yellow-200  { border-color: hsl(48  80% 42% / 0.4); }
+.dark .border-green-200   { border-color: hsl(142 55% 38% / 0.4); }
+.dark .border-emerald-200 { border-color: hsl(160 60% 38% / 0.4); }
+.dark .border-teal-200    { border-color: hsl(175 55% 38% / 0.4); }
+.dark .border-cyan-200    { border-color: hsl(190 65% 40% / 0.4); }
+.dark .border-blue-200    { border-color: hsl(217 70% 44% / 0.4); }
+.dark .border-indigo-200  { border-color: hsl(232 65% 46% / 0.4); }
+.dark .border-violet-200  { border-color: hsl(258 65% 46% / 0.4); }
+.dark .border-purple-200  { border-color: hsl(270 60% 46% / 0.4); }
+.dark .border-pink-200    { border-color: hsl(330 60% 46% / 0.4); }
+.dark .border-rose-200    { border-color: hsl(345 65% 44% / 0.4); }
 
 /* Match hover backgrounds so badges don't flash a bright color on hover */
 .dark .hover\:bg-gray-100:hover    { background-color: hsl(228 28% 20% / 0.9); }

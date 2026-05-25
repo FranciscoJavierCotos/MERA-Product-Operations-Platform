@@ -178,10 +178,17 @@ jobs:
         run: supabase db reset
 
       - name: Export Supabase connection vars to GitHub env
-        # `supabase status -o env` emits KEY=value lines — pipe directly into
-        # $GITHUB_ENV so subsequent steps see SUPABASE_URL, SUPABASE_ANON_KEY,
-        # SUPABASE_SERVICE_ROLE_KEY, etc. without us echoing them into the log.
-        run: supabase status -o env >> $GITHUB_ENV
+        # `supabase status -o env` emits KEY=value lines. By default the keys
+        # are API_URL / ANON_KEY / SERVICE_ROLE_KEY; remap them to the names
+        # apps/api/src/config.ts expects (SUPABASE_URL / SUPABASE_ANON_KEY /
+        # SUPABASE_SERVICE_ROLE_KEY) via --override-name so the API's Zod env
+        # schema validates and tests can boot the Fastify app in-process.
+        run: |
+          supabase status -o env \
+            --override-name api.url=SUPABASE_URL \
+            --override-name auth.anon_key=SUPABASE_ANON_KEY \
+            --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
+            >> $GITHUB_ENV
 
       - name: Integration tests — api
         run: pnpm --filter api test:integration
