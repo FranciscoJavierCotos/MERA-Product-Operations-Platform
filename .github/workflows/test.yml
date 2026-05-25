@@ -9,7 +9,7 @@ on:
 env:
   # pnpm version must match packageManager field in root package.json
   PNPM_VERSION: "11.2.2"
-  NODE_VERSION: "20"
+  NODE_VERSION: "22"
 
 jobs:
   # ── 1. Type-check both apps ────────────────────────────────────────────────
