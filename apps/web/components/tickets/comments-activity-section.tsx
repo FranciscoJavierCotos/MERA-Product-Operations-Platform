@@ -46,17 +46,17 @@ export function CommentsActivitySection({
 
   return (
     <Card className="shadow-sm h-full flex flex-col">
-      <CardHeader className="border-b bg-gray-50/50">
+      <CardHeader className="border-b bg-gray-50/50 dark:bg-white/[0.02] dark:border-border/50">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1">
+          <div className="flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-background/60 dark:border dark:border-border/60 p-1">
             <button
               type="button"
               onClick={() => setActiveView("comments")}
               className={cn(
                 "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
                 activeView === "comments"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700",
+                  ? "bg-white text-gray-900 shadow-sm dark:bg-primary dark:text-white dark:shadow-[0_0_18px_-2px_hsl(var(--primary)/0.6)]"
+                  : "text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white",
               )}
             >
               Comments ({commentsCount})
@@ -70,8 +70,8 @@ export function CommentsActivitySection({
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
                 activeView === "activity"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700",
+                  ? "bg-white text-gray-900 shadow-sm dark:bg-primary dark:text-white dark:shadow-[0_0_18px_-2px_hsl(var(--primary)/0.6)]"
+                  : "text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white",
               )}
             >
               Activity
@@ -111,8 +111,10 @@ export function CommentsActivitySection({
           />
         ) : (
           <div className="text-center py-12">
-            <History className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-            <p className="text-sm text-gray-500">No activity recorded yet.</p>
+            <History className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              No activity recorded yet.
+            </p>
           </div>
         )}
       </CardContent>

@@ -175,15 +175,15 @@ export function Navbar({ user }: NavbarProps) {
               <div className="hidden h-6 w-px bg-gray-200 dark:bg-gray-700 sm:block" />
 
               <div className="flex min-w-0 items-center gap-3">
-                <div className="rounded-md bg-primary-50 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-primary-700 dark:bg-primary/[0.08] dark:text-primary-300 dark:border dark:border-primary/20 dark:shadow-none">
+                <div className="rounded-md bg-primary px-2 py-1 text-xs font-semibold uppercase tracking-wide text-white dark:bg-primary dark:text-white dark:shadow-[0_0_18px_-2px_hsl(var(--primary)/0.7)]">
                   MERA
                 </div>
 
                 <div className="hidden sm:flex sm:flex-col sm:leading-tight">
-                  <span className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-primary-300/60 dark:tracking-[0.18em] dark:text-[10px]">
+                  <span className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-primary-300 dark:tracking-[0.18em] dark:text-[10px] dark:font-semibold">
                     Workspace
                   </span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
                     {getPageLabel(pathname)}
                   </span>
                 </div>
