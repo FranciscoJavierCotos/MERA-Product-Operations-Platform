@@ -167,7 +167,7 @@ export function Navbar({ user }: NavbarProps) {
 
   return (
     <>
-      <div className="sticky top-0 z-40 border-b border-gray-200/80 bg-white/90 backdrop-blur-sm dark:border-border/40 dark:bg-[hsl(230_55%_5%/0.78)] dark:backdrop-blur-xl dark:backdrop-saturate-150 dark:shadow-[0_1px_0_0_hsl(var(--primary)/0.08),0_8px_24px_-12px_hsl(0_0%_0%/0.6)]">
+      <div className="sticky top-0 z-40 border-b border-gray-200/80 bg-white/90 backdrop-blur-sm dark:border-border dark:bg-card/85 dark:backdrop-blur">
         <div className="h-16 px-4 sm:px-6 lg:px-8">
           <div className="flex h-full items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
@@ -175,12 +175,12 @@ export function Navbar({ user }: NavbarProps) {
               <div className="hidden h-6 w-px bg-gray-200 dark:bg-gray-700 sm:block" />
 
               <div className="flex min-w-0 items-center gap-3">
-                <div className="rounded-md bg-primary px-2 py-1 text-xs font-semibold uppercase tracking-wide text-white dark:bg-primary dark:text-white dark:shadow-[0_0_18px_-2px_hsl(var(--primary)/0.7)]">
+                <div className="rounded-md bg-primary px-2 py-1 text-xs font-semibold uppercase tracking-wide text-white">
                   MERA
                 </div>
 
                 <div className="hidden sm:flex sm:flex-col sm:leading-tight">
-                  <span className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-primary-300 dark:tracking-[0.18em] dark:text-[10px] dark:font-semibold">
+                  <span className="text-[11px] font-medium text-gray-500 dark:text-muted-foreground">
                     Workspace
                   </span>
                   <span className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -235,7 +235,7 @@ export function Navbar({ user }: NavbarProps) {
 
                     <DropdownMenuSeparator />
 
-                    <DropdownMenuLabel className="text-xs uppercase tracking-wide text-gray-500">
+                    <DropdownMenuLabel className="text-[11px] font-medium text-muted-foreground">
                       Work status
                     </DropdownMenuLabel>
                     <DropdownMenuRadioGroup

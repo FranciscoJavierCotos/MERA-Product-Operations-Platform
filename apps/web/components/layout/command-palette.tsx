@@ -299,7 +299,7 @@ export function CommandPalette({
               return (
                 <div key={command.id}>
                   {showGroupLabel && (
-                    <p className="px-2 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground first:pt-1">
+                    <p className="px-2 pb-1 pt-3 text-xs font-semibold text-muted-foreground first:pt-1">
                       {GROUP_LABELS[command.group]}
                     </p>
                   )}

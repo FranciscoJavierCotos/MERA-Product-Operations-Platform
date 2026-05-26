@@ -46,17 +46,23 @@ export function CommentsActivitySection({
 
   return (
     <Card className="shadow-sm h-full flex flex-col">
-      <CardHeader className="border-b bg-gray-50/50 dark:bg-white/[0.02] dark:border-border/50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-background/60 dark:border dark:border-border/60 p-1">
+      <CardHeader className="border-b bg-transparent dark:border-border/50 pb-0">
+        <div className="flex items-end justify-between gap-2">
+          <div
+            className="flex items-center gap-0 -mb-px"
+            role="tablist"
+            aria-label="Comments and activity"
+          >
             <button
               type="button"
+              role="tab"
+              aria-selected={activeView === "comments"}
               onClick={() => setActiveView("comments")}
               className={cn(
-                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+                "relative inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors",
                 activeView === "comments"
-                  ? "bg-white text-gray-900 shadow-sm dark:bg-primary dark:text-white dark:shadow-[0_0_18px_-2px_hsl(var(--primary)/0.6)]"
-                  : "text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white",
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
               Comments ({commentsCount})
@@ -66,12 +72,14 @@ export function CommentsActivitySection({
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={activeView === "activity"}
               onClick={() => setActiveView("activity")}
               className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+                "relative inline-flex items-center px-3 py-2.5 text-sm font-medium border-b-2 transition-colors",
                 activeView === "activity"
-                  ? "bg-white text-gray-900 shadow-sm dark:bg-primary dark:text-white dark:shadow-[0_0_18px_-2px_hsl(var(--primary)/0.6)]"
-                  : "text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white",
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
               Activity

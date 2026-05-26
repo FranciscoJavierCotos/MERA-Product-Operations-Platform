@@ -21,6 +21,8 @@ interface FunctionalTeamDropdownProps {
   availableTeams?: Team[];
   isSupportAgent: boolean;
   isClosed: boolean;
+  chevronClassName?: string;
+  quietEmpty?: boolean;
 }
 
 export function FunctionalTeamDropdown({
@@ -29,6 +31,8 @@ export function FunctionalTeamDropdown({
   availableTeams,
   isSupportAgent,
   isClosed,
+  chevronClassName,
+  quietEmpty,
 }: FunctionalTeamDropdownProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -79,8 +83,13 @@ export function FunctionalTeamDropdown({
     }
   };
 
+  const isEmpty = !currentTeam;
+
   // If not a support agent or ticket is closed, show non-interactive badge
   if (!isSupportAgent || isClosed) {
+    if (quietEmpty && isEmpty) {
+      return <span className="text-sm text-muted-foreground">—</span>;
+    }
     return (
       <Badge variant="secondary" className="whitespace-nowrap">
         {currentTeam?.name || "Not assigned"}
@@ -95,13 +104,20 @@ export function FunctionalTeamDropdown({
           className="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring rounded-md"
           disabled={isUpdating || isLoading}
         >
-          <Badge
-            variant="secondary"
-            className="whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
-          >
-            {currentTeam?.name || "Select Department"}
-            <ChevronDown className="h-3 w-3" />
-          </Badge>
+          {quietEmpty && isEmpty ? (
+            <span className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              —
+              <ChevronDown className={`h-3 w-3 ${chevronClassName ?? ""}`} />
+            </span>
+          ) : (
+            <Badge
+              variant="secondary"
+              className="whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
+            >
+              {currentTeam?.name || "Select Department"}
+              <ChevronDown className={`h-3 w-3 ${chevronClassName ?? ""}`} />
+            </Badge>
+          )}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-[200px]">

@@ -20,6 +20,8 @@ interface TicketCategoryDropdownProps {
   categories: TicketCategoryRow[];
   isSupportAgent: boolean;
   isClosed: boolean;
+  chevronClassName?: string;
+  quietEmpty?: boolean;
 }
 
 export function TicketCategoryDropdown({
@@ -28,6 +30,8 @@ export function TicketCategoryDropdown({
   categories,
   isSupportAgent,
   isClosed,
+  chevronClassName,
+  quietEmpty,
 }: TicketCategoryDropdownProps) {
   const router = useRouter();
   const supabase = createClient();
@@ -48,9 +52,13 @@ export function TicketCategoryDropdown({
     }
   };
 
-  const label = currentCategory?.label ?? "-";
+  const isEmpty = !currentCategory;
+  const label = currentCategory?.label ?? "—";
 
   if (!isSupportAgent || isClosed) {
+    if (quietEmpty && isEmpty) {
+      return <span className="text-sm text-muted-foreground">—</span>;
+    }
     return (
       <Badge variant="secondary" className="whitespace-nowrap">
         {label}
@@ -65,13 +73,20 @@ export function TicketCategoryDropdown({
           className="focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring rounded-md"
           disabled={isUpdating}
         >
-          <Badge
-            variant="secondary"
-            className="whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
-          >
-            {label}
-            <ChevronDown className="h-3 w-3" />
-          </Badge>
+          {quietEmpty && isEmpty ? (
+            <span className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              —
+              <ChevronDown className={`h-3 w-3 ${chevronClassName ?? ""}`} />
+            </span>
+          ) : (
+            <Badge
+              variant="secondary"
+              className="whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
+            >
+              {label}
+              <ChevronDown className={`h-3 w-3 ${chevronClassName ?? ""}`} />
+            </Badge>
+          )}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">

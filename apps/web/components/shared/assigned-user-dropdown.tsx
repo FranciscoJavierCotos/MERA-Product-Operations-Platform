@@ -26,6 +26,8 @@ interface AssignedUserDropdownProps {
   isSupportAgent: boolean;
   isClosed: boolean;
   compact?: boolean;
+  chevronClassName?: string;
+  quietEmpty?: boolean;
 }
 
 export function AssignedUserDropdown({
@@ -35,6 +37,8 @@ export function AssignedUserDropdown({
   isSupportAgent,
   isClosed,
   compact = false,
+  chevronClassName,
+  quietEmpty,
 }: AssignedUserDropdownProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -89,6 +93,8 @@ export function AssignedUserDropdown({
     }
   };
 
+  const isEmpty = !assignedUser;
+
   // If not a support agent or ticket is closed, show non-interactive display
   if (!isSupportAgent || isClosed) {
     return (
@@ -96,7 +102,7 @@ export function AssignedUserDropdown({
         {assignedUser ? (
           <span className="text-sm">{assignedUser.full_name}</span>
         ) : (
-          <span className="text-sm text-gray-500">Unassigned</span>
+          <span className="text-sm text-muted-foreground">{quietEmpty ? "—" : "Unassigned"}</span>
         )}
       </div>
     );
@@ -106,15 +112,17 @@ export function AssignedUserDropdown({
     <DropdownMenu onOpenChange={(open) => open && void ensureMembersLoaded()}>
       <DropdownMenuTrigger asChild>
         <button
-          className={`${compact ? "" : "mt-2 "}flex items-center gap-2 hover:bg-gray-50 rounded-md px-2 py-1 -ml-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring`}
+          className={`${compact ? "" : "mt-2 "}flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-white/[0.04] rounded-md px-2 py-1 -ml-2 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring`}
           disabled={isUpdating || isLoading}
         >
           {assignedUser ? (
             <span className="text-sm">{assignedUser.full_name}</span>
           ) : (
-            <span className="text-sm text-gray-500">Unassigned</span>
+            <span className="text-sm text-muted-foreground">
+              {quietEmpty && isEmpty ? "—" : "Unassigned"}
+            </span>
           )}
-          <ChevronDown className="h-3 w-3 text-gray-400" />
+          <ChevronDown className={`h-3 w-3 text-gray-400 ${chevronClassName ?? ""}`} />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-[200px]">

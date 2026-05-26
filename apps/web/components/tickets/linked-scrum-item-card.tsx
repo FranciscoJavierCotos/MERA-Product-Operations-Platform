@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ExternalLink, Link2, MoreHorizontal, Trash2 } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -66,15 +67,13 @@ export function LinkedScrumItemCard({
 
   return (
     <>
-      <Card className="border-primary-200 bg-gradient-to-br from-primary-50 to-white">
-        <CardHeader className="pb-3">
+      <Card>
+        <CardHeader>
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Link2 className="h-4 w-4 text-primary-700" />
-              <h2 className="text-base font-semibold text-primary-900">
-                Linked scrum item
-              </h2>
-            </div>
+            <CardTitle className="flex items-center gap-2">
+              <Link2 className="h-5 w-5" />
+              Linked scrum item
+            </CardTitle>
             {primary && canEdit && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -110,7 +109,7 @@ export function LinkedScrumItemCard({
             <PrimaryLinkView link={primary} linkTypeLabel={linkTypeLabel} />
           ) : (
             <div className="flex flex-col items-start gap-3">
-              <p className="text-sm text-primary-900/70">
+              <p className="text-sm text-muted-foreground">
                 This ticket is not linked to any scrum work item yet.
               </p>
               {canEdit && (
@@ -153,12 +152,12 @@ function PrimaryLinkView({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-800">
+        <Badge variant="secondary" className="text-xs font-medium">
           {linkTypeLabel}
-        </span>
+        </Badge>
         <Link
           href={`/projects/${target.project.key}`}
-          className="font-mono text-sm font-semibold text-primary-900 hover:underline"
+          className="font-mono text-sm font-semibold text-foreground hover:underline"
         >
           {target.item_key}
         </Link>
@@ -166,35 +165,37 @@ function PrimaryLinkView({
         <WorkItemStatusBadge status={target.status} />
       </div>
 
-      <p className="text-sm font-medium text-gray-900">{target.title}</p>
+      <p className="text-sm font-medium text-foreground">{target.title}</p>
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <Field label="Project">
           <Link
             href={`/projects/${target.project.key}`}
-            className="text-sm text-gray-900 hover:underline"
+            className="text-sm text-foreground hover:underline"
           >
             {target.project.name}{" "}
-            <span className="text-gray-500">({target.project.key})</span>
+            <span className="text-muted-foreground">({target.project.key})</span>
           </Link>
         </Field>
 
         <Field label="Sprint">
           {target.sprint ? (
-            <span className="text-sm text-gray-900">
+            <span className="text-sm text-foreground">
               {target.sprint.name}
               {target.sprint.status === "active" && (
-                <span className="ml-1 text-xs text-emerald-700">(active)</span>
+                <span className="ml-1 text-xs text-emerald-700 dark:text-emerald-400">
+                  (active)
+                </span>
               )}
             </span>
           ) : (
-            <span className="text-sm text-gray-500">Backlog</span>
+            <span className="text-sm text-muted-foreground">Backlog</span>
           )}
         </Field>
 
         {target.sprint?.end_date && (
           <Field label="Sprint ends">
-            <span className="text-sm text-gray-900">
+            <span className="text-sm text-foreground">
               {formatDate(target.sprint.end_date, "PP")}
             </span>
           </Field>
@@ -203,7 +204,7 @@ function PrimaryLinkView({
         <Field label="">
           <Link
             href={`/projects/${target.project.key}`}
-            className="inline-flex items-center gap-1 text-xs text-primary-700 hover:underline"
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
           >
             View in project
             <ExternalLink className="h-3 w-3" />
@@ -212,7 +213,7 @@ function PrimaryLinkView({
       </div>
 
       {link.note && (
-        <div className="rounded border border-primary-200 bg-white/60 p-2 text-xs text-gray-700">
+        <div className="rounded border bg-muted/50 p-2 text-xs text-muted-foreground">
           {link.note}
         </div>
       )}
@@ -230,7 +231,7 @@ function Field({
   return (
     <div>
       {label && (
-        <p className="text-xs font-medium text-gray-500">{label}</p>
+        <p className="text-xs font-medium text-muted-foreground">{label}</p>
       )}
       <div className="mt-0.5">{children}</div>
     </div>

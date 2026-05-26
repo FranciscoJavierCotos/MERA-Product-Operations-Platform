@@ -59,17 +59,17 @@ export function Sidebar({
         isCollapsed ? "md:w-20" : "md:w-64",
       )}
     >
-      <div className="flex-1 flex flex-col min-h-0 bg-gray-800 dark:bg-gradient-to-b dark:from-[hsl(230,55%,5%)] dark:via-[hsl(228,50%,4%)] dark:to-[hsl(230,60%,3%)] dark:border-r dark:border-border/60 dark:shadow-[inset_-1px_0_0_0_hsl(228_60%_20%/0.25)]">
+      <div className="flex-1 flex flex-col min-h-0 bg-gray-800 dark:bg-card dark:border-r dark:border-border">
         <div
           className={cn(
-            "relative flex items-center h-16 flex-shrink-0 bg-gray-900 dark:bg-transparent dark:border-b dark:border-border/50",
+            "relative flex items-center h-16 flex-shrink-0 bg-gray-900 dark:bg-transparent dark:border-b dark:border-border",
             isCollapsed ? "justify-center px-2" : "px-4",
           )}
         >
           {isCollapsed ? (
             <h1
               className={cn(
-                "text-white text-xl font-bold tracking-tight transition-transform duration-300 ease-out dark:text-glow",
+                "text-white text-xl font-bold tracking-tight transition-transform duration-300 ease-out",
                 isToggleHovered ? "-translate-x-3" : "translate-x-0",
               )}
             >
@@ -77,10 +77,10 @@ export function Sidebar({
             </h1>
           ) : (
             <div className="flex flex-col">
-              <h1 className="text-white text-xl font-bold tracking-tight dark:text-glow">
+              <h1 className="text-white text-xl font-bold tracking-tight">
                 MERA
               </h1>
-              <span className="text-gray-400 text-xs leading-none dark:text-white dark:uppercase dark:tracking-[0.18em] dark:text-[10px] dark:font-bold dark:mt-0.5 dark:drop-shadow-[0_0_12px_hsl(var(--primary)/0.7)]">
+              <span className="text-gray-400 text-[11px] leading-none mt-0.5 dark:text-muted-foreground">
                 Product Operations
               </span>
             </div>
@@ -114,37 +114,24 @@ export function Sidebar({
                   title={isCollapsed ? item.name : undefined}
                   className={cn(
                     isActive
-                      ? "bg-gray-900 text-white border-l-2 border-primary-400 dark:bg-gradient-to-r dark:from-primary/15 dark:via-primary/[0.06] dark:to-transparent dark:border-primary dark:shadow-[inset_0_0_18px_-4px_hsl(var(--primary)/0.35)]"
+                      ? "bg-gray-900 text-white border-l-2 border-primary-400 dark:bg-secondary dark:border-primary dark:text-gray-100"
                       : "text-gray-300 hover:bg-gray-700 hover:text-white border-l-2 border-transparent dark:text-gray-400 dark:hover:bg-white/[0.04] dark:hover:text-gray-100",
                     isCollapsed ? "justify-center px-2" : "pl-[7px] pr-2",
-                    "group relative flex items-center py-2 text-sm font-medium rounded-md transition-all duration-150",
+                    "group relative flex items-center py-2 text-sm font-medium rounded-md transition-colors duration-150",
                   )}
                 >
-                  {isActive && (
-                    <span
-                      aria-hidden="true"
-                      className="hidden dark:block absolute left-[-1px] top-1.5 bottom-1.5 w-[2px] rounded-full bg-gradient-to-b from-primary-300 via-primary to-primary-700 shadow-[0_0_10px_hsl(var(--primary)/0.7)]"
-                    />
-                  )}
                   <item.icon
                     className={cn(
                       isActive
-                        ? "text-primary-300 dark:text-primary-400 dark:drop-shadow-[0_0_6px_hsl(var(--primary)/0.55)]"
-                        : "text-gray-400 group-hover:text-gray-300 dark:text-gray-500 dark:group-hover:text-primary-300",
+                        ? "text-primary-300 dark:text-primary-400"
+                        : "text-gray-400 group-hover:text-gray-300 dark:text-gray-500 dark:group-hover:text-gray-300",
                       isCollapsed ? "mr-0 h-6 w-6" : "mr-3 h-6 w-6",
                       "flex-shrink-0 transition-colors",
                     )}
                     aria-hidden="true"
                   />
                   {!isCollapsed && (
-                    <span
-                      className={cn(
-                        "transition-colors",
-                        isActive && "dark:text-glow",
-                      )}
-                    >
-                      {item.name}
-                    </span>
+                    <span className="transition-colors">{item.name}</span>
                   )}
                 </Link>
               );

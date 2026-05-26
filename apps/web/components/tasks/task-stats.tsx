@@ -77,17 +77,15 @@ function StatCard({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-gray-600 dark:text-primary-300/80 dark:uppercase dark:tracking-[0.14em] dark:text-[11px]">
+        <CardTitle className="text-sm font-medium text-gray-600 dark:text-muted-foreground">
           {title}
         </CardTitle>
-        <Icon
-          className={`h-4 w-4 ${iconClassName} dark:drop-shadow-[0_0_6px_currentColor]`}
-        />
+        <Icon className={`h-4 w-4 ${iconClassName}`} />
       </CardHeader>
       <CardContent>
         <div
-          className={`text-2xl font-bold ${
-            valueClassName || "text-gray-900 dark:text-gray-50 dark:cyber-number"
+          className={`text-2xl font-bold tabular-nums ${
+            valueClassName || "text-gray-900 dark:text-gray-50"
           }`}
         >
           {value}

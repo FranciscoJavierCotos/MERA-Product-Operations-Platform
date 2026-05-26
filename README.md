@@ -275,12 +275,12 @@ CI runs on every push to `main` / `develop` and on every PR targeting them. The 
 | **Audit**        | `pnpm audit --audit-level=high`                                                                                                                                            | Any HIGH or CRITICAL CVE in the dependency tree     |
 | **Semgrep**      | SAST against the project-local rules in [.semgrep.yml](.semgrep.yml) — covers OWASP Top 10 for Node/TypeScript (injection, broken access control, crypto, misconfig, …)   | Any ERROR-severity finding                          |
 | **Secret Scan**  | Gitleaks with the built-in ruleset + project allowlist [.gitleaks.toml](.gitleaks.toml) — fixtures and seeded dev keys are filtered                                        | Any real leaked credential                          |
-| **Integration**  | Boots a real local Supabase stack (`supabase start` → `supabase db reset`), runs the full Vitest integration suite against the live API + DB. Cached Docker images for speed | Any failing route, RLS regression, or trigger drift |
+| **Integration**  | **Disabled in CI** (`if: false` in [.github/workflows/test.yml](.github/workflows/test.yml)) — boots a real local Supabase stack and runs the Vitest integration suite when enabled. Run locally before merging API/route changes | Any failing route, RLS regression, or trigger drift (when re-enabled) |
 
 ```
 ┌─ Typecheck ─┬─► Unit
-              ├─► Audit
-              └─► Integration (push→main or any PR)
+              └─► Audit
+              (Integration job exists but is gated off with `if: false`)
 
 ┌─ Semgrep      (parallel)
 └─ Secret Scan  (parallel)
@@ -288,7 +288,7 @@ CI runs on every push to `main` / `develop` and on every PR targeting them. The 
 
 **Design notes:**
 
-- **Integration is gated by branch**: it runs on every PR and on push to `main`, but is skipped on push to `develop` so feature work stays fast. The real Supabase boot + migrations + Vitest run is the slowest job by an order of magnitude.
+- **Integration is disabled in CI**: the job is defined but gated with `if: false`. Run `pnpm test:integration` locally against `supabase start` + `supabase db reset` before merging API/route changes. Re-enable by editing the `if:` in [.github/workflows/test.yml](.github/workflows/test.yml).
 - **Security jobs are independent**: Semgrep and Gitleaks don't wait for typecheck — a leaked secret should block a merge even if the code doesn't compile.
 - **Docker image cache**: the Supabase image set is cached by `supabase/config.toml` hash, cutting ~4–6 minutes per integration run.
 - **E2E is not in CI yet**: Playwright currently runs locally only. It's on the roadmap to add a `workflow_dispatch` job once the cold-start cost of booting both Next dev server + Fastify + Supabase in CI is amortized.

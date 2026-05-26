@@ -22,6 +22,7 @@ interface StatusBadgeDropdownProps {
   isSupportAgent: boolean;
   isClosed: boolean;
   currentResolution?: string | null;
+  chevronClassName?: string;
 }
 
 const isHtmlEmpty = (html: string | null | undefined) =>
@@ -35,6 +36,7 @@ export function StatusBadgeDropdown({
   isSupportAgent,
   isClosed,
   currentResolution,
+  chevronClassName,
 }: StatusBadgeDropdownProps) {
   const router = useRouter();
   const supabase = createClient();
@@ -87,7 +89,7 @@ export function StatusBadgeDropdown({
               className="whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
             >
               {currentStatus.label}
-              <ChevronDown className="h-3 w-3" />
+              <ChevronDown className={`h-3 w-3 ${chevronClassName ?? ""}`} />
             </Badge>
           </button>
         </DropdownMenuTrigger>
