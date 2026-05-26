@@ -20,9 +20,15 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  const profile = await api.get<Profile | null>(`/users/${user.id}`);
+  let profile: Profile | null = null;
+  try {
+    profile = await api.get<Profile | null>(`/users/${user.id}`);
+  } catch {
+    // Gracefully degrade when the API is unavailable or rate-limited.
+    // The fallback below builds a minimal profile from the auth session.
+  }
 
-  // If no profile exists, create a temporary one from user data
+  // If no profile exists (or the API call failed), fall back to auth user data
   const displayProfile = profile || {
     id: user.id,
     email: user.email!,

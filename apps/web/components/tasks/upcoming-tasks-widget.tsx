@@ -81,10 +81,10 @@ interface UpcomingTaskItemProps {
 
 function UpcomingTaskItem({ task, onComplete }: UpcomingTaskItemProps) {
   return (
-    <div className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors group">
+    <div className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-white/[0.04] dark:border-border/60 dark:hover:border-primary/30 transition-colors group">
       <button
         onClick={() => onComplete(task)}
-        className="flex-shrink-0 mt-0.5 p-1 rounded-full hover:bg-gray-100 transition-colors"
+        className="flex-shrink-0 mt-0.5 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors"
         title="Mark as complete"
       >
         <CheckCircle2 className="h-5 w-5 text-gray-400 group-hover:text-green-500 transition-colors" />
@@ -93,7 +93,7 @@ function UpcomingTaskItem({ task, onComplete }: UpcomingTaskItemProps) {
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h4 className="text-sm font-medium text-gray-900 truncate">
+            <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
               {task.title}
             </h4>
             <div className="flex flex-wrap items-center gap-1.5 mt-1">
@@ -121,20 +121,20 @@ function UpcomingTasksSkeleton() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <div className="h-6 w-40 bg-gray-200 rounded animate-pulse" />
-        <div className="h-8 w-20 bg-gray-200 rounded animate-pulse" />
+        <div className="h-6 w-40 bg-gray-200 dark:bg-white/[0.06] rounded animate-pulse" />
+        <div className="h-8 w-20 bg-gray-200 dark:bg-white/[0.06] rounded animate-pulse" />
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="flex items-start gap-3 p-3 border rounded-lg"
+              className="flex items-start gap-3 p-3 border dark:border-border/60 rounded-lg"
             >
-              <div className="h-5 w-5 bg-gray-200 rounded-full animate-pulse" />
+              <div className="h-5 w-5 bg-gray-200 dark:bg-white/[0.06] rounded-full animate-pulse" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
-                <div className="h-3 w-1/2 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 w-3/4 bg-gray-200 dark:bg-white/[0.06] rounded animate-pulse" />
+                <div className="h-3 w-1/2 bg-gray-200 dark:bg-white/[0.06] rounded animate-pulse" />
               </div>
             </div>
           ))}

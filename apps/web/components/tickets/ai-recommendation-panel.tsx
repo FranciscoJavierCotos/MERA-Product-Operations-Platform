@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
@@ -61,31 +61,33 @@ export function AiRecommendationPanel({ ticketId }: Props) {
           </CardTitle>
           <Button onClick={run} disabled={isPending} size="sm">
             {isPending
-              ? "Searchingâ€¦"
+              ? "Searching…"
               : results === null
                 ? "Search"
                 : "Refresh"}
           </Button>
         </div>
-        <div className="text-xs text-gray-500 mt-1">
+        <div className="text-xs text-muted-foreground mt-1">
           Searches resolved tickets and uploaded documentation for content
           similar to this ticket&apos;s description.
         </div>
       </CardHeader>
       <CardContent>
         {error && (
-          <div className="text-sm text-red-600 mb-3">{error}</div>
+          <div className="text-sm text-red-600 dark:text-red-400 mb-3">
+            {error}
+          </div>
         )}
         {results === null && !error && (
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-muted-foreground">
             Click <strong>Search</strong> to retrieve relevant past resolutions
             and documentation.
           </div>
         )}
         {results !== null && results.length === 0 && (
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-muted-foreground">
             No matches above the current similarity threshold. Try lowering it
-            in AI Knowledge â†’ Settings.
+            in AI Knowledge → Settings.
           </div>
         )}
         {results !== null && results.length > 0 && (
@@ -93,28 +95,30 @@ export function AiRecommendationPanel({ ticketId }: Props) {
             {results.map((r, i) => (
               <li
                 key={`${r.source_id}-${r.chunk_id ?? "res"}-${i}`}
-                className="border rounded-md p-3 bg-gray-50"
+                className="border border-border rounded-md p-3 bg-muted/40 dark:bg-muted/20 transition-colors"
               >
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <div className="flex items-center gap-2 min-w-0">
                     {r.source_type === "resolution" ? (
-                      <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+                      <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-900/40 dark:text-emerald-300 dark:hover:bg-emerald-900/40 border-transparent">
                         <TicketIcon className="h-3 w-3 mr-1" />
                         Resolution
                       </Badge>
                     ) : (
-                      <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                      <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/40 border-transparent">
                         <FileText className="h-3 w-3 mr-1" />
                         Document
                       </Badge>
                     )}
-                    <span className="font-medium truncate">{r.title}</span>
+                    <span className="font-medium truncate text-foreground">
+                      {r.title}
+                    </span>
                   </div>
-                  <span className="text-xs text-gray-500 font-mono whitespace-nowrap">
+                  <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
                     {(Number(r.similarity) * 100).toFixed(1)}%
                   </span>
                 </div>
-                <p className="text-sm text-gray-700 line-clamp-3">
+                <p className="text-sm text-muted-foreground line-clamp-3">
                   {r.snippet}
                 </p>
                 <div className="mt-2">
@@ -123,14 +127,14 @@ export function AiRecommendationPanel({ ticketId }: Props) {
                       href={`/tickets/${r.source_id}`}
                       className="text-xs text-primary hover:underline"
                     >
-                      Open ticket â†’
+                      Open ticket →
                     </Link>
                   ) : (
                     <Link
                       href={`/knowledge`}
                       className="text-xs text-primary hover:underline"
                     >
-                      Open in Knowledge Center â†’
+                      Open in Knowledge Center →
                     </Link>
                   )}
                 </div>

@@ -211,7 +211,7 @@ export function TaskItem({
               <span className="text-gray-300 dark:text-gray-600">·</span>
               <Link
                 href={`/tickets/${task.ticket_id}`}
-                className="text-xs text-primary dark:text-primary-400 hover:underline truncate max-w-[200px]"
+                className="text-xs text-primary hover:underline truncate max-w-[200px]"
                 onClick={(e) => e.stopPropagation()}
                 title={`#${task.ticket.ticket_number} - ${task.ticket.title}`}
               >
