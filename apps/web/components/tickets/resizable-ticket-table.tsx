@@ -23,16 +23,15 @@ import type {
 } from "@/types/ticket.types";
 import {
   computeSlaDisplayInfo,
-  computeElapsedMinutes,
   formatSlaCountdown,
-  formatSlaMinutes,
   getTicketSlaInstance,
 } from "@/lib/utils/sla";
 import { formatTicketNumber } from "@/lib/utils/format";
 import { formatRelativeTime } from "@/lib/utils/date";
+import { DENSITY_ROW_HEIGHT, type TableDensity } from "@/lib/hooks/use-table-density";
 
 const MIN_COL_WIDTH = 60;
-const ROW_HEIGHT = 72;
+const CHEVRON_HIDE = "row-hover-only";
 
 interface ColDef {
   key: string;
@@ -42,27 +41,23 @@ interface ColDef {
 }
 
 const BASE_COLUMNS: ColDef[] = [
-  { key: "ticket_number", label: "Ticket ID",           defaultWidth: 105, sortCol: "ticket_number" },
-  { key: "title",         label: "Title",               defaultWidth: 210, sortCol: "title" },
-  { key: "category",      label: "Category",            defaultWidth: 145, sortCol: "category_id" },
-  { key: "status",        label: "Status",              defaultWidth: 155, sortCol: "status_id" },
-  { key: "priority",      label: "Priority",            defaultWidth: 120, sortCol: "priority_id" },
-  { key: "sla_response",  label: "SLA Response Time",   defaultWidth: 155 },
-  { key: "sla_resolution",label: "SLA Resolution Time", defaultWidth: 160 },
-  { key: "functional_team", label: "Functional Team",  defaultWidth: 165 },
-  { key: "support_team",  label: "Support Team",        defaultWidth: 200 },
+  { key: "ticket_number", label: "Ticket ID",       defaultWidth: 105, sortCol: "ticket_number" },
+  { key: "title",         label: "Title",           defaultWidth: 240, sortCol: "title" },
+  { key: "category",      label: "Category",        defaultWidth: 140, sortCol: "category_id" },
+  { key: "status",        label: "Status",          defaultWidth: 145, sortCol: "status_id" },
+  { key: "priority",      label: "Priority",        defaultWidth: 120, sortCol: "priority_id" },
+  { key: "sla",           label: "SLA",             defaultWidth: 180 },
+  { key: "functional_team", label: "Functional Team", defaultWidth: 165 },
+  { key: "support_team",  label: "Support Team",    defaultWidth: 200 },
 ];
 
 const ASSIGNED_TO_COL: ColDef = { key: "assigned_to_col", label: "Assigned To",  defaultWidth: 175 };
-const TEMPERATURE_COL: ColDef = { key: "temperature",     label: "Temperature",  defaultWidth: 125, sortCol: "temperature_id" };
+const TEMPERATURE_COL: ColDef = { key: "temperature",     label: "Temp.",         defaultWidth: 80, sortCol: "temperature_id" };
 
-const DATE_COLUMNS: ColDef[] = [
-  { key: "created_at", label: "Created", defaultWidth: 135, sortCol: "created_at" },
-  { key: "updated_at", label: "Updated", defaultWidth: 135, sortCol: "updated_at" },
-];
+const ACTIVITY_COL: ColDef = { key: "activity", label: "Activity", defaultWidth: 150, sortCol: "updated_at" };
 
-const ALL_COLUMNS: ColDef[] = [...BASE_COLUMNS, ASSIGNED_TO_COL, TEMPERATURE_COL, ...DATE_COLUMNS];
-const MY_COLUMNS: ColDef[]  = [...BASE_COLUMNS, TEMPERATURE_COL, ...DATE_COLUMNS];
+const ALL_COLUMNS: ColDef[] = [...BASE_COLUMNS, ASSIGNED_TO_COL, TEMPERATURE_COL, ACTIVITY_COL];
+const MY_COLUMNS: ColDef[]  = [...BASE_COLUMNS, TEMPERATURE_COL, ACTIVITY_COL];
 
 export interface TicketRow {
   id: string;
@@ -97,6 +92,7 @@ interface ResizableTicketTableProps {
   categories: TicketCategoryRow[];
   temperatures: TicketTemperatureRow[];
   supportLevels: TicketSupportLevelRow[];
+  density?: TableDensity;
 }
 
 function getDefaultWidths(columns: ColDef[]): Record<string, number> {
@@ -132,9 +128,11 @@ export function ResizableTicketTable({
   categories,
   temperatures,
   supportLevels,
+  density = "default",
 }: ResizableTicketTableProps) {
   const columns = variant === "all" ? ALL_COLUMNS : MY_COLUMNS;
-  const storageKey = `ticket-table-widths-${variant}`;
+  // Storage key is v2 because column shape changed (sla collapsed, activity merged).
+  const storageKey = `ticket-table-widths-v2-${variant}`;
 
   const [widths, setWidths] = useState<Record<string, number>>(() =>
     getDefaultWidths(columns),
@@ -155,6 +153,8 @@ export function ResizableTicketTable({
   const [, startTransition] = useTransition();
   const currentSort = searchParams.get("sort");
   const currentDir = searchParams.get("dir");
+
+  const rowHeight = DENSITY_ROW_HEIGHT[density];
 
   const handleSort = (sortCol: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -218,7 +218,7 @@ export function ResizableTicketTable({
   return (
     <div className="relative w-full overflow-x-auto">
       <table
-        className="caption-bottom text-sm border-collapse"
+        className="caption-bottom text-sm border-collapse row-hover-chrome"
         style={{ tableLayout: "fixed", width: totalWidth }}
       >
         <colgroup>
@@ -237,7 +237,7 @@ export function ResizableTicketTable({
               return (
                 <th
                   key={col.key}
-                  className="group relative h-12 px-4 text-left align-middle font-medium text-muted-foreground overflow-hidden select-none"
+                  className="group relative h-11 px-4 text-left align-middle font-medium text-muted-foreground overflow-hidden select-none"
                 >
                   {col.sortCol ? (
                     <button
@@ -247,10 +247,10 @@ export function ResizableTicketTable({
                       {col.label}
                       <SortIcon
                         className={cn(
-                          "h-3.5 w-3.5 shrink-0 transition-colors",
+                          "h-3.5 w-3.5 shrink-0 transition-opacity",
                           isActive
-                            ? "text-primary"
-                            : "text-gray-300 group-hover:text-gray-500 dark:text-gray-600 dark:group-hover:text-gray-400",
+                            ? "text-primary opacity-100"
+                            : "opacity-0 group-hover:opacity-100 text-gray-400 dark:text-gray-500",
                         )}
                       />
                     </button>
@@ -289,6 +289,8 @@ export function ResizableTicketTable({
                 categories={categories}
                 temperatures={temperatures}
                 supportLevels={supportLevels}
+                rowHeight={rowHeight}
+                density={density}
               />
             ))
           ) : (
@@ -318,7 +320,8 @@ function TicketTableRow({
   priorities,
   categories,
   temperatures,
-  supportLevels,
+  rowHeight,
+  density,
 }: {
   ticket: TicketRow;
   variant: "all" | "my";
@@ -329,6 +332,8 @@ function TicketTableRow({
   categories: TicketCategoryRow[];
   temperatures: TicketTemperatureRow[];
   supportLevels: TicketSupportLevelRow[];
+  rowHeight: number;
+  density: TableDensity;
 }) {
   const slaInstance = getTicketSlaInstance(ticket.sla_instance ?? null);
   const now = new Date();
@@ -342,10 +347,14 @@ function TicketTableRow({
     : null;
 
   const isClosed = ticket.status.name === "closed";
-  const h = ROW_HEIGHT;
+  const h = rowHeight;
 
   const cellClass = "p-0 overflow-hidden border-b";
   const innerClass = "flex items-center px-4 overflow-hidden";
+
+  // In compact mode title gets one line; in default/comfortable it can wrap.
+  const titleClamp = density === "compact" ? "line-clamp-1" : "line-clamp-2";
+  const titleVerticalPad = density === "compact" ? 8 : 12;
 
   return (
     <tr className="transition-colors hover:bg-muted/50 cursor-pointer">
@@ -353,7 +362,7 @@ function TicketTableRow({
       <td className={cellClass}>
         <Link
           href={`/tickets/${ticket.id}`}
-          className={cn(innerClass, "text-primary hover:underline")}
+          className={cn(innerClass, "text-primary hover:underline tabular-nums")}
           style={{ height: h }}
         >
           <span className="truncate">{formatTicketNumber(ticket.ticket_number)}</span>
@@ -365,9 +374,13 @@ function TicketTableRow({
         <Link
           href={`/tickets/${ticket.id}`}
           className="flex items-start px-4 overflow-hidden hover:underline"
-          style={{ height: h, paddingTop: 16, paddingBottom: 16 }}
+          style={{
+            height: h,
+            paddingTop: titleVerticalPad,
+            paddingBottom: titleVerticalPad,
+          }}
         >
-          <span className="line-clamp-2 leading-5">{ticket.title}</span>
+          <span className={cn(titleClamp, "leading-5")}>{ticket.title}</span>
         </Link>
       </td>
 
@@ -380,6 +393,8 @@ function TicketTableRow({
             categories={categories}
             isSupportAgent={isSupportAgent}
             isClosed={isClosed}
+            quietEmpty
+            chevronClassName={CHEVRON_HIDE}
           />
         </div>
       </td>
@@ -393,6 +408,7 @@ function TicketTableRow({
             statuses={statuses}
             isSupportAgent={isSupportAgent}
             isClosed={isClosed}
+            chevronClassName={CHEVRON_HIDE}
           />
         </div>
       </td>
@@ -406,74 +422,29 @@ function TicketTableRow({
             priorities={priorities}
             isSupportAgent={isSupportAgent}
             isClosed={isClosed}
+            chevronClassName={CHEVRON_HIDE}
           />
         </div>
       </td>
 
-      {/* SLA Response Time */}
+      {/* SLA — single dual-line column */}
       <td className={cellClass}>
-        <div className={cn(innerClass, "text-sm")} style={{ height: h }}>
+        <div className={cn(innerClass, "text-xs leading-tight")} style={{ height: h }}>
           {slaInfo ? (
-            slaInfo.responseStatus === "met" ? (
-              <span className="text-green-700 font-medium truncate">Met</span>
-            ) : slaInfo.responseStatus === "breached" ? (
-              <span className="text-red-700 font-medium truncate">
-                {formatSlaMinutes(
-                  computeElapsedMinutes(
-                    ticket.created_at,
-                    slaInstance!.responded_at,
-                    now,
-                  ),
-                )}
-              </span>
-            ) : (
-              <span
-                className={cn(
-                  "truncate",
-                  slaInfo.responseMinutesRemaining <= 60
-                    ? "text-amber-700"
-                    : "text-gray-700",
-                )}
-              >
-                {formatSlaCountdown(slaInfo.responseMinutesRemaining)}
-              </span>
-            )
+            <div className="flex flex-col gap-0.5 truncate">
+              <SlaLine
+                kind="response"
+                status={slaInfo.responseStatus}
+                minutesRemaining={slaInfo.responseMinutesRemaining}
+              />
+              <SlaLine
+                kind="resolution"
+                status={slaInfo.resolutionStatus}
+                minutesRemaining={slaInfo.resolutionMinutesRemaining}
+              />
+            </div>
           ) : (
-            <span className="text-gray-400">-</span>
-          )}
-        </div>
-      </td>
-
-      {/* SLA Resolution Time */}
-      <td className={cellClass}>
-        <div className={cn(innerClass, "text-sm")} style={{ height: h }}>
-          {slaInfo ? (
-            slaInfo.resolutionStatus === "met" ? (
-              <span className="text-green-700 font-medium truncate">Met</span>
-            ) : slaInfo.resolutionStatus === "breached" ? (
-              <span className="text-red-700 truncate">
-                {formatSlaMinutes(
-                  computeElapsedMinutes(
-                    ticket.created_at,
-                    ticket.resolved_at ?? null,
-                    now,
-                  ),
-                )}
-              </span>
-            ) : (
-              <span
-                className={cn(
-                  "truncate",
-                  slaInfo.resolutionStatus === "at_risk"
-                    ? "text-amber-700"
-                    : "text-gray-700",
-                )}
-              >
-                {formatSlaCountdown(slaInfo.resolutionMinutesRemaining)}
-              </span>
-            )
-          ) : (
-            <span className="text-gray-400">-</span>
+            <span className="text-muted-foreground">—</span>
           )}
         </div>
       </td>
@@ -486,6 +457,8 @@ function TicketTableRow({
             currentTeam={(ticket.functional_team as Team | undefined) ?? null}
             isSupportAgent={isSupportAgent}
             isClosed={isClosed}
+            quietEmpty
+            chevronClassName={CHEVRON_HIDE}
           />
         </div>
       </td>
@@ -499,6 +472,7 @@ function TicketTableRow({
             currentLevel={(ticket.support_level?.name as SupportLevel) || "L1"}
             isSupportAgent={isSupportAgent}
             isClosed={isClosed}
+            chevronClassName={CHEVRON_HIDE}
           />
         </div>
       </td>
@@ -521,6 +495,8 @@ function TicketTableRow({
               isSupportAgent={isSupportAgent}
               isClosed={isClosed}
               compact
+              quietEmpty
+              chevronClassName={CHEVRON_HIDE}
             />
           </div>
         </td>
@@ -539,27 +515,91 @@ function TicketTableRow({
         </div>
       </td>
 
-      {/* Created */}
+      {/* Activity — merged Updated (primary) + Created (secondary) */}
       <td className={cellClass}>
         <Link
           href={`/tickets/${ticket.id}`}
-          className={cn(innerClass, "text-gray-500")}
+          className={cn(innerClass, "text-sm tabular-nums")}
           style={{ height: h }}
         >
-          <span className="truncate">{formatRelativeTime(ticket.created_at)}</span>
-        </Link>
-      </td>
-
-      {/* Updated */}
-      <td className={cellClass}>
-        <Link
-          href={`/tickets/${ticket.id}`}
-          className={cn(innerClass, "text-gray-500")}
-          style={{ height: h }}
-        >
-          <span className="truncate">{formatRelativeTime(ticket.updated_at)}</span>
+          {density === "compact" ? (
+            <span className="truncate">
+              Updated {formatRelativeTime(ticket.updated_at)}
+            </span>
+          ) : (
+            <div className="flex flex-col leading-tight">
+              <span className="text-foreground/90 text-sm truncate">
+                Updated {formatRelativeTime(ticket.updated_at)}
+              </span>
+              <span className="text-muted-foreground text-[11px] truncate">
+                Created {formatRelativeTime(ticket.created_at)}
+              </span>
+            </div>
+          )}
         </Link>
       </td>
     </tr>
+  );
+}
+
+/* ───────────── SLA semantic line ───────────── */
+
+interface SlaLineProps {
+  kind: "response" | "resolution";
+  status: string;
+  minutesRemaining: number;
+}
+
+function SlaLine({ kind, status, minutesRemaining }: SlaLineProps) {
+  const isResponse = kind === "response";
+
+  // Map state → dot color + label + value style
+  let dotClass = "bg-muted-foreground/40";
+  let labelClass = "text-muted-foreground";
+  let label = isResponse ? "Response" : "Resolution";
+  let valueClass = "text-muted-foreground";
+  let value: string | null = null;
+
+  if (status === "met") {
+    dotClass = "bg-green-500";
+    labelClass = "text-green-700 dark:text-green-400";
+    label = isResponse ? "Responded" : "Met";
+    valueClass = "text-green-700 dark:text-green-400";
+  } else if (status === "breached") {
+    dotClass = "bg-red-500";
+    labelClass = "text-red-700 dark:text-red-400 font-medium";
+    label = isResponse ? "Resp. breached" : "Res. breached";
+    valueClass = "text-red-700 dark:text-red-400 font-medium";
+  } else if (status === "at_risk") {
+    dotClass = "bg-amber-500";
+    labelClass = "text-amber-700 dark:text-amber-400";
+    label = isResponse ? "Resp. at risk" : "Res. at risk";
+    valueClass = "text-amber-700 dark:text-amber-400";
+    value = formatSlaCountdown(minutesRemaining);
+  } else if (status === "pending") {
+    // Response — not yet responded
+    dotClass = minutesRemaining <= 60 ? "bg-amber-500" : "bg-muted-foreground/50";
+    labelClass = minutesRemaining <= 60 ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground";
+    label = "Pending response";
+    valueClass = minutesRemaining <= 60 ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground";
+    value = formatSlaCountdown(minutesRemaining);
+  } else if (status === "on_track") {
+    dotClass = "bg-emerald-500/70";
+    labelClass = "text-muted-foreground";
+    label = isResponse ? "Response" : "Resolution";
+    valueClass = "text-foreground/80";
+    value = formatSlaCountdown(minutesRemaining);
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 truncate">
+      <span className={cn("inline-block h-1.5 w-1.5 rounded-full shrink-0", dotClass)} />
+      <span className={cn("text-[11px] truncate", labelClass)}>{label}</span>
+      {value && (
+        <span className={cn("ml-auto text-[11px] tabular-nums shrink-0", valueClass)}>
+          {value}
+        </span>
+      )}
+    </div>
   );
 }

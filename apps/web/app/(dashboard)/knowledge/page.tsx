@@ -59,11 +59,11 @@ export default async function KnowledgeCenterPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <Brain className="h-8 w-8 text-primary" />
             AI Knowledge Center
           </h1>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Centralized management for every knowledge source the AI can draw on.
           </p>
         </div>
@@ -135,14 +135,14 @@ function KpiCard({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
           {icon}
           {label}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-gray-900">{value}</div>
-        <div className="text-xs text-gray-500 mt-1">{sub}</div>
+        <div className="text-2xl font-bold text-foreground">{value}</div>
+        <div className="text-xs text-muted-foreground mt-1">{sub}</div>
       </CardContent>
     </Card>
   );

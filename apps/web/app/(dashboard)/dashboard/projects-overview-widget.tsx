@@ -98,7 +98,7 @@ function ProjectCard({ project }: { project: ProjectDashboardCard }) {
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="shrink-0 text-[11px] font-bold tracking-widest text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary/10 border border-primary-200 dark:border-primary/30 rounded px-1.5 py-0.5 dark:shadow-[inset_0_0_8px_-2px_hsl(var(--primary)/0.4)]">
+            <span className="shrink-0 text-[11px] font-bold tracking-widest text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary/10 border border-primary-200 dark:border-primary/30 rounded px-1.5 py-0.5">
               {project.key}
             </span>
             <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-primary-700 dark:group-hover:text-primary-300 transition-colors">
@@ -132,7 +132,7 @@ function ProjectCard({ project }: { project: ProjectDashboardCard }) {
           <div className="flex flex-col gap-2.5 pt-0.5">
             <div className="flex items-center justify-between text-xs">
               <span className="flex items-center gap-1 font-medium text-gray-700 dark:text-gray-200">
-                <Zap className="h-3 w-3 text-primary dark:drop-shadow-[0_0_6px_hsl(var(--primary)/0.65)]" />
+                <Zap className="h-3 w-3 text-primary" />
                 {sprint.name}
               </span>
               <span className="flex items-center gap-1 text-gray-400 dark:text-gray-500">
@@ -213,7 +213,7 @@ export async function ProjectsOverviewWidget() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-4">
           <CardTitle className="flex items-center gap-2 text-base dark:tracking-tight">
-            <Layers className="h-4 w-4 text-primary dark:drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]" />
+            <Layers className="h-4 w-4 text-primary" />
             Active Projects
           </CardTitle>
           <div className="hidden dark:block flex-1 holo-divider" />

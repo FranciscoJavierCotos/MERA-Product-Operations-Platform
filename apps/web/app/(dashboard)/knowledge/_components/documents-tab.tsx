@@ -60,11 +60,11 @@ const STATUS_BADGE: Record<
   number,
   { label: string; className: string }
 > = {
-  1: { label: "Pending", className: "bg-amber-100 text-amber-800" },
-  2: { label: "Processing", className: "bg-blue-100 text-blue-800" },
-  3: { label: "Ready", className: "bg-emerald-100 text-emerald-800" },
-  4: { label: "Failed", className: "bg-red-100 text-red-800" },
-  5: { label: "Archived", className: "bg-gray-100 text-gray-700" },
+  1: { label: "Pending", className: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" },
+  2: { label: "Processing", className: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  3: { label: "Ready", className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" },
+  4: { label: "Failed", className: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+  5: { label: "Archived", className: "bg-gray-100 text-gray-700 dark:bg-muted dark:text-muted-foreground" },
 };
 
 export function DocumentsTab({
@@ -128,7 +128,7 @@ export function DocumentsTab({
           <div className="flex items-start justify-between gap-4">
             <div>
               <CardTitle className="text-lg">Documentation</CardTitle>
-              <div className="text-sm text-gray-600 mt-1">
+              <div className="text-sm text-muted-foreground mt-1">
                 PDF documents ingested into the knowledge base. Each upload is
                 chunked and embedded automatically.
               </div>
@@ -144,7 +144,7 @@ export function DocumentsTab({
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[220px]">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 className="pl-8"
                 placeholder="Search documentsâ€¦"
@@ -153,7 +153,7 @@ export function DocumentsTab({
               />
             </div>
             <select
-              className="text-sm border rounded-md px-2 py-1.5 bg-white"
+              className="text-sm border border-border rounded-md px-2 py-1.5 bg-background text-foreground"
               value={collectionFilter}
               onChange={(e) => setCollectionFilter(e.target.value)}
             >
@@ -165,7 +165,7 @@ export function DocumentsTab({
               ))}
             </select>
             <select
-              className="text-sm border rounded-md px-2 py-1.5 bg-white"
+              className="text-sm border border-border rounded-md px-2 py-1.5 bg-background text-foreground"
               value={archivedFilter}
               onChange={(e) =>
                 setArchivedFilter(
@@ -196,7 +196,7 @@ export function DocumentsTab({
                 <TableRow>
                   <TableCell
                     colSpan={7}
-                    className="text-center text-gray-500 py-8"
+                    className="text-center text-muted-foreground py-8"
                   >
                     No documents yet.
                     {isAdmin && (
@@ -229,10 +229,10 @@ export function DocumentsTab({
                         </span>
                       </button>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600">
-                      {d.collection?.name ?? "â€”"}
+                    <TableCell className="text-sm text-muted-foreground">
+                      {d.collection?.name ?? "—"}
                     </TableCell>
-                    <TableCell className="text-sm font-mono text-gray-600">
+                    <TableCell className="text-sm font-mono text-muted-foreground">
                       v{d.current_version?.version_number ?? "?"}
                     </TableCell>
                     <TableCell>
@@ -243,10 +243,10 @@ export function DocumentsTab({
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600">
+                    <TableCell className="text-sm text-muted-foreground">
                       {d.chunk_count}
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600">
+                    <TableCell className="text-sm text-muted-foreground">
                       {formatRelativeTime(d.updated_at)}
                     </TableCell>
                     <TableCell className="text-right space-x-2">
@@ -288,7 +288,7 @@ export function DocumentsTab({
                             size="sm"
                             variant="outline"
                             disabled={isPending}
-                            className="text-red-600 hover:bg-red-50"
+                            className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
                             onClick={() => {
                               if (
                                 !confirm(
@@ -394,10 +394,10 @@ function UploadDocumentDialog({
             <label className="text-sm font-medium">Collection</label>
             <select
               name="collection_id"
-              className="w-full border rounded-md px-2 py-2 bg-white"
+              className="w-full border border-border rounded-md px-2 py-2 bg-background text-foreground"
               defaultValue=""
             >
-              <option value="">â€” None â€”</option>
+              <option value="">â€" None â€"</option>
               {collections.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -412,7 +412,7 @@ function UploadDocumentDialog({
                 {tags.map((t) => (
                   <label
                     key={t.id}
-                    className="flex items-center gap-1 text-xs border rounded-full px-2 py-1 cursor-pointer hover:bg-gray-50"
+                    className="flex items-center gap-1 text-xs border border-border rounded-full px-2 py-1 cursor-pointer hover:bg-accent"
                   >
                     <input
                       type="checkbox"
@@ -438,7 +438,7 @@ function UploadDocumentDialog({
               }
             />
             {fileName && (
-              <div className="text-xs text-gray-500 mt-1">{fileName}</div>
+              <div className="text-xs text-muted-foreground mt-1">{fileName}</div>
             )}
           </div>
           <DialogFooter>

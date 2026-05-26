@@ -20,6 +20,7 @@ interface PriorityBadgeDropdownProps {
   priorities: TicketPriorityRow[];
   isSupportAgent: boolean;
   isClosed: boolean;
+  chevronClassName?: string;
 }
 
 export function PriorityBadgeDropdown({
@@ -28,6 +29,7 @@ export function PriorityBadgeDropdown({
   priorities,
   isSupportAgent,
   isClosed,
+  chevronClassName,
 }: PriorityBadgeDropdownProps) {
   const router = useRouter();
   const supabase = createClient();
@@ -64,7 +66,7 @@ export function PriorityBadgeDropdown({
             className={`${currentPriority.color_class} whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1`}
           >
             {currentPriority.label}
-            <ChevronDown className="h-3 w-3" />
+            <ChevronDown className={`h-3 w-3 ${chevronClassName ?? ""}`} />
           </Badge>
         </button>
       </DropdownMenuTrigger>

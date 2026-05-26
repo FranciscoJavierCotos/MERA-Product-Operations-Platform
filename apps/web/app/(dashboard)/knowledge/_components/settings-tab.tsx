@@ -84,7 +84,7 @@ function RetrievalConfigCard({
     <Card>
       <CardHeader>
         <CardTitle>Retrieval Settings</CardTitle>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           Tune how the AI Recommendation engine selects results. Changes apply
           immediately to every ticket retrieval.
         </div>
@@ -105,7 +105,7 @@ function RetrievalConfigCard({
               disabled={!isAdmin}
               className="w-full"
             />
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               Results below this cosine similarity score are dropped.
             </div>
           </div>
@@ -183,7 +183,7 @@ function SourceBlock({
         </label>
       </div>
       <div>
-        <label className="text-xs text-gray-600">
+        <label className="text-xs text-muted-foreground">
           Weight: {weight.toFixed(2)}
         </label>
         <input
@@ -254,7 +254,7 @@ function CollectionsCard({
     <Card>
       <CardHeader>
         <CardTitle>Collections</CardTitle>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           Group documents into logical buckets (e.g. Runbooks, Product Docs).
         </div>
       </CardHeader>
@@ -293,7 +293,7 @@ function CollectionsCard({
         )}
         <div className="border rounded-md divide-y">
           {collections.length === 0 && (
-            <div className="p-3 text-sm text-gray-500">
+            <div className="p-3 text-sm text-muted-foreground">
               No collections yet.
             </div>
           )}
@@ -307,11 +307,11 @@ function CollectionsCard({
                   {c.name}
                   {c.archived_at && <Badge variant="outline">Archived</Badge>}
                 </div>
-                <div className="text-xs text-gray-500 font-mono">
+                <div className="text-xs text-muted-foreground font-mono">
                   {c.slug}
                 </div>
                 {c.description && (
-                  <div className="text-xs text-gray-600 mt-1">
+                  <div className="text-xs text-muted-foreground mt-1">
                     {c.description}
                   </div>
                 )}
@@ -339,13 +339,13 @@ function AuditLogCard({ log }: { log: KbAuditLog[] }) {
     <Card>
       <CardHeader>
         <CardTitle>Recent Activity</CardTitle>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           Latest changes across the knowledge base.
         </div>
       </CardHeader>
       <CardContent>
         {log.length === 0 ? (
-          <div className="text-sm text-gray-500">No activity yet.</div>
+          <div className="text-sm text-muted-foreground">No activity yet.</div>
         ) : (
           <div className="border rounded-md divide-y">
             {log.map((entry) => (
@@ -354,13 +354,13 @@ function AuditLogCard({ log }: { log: KbAuditLog[] }) {
                 className="p-3 text-sm flex items-center justify-between"
               >
                 <div>
-                  <span className="font-mono text-xs text-gray-500">
+                  <span className="font-mono text-xs text-muted-foreground">
                     {entry.entity_type}
                   </span>
                   <span className="mx-2">Â·</span>
                   <span className="font-medium">{entry.action}</span>
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   {formatRelativeTime(entry.created_at)}
                 </div>
               </div>

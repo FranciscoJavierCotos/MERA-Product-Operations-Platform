@@ -25,6 +25,7 @@ interface SupportTeamDropdownProps {
   isSupportAgent: boolean;
   isClosed: boolean;
   showLevelBadge?: boolean;
+  chevronClassName?: string;
 }
 
 export function SupportTeamDropdown({
@@ -35,6 +36,7 @@ export function SupportTeamDropdown({
   isSupportAgent,
   isClosed,
   showLevelBadge = true,
+  chevronClassName,
 }: SupportTeamDropdownProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -133,10 +135,10 @@ export function SupportTeamDropdown({
               {SUPPORT_LEVEL_CONFIG[currentLevel].label}
             </Badge>
           )}
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-gray-600 dark:text-gray-300">
             {currentTeam?.name || "Support Desk"}
           </span>
-          <ChevronDown className="h-3 w-3 text-gray-400" />
+          <ChevronDown className={`h-3 w-3 text-gray-400 ${chevronClassName ?? ""}`} />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-[250px]">

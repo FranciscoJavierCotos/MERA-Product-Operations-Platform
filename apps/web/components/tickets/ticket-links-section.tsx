@@ -118,7 +118,7 @@ export function TicketLinksSection({
           <div className="space-y-4">
             {grouped.map(([type, rows]) => (
               <div key={type}>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <p className="mb-2 text-xs font-semibold text-gray-500 dark:text-muted-foreground">
                   {labelFor(type)}
                 </p>
                 <ul className="space-y-2">

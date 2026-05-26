@@ -93,7 +93,7 @@ export function ResolutionsTab({ rows, isAdmin }: Props) {
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Ticket Resolutions</CardTitle>
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           Resolved tickets stored as 768-dim embeddings. Toggle, archive, or
           regenerate them to control what the AI can retrieve.
         </div>
@@ -101,7 +101,7 @@ export function ResolutionsTab({ rows, isAdmin }: Props) {
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-[220px]">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               className="pl-8"
               placeholder="Search title or resolution textâ€¦"
@@ -124,7 +124,7 @@ export function ResolutionsTab({ rows, isAdmin }: Props) {
             active={aiFilter === "disabled"}
             onClick={() => setAiFilter("disabled")}
           />
-          <span className="text-gray-300 mx-1">|</span>
+          <span className="text-muted-foreground mx-1">|</span>
           <FilterPill
             label="Active"
             active={archiveFilter === "active"}
@@ -159,7 +159,7 @@ export function ResolutionsTab({ rows, isAdmin }: Props) {
               <TableRow>
                 <TableCell
                   colSpan={7}
-                  className="text-center text-gray-500 py-8"
+                  className="text-center text-muted-foreground py-8"
                 >
                   No resolutions match the current filters.
                 </TableCell>
@@ -178,20 +178,20 @@ export function ResolutionsTab({ rows, isAdmin }: Props) {
                 <TableCell className="max-w-[280px] truncate">
                   {r.title}
                 </TableCell>
-                <TableCell className="text-sm text-gray-600">
-                  {r.category ?? "â€”"}
+                <TableCell className="text-sm text-muted-foreground">
+                  {r.category ?? "—"}
                 </TableCell>
-                <TableCell className="text-sm text-gray-600">
-                  {r.resolved_at ? formatRelativeTime(r.resolved_at) : "â€”"}
+                <TableCell className="text-sm text-muted-foreground">
+                  {r.resolved_at ? formatRelativeTime(r.resolved_at) : "—"}
                 </TableCell>
                 <TableCell>
                   {r.has_embedding ? (
-                    <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+                    <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/30">
                       <Check className="h-3 w-3 mr-1" />
                       Indexed
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-amber-700">
+                    <Badge variant="outline" className="text-amber-700 dark:text-amber-400">
                       Regenerating
                     </Badge>
                   )}
@@ -290,7 +290,7 @@ function FilterPill({
       className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
         active
           ? "bg-primary text-white border-primary"
-          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+          : "bg-background text-foreground border-border hover:bg-accent"
       }`}
     >
       {label}

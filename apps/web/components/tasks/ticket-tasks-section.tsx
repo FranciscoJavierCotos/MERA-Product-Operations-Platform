@@ -129,7 +129,7 @@ export function TicketTasksSection({
             {/* Pending Tasks */}
             {pendingTasks.length > 0 && (
               <div className="space-y-2">
-                <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                <h4 className="text-xs font-medium text-gray-500 dark:text-muted-foreground">
                   Pending ({pendingTasks.length})
                 </h4>
                 {pendingTasks.map((task) => (
@@ -148,7 +148,7 @@ export function TicketTasksSection({
             {/* Completed Tasks */}
             {completedTasks.length > 0 && (
               <div className="space-y-2">
-                <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                <h4 className="text-xs font-medium text-gray-500 dark:text-muted-foreground">
                   Completed ({completedTasks.length})
                 </h4>
                 {completedTasks.map((task) => (

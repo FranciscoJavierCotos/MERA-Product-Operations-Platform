@@ -9,17 +9,25 @@ import type {
 } from "@/types/ticket.types";
 import type { Team } from "@/types/team.types";
 import type { PaginatedTickets } from "@/lib/supabase/queries/tickets";
-import { Pagination } from "@/components/shared/pagination";
 import { TicketFilterBar } from "@/components/tickets/ticket-filter-bar";
-import { ResizableTicketTable, type TicketRow } from "@/components/tickets/resizable-ticket-table";
+import { TicketsTableShell } from "@/components/tickets/tickets-table-shell";
+import type { TicketRow } from "@/components/tickets/resizable-ticket-table";
 
 export const dynamic = "force-dynamic";
 
-const PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = 25;
+const ALLOWED_PAGE_SIZES = [10, 25, 50, 100];
+
+function resolvePageSize(raw: string | undefined): number {
+  const n = parseInt(raw ?? "", 10);
+  if (Number.isFinite(n) && ALLOWED_PAGE_SIZES.includes(n)) return n;
+  return DEFAULT_PAGE_SIZE;
+}
 
 interface MyTicketsPageProps {
   searchParams: Promise<{
     page?: string;
+    page_size?: string;
     search?: string;
     status?: string;
     priority?: string;
@@ -56,6 +64,7 @@ export default async function MyTicketsPage({
   const parsedPage = parseInt(params?.page ?? "1", 10);
   const requestedPage =
     Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const pageSize = resolvePageSize(params?.page_size);
 
   const [
     statuses,
@@ -84,7 +93,7 @@ export default async function MyTicketsPage({
     "/tickets/me/paginated",
     {
       page: requestedPage,
-      pageSize: PAGE_SIZE,
+      pageSize,
       search: params.search,
       status_id: statusId,
       priority_id: priorityId,
@@ -99,8 +108,10 @@ export default async function MyTicketsPage({
     },
   );
 
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const currentPage = Math.min(requestedPage, totalPages);
+  const rangeStart = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const rangeEnd = Math.min(currentPage * pageSize, totalCount);
 
   return (
     <div className="space-y-4">
@@ -121,7 +132,7 @@ export default async function MyTicketsPage({
       />
 
       <div className="bg-white dark:bg-card shadow rounded-lg overflow-hidden">
-        <ResizableTicketTable
+        <TicketsTableShell
           tickets={tickets as TicketRow[]}
           variant="my"
           isSupportAgent={!!isSupportAgent}
@@ -131,12 +142,14 @@ export default async function MyTicketsPage({
           categories={categories}
           temperatures={temperatures}
           supportLevels={supportLevels}
-        />
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalCount={totalCount}
-          pageSize={PAGE_SIZE}
+          pagination={{
+            currentPage,
+            totalPages,
+            totalCount,
+            pageSize,
+            rangeStart,
+            rangeEnd,
+          }}
         />
       </div>
     </div>

@@ -35,37 +35,22 @@ function KpiCard({
   accent: "primary" | "cyan" | "green";
   footer?: React.ReactNode;
 }) {
-  const accentRing = {
-    primary:
-      "dark:before:bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.22),transparent_55%)] dark:hover:shadow-[0_0_0_1px_hsl(var(--primary)/0.3),0_20px_44px_-22px_hsl(var(--primary)/0.55)]",
-    cyan:
-      "dark:before:bg-[radial-gradient(circle_at_top_right,hsl(var(--cyber-cyan)/0.18),transparent_55%)] dark:hover:shadow-[0_0_0_1px_hsl(var(--cyber-cyan)/0.3),0_20px_44px_-22px_hsl(var(--cyber-cyan)/0.45)]",
-    green:
-      "dark:before:bg-[radial-gradient(circle_at_top_right,hsl(142_70%_45%/0.18),transparent_55%)] dark:hover:shadow-[0_0_0_1px_hsl(142_70%_45%/0.3),0_20px_44px_-22px_hsl(142_70%_45%/0.45)]",
-  }[accent];
   const iconAccent = {
-    primary: "dark:text-primary-300 dark:drop-shadow-[0_0_8px_hsl(var(--primary)/0.55)]",
-    cyan: "dark:text-cyan-300 dark:drop-shadow-[0_0_8px_hsl(var(--cyber-cyan)/0.55)]",
-    green: "dark:text-emerald-300 dark:drop-shadow-[0_0_8px_hsl(142_70%_50%/0.55)]",
+    primary: "dark:text-primary-400",
+    cyan: "dark:text-sky-400",
+    green: "dark:text-emerald-400",
   }[accent];
 
   return (
-    <Card
-      className={cn(
-        "relative overflow-hidden dark:before:absolute dark:before:inset-0 dark:before:pointer-events-none dark:before:opacity-80",
-        accentRing,
-      )}
-    >
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-        <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground dark:text-gray-400/80">
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-xs font-medium text-muted-foreground">
           {label}
         </CardTitle>
-        <span className={cn("text-muted-foreground transition-colors", iconAccent)}>
-          {icon}
-        </span>
+        <span className={cn("text-muted-foreground", iconAccent)}>{icon}</span>
       </CardHeader>
-      <CardContent className="relative">
-        <div className="text-3xl font-bold dark:cyber-number">{value}</div>
+      <CardContent>
+        <div className="text-3xl font-bold tabular-nums">{value}</div>
         {footer}
       </CardContent>
     </Card>

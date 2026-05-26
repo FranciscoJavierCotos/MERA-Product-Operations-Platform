@@ -157,14 +157,15 @@ export default async function TicketDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+          <span className="text-sm font-medium text-muted-foreground tabular-nums">
             {formatTicketNumber(ticket.ticket_number)}
-          </h1>
-          <span className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
-            {ticket.title}
           </span>
+          <span className="text-muted-foreground/40 select-none">·</span>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 truncate">
+            {ticket.title}
+          </h1>
         </div>
         <div className="flex items-center gap-1">
           <TicketNavigationButtons
@@ -196,7 +197,7 @@ export default async function TicketDetailPage({
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Functional Department
+                  Functional Team
                 </h3>
                 <div className="mt-2">
                   <FunctionalTeamDropdown
@@ -257,7 +258,7 @@ export default async function TicketDetailPage({
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Ticket Status
+                  Status
                 </h3>
                 <div className="mt-2">
                   <StatusBadgeDropdown
@@ -273,7 +274,7 @@ export default async function TicketDetailPage({
 
               <div>
                 <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Ticket Priority
+                  Priority
                 </h3>
                 <div className="mt-2">
                   <PriorityBadgeDropdown
@@ -288,7 +289,7 @@ export default async function TicketDetailPage({
 
               <div>
                 <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Client Temperature
+                  Temperature
                 </h3>
                 <div className="mt-2">
                   <TemperatureBadgeDropdown
@@ -420,15 +421,8 @@ export default async function TicketDetailPage({
             currentUserId={user?.id}
           />
         </div>
-        {/* Right column: AI Research → Tasks → Linked Scrum Item */}
+        {/* Right column: Linked Scrum Item → Tasks → AI Research */}
         <div className="min-w-0 h-full flex flex-col gap-6">
-          {isSupportAgent && <AiRecommendationPanel ticketId={ticket.id} />}
-          <TicketTasksSection
-            ticketId={ticket.id}
-            users={supportMembers || []}
-            currentUserId={user?.id || ""}
-            isClosed={isClosed}
-          />
           <LinkedScrumItemCard
             ticketId={ticket.id}
             primary={ticketLinks.find((l) => l.is_primary) ?? null}
@@ -444,6 +438,13 @@ export default async function TicketDetailPage({
               canEdit={!!isSupportAgent && !isClosed}
             />
           )}
+          <TicketTasksSection
+            ticketId={ticket.id}
+            users={supportMembers || []}
+            currentUserId={user?.id || ""}
+            isClosed={isClosed}
+          />
+          {isSupportAgent && <AiRecommendationPanel ticketId={ticket.id} />}
         </div>
       </div>
     </div>

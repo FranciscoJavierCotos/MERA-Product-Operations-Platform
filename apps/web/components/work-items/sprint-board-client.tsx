@@ -324,7 +324,7 @@ export function SprintBoardClient({
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+              <p className="text-xs font-medium text-gray-500 dark:text-muted-foreground">
                 Active sprint
               </p>
               <h2 className="text-lg font-semibold">{activeSprint.name}</h2>
@@ -374,7 +374,7 @@ export function SprintBoardClient({
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+              <p className="text-xs font-medium text-gray-500 dark:text-muted-foreground">
                 Next sprint
               </p>
               <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
