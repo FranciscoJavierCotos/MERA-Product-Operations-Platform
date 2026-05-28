@@ -33,19 +33,26 @@ export class ApiError extends Error {
 async function request<T>(
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
   path: string,
-  opts: { query?: Query; body?: unknown; cache?: RequestCache } = {},
+  opts: { query?: Query; body?: unknown; cache?: RequestCache; revalidate?: number } = {},
 ): Promise<T> {
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(opts.body !== undefined ? { "Content-Type": "application/json" } : {}),
     ...(await authHeader()),
   };
 
-  const res = await fetch(`${API_URL}${path}${buildQuery(opts.query)}`, {
+  const fetchInit: RequestInit = {
     method,
     headers,
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
-    cache: opts.cache ?? "no-store",
-  });
+  };
+
+  if (opts.revalidate !== undefined) {
+    fetchInit.next = { revalidate: opts.revalidate };
+  } else {
+    fetchInit.cache = opts.cache ?? "no-store";
+  }
+
+  const res = await fetch(`${API_URL}${path}${buildQuery(opts.query)}`, fetchInit);
 
   if (!res.ok) {
     let bodyJson: unknown = null;
@@ -67,6 +74,8 @@ async function request<T>(
 
 export const api = {
   get: <T>(path: string, query?: Query) => request<T>("GET", path, { query }),
+  getRevalidated: <T>(path: string, revalidate: number, query?: Query) =>
+    request<T>("GET", path, { query, revalidate }),
   post: <T>(path: string, body?: unknown, query?: Query) =>
     request<T>("POST", path, { body, query }),
   put: <T>(path: string, body?: unknown, query?: Query) =>

@@ -3,7 +3,7 @@
 import { apiBrowser } from "@/lib/api-client-browser";
 import type {
   Team,
-  TeamCategory,
+  TeamType,
   SupportLevel,
   EscalationHistory,
   TicketCollaborator,
@@ -17,12 +17,12 @@ export async function getTeams(_sb: AnyClient) {
   return apiBrowser.get<Team[]>("/teams");
 }
 
-export async function getTeamsByCategory(_sb: AnyClient, category: TeamCategory) {
-  return apiBrowser.get<Team[]>("/teams/by-category", { category });
+export async function getTeamsByType(_sb: AnyClient, type: TeamType) {
+  return apiBrowser.get<Team[]>("/teams/by-type", { type });
 }
 
-export async function getFunctionalTeams(_sb: AnyClient) {
-  return apiBrowser.get<Team[]>("/teams/functional");
+export async function getBusinessTeams(_sb: AnyClient) {
+  return apiBrowser.get<Team[]>("/teams/business");
 }
 
 export async function getL1SupportTeam(_sb: AnyClient) {
@@ -62,10 +62,8 @@ export async function addTicketCollaborator(
   _sb: AnyClient,
   collaborator: {
     ticket_id: string;
-    functional_team_id?: string;
-    support_team_id?: string;
+    team_id: string;
     support_level?: SupportLevel;
-    added_by?: string;
     notes?: string;
   },
 ) {
@@ -85,7 +83,7 @@ export async function removeTicketCollaborator(
 
 export async function createTeam(
   _sb: AnyClient,
-  input: { name: string; description?: string | null; category: TeamCategory },
+  input: { name: string; description?: string | null; team_type?: TeamType; support_level?: SupportLevel },
 ) {
   return apiBrowser.post<Team>("/teams", input);
 }
@@ -93,7 +91,7 @@ export async function createTeam(
 export async function updateTeam(
   _sb: AnyClient,
   id: string,
-  input: Partial<{ name: string; description: string | null; category: TeamCategory }>,
+  input: Partial<{ name: string; description: string | null; team_type: TeamType; support_level: SupportLevel }>,
 ) {
   return apiBrowser.patch<Team>(`/teams/${id}`, input);
 }

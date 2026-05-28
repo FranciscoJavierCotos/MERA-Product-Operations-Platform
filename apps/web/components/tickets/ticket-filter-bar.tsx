@@ -31,8 +31,7 @@ export interface TicketFilterBarProps {
   priorities: TicketPriorityRow[];
   categories: TicketCategoryRow[];
   temperatures: TicketTemperatureRow[];
-  functionalTeams: FilterOption[];
-  supportTeams: FilterOption[];
+  teams: FilterOption[];
   supportMembers?: FilterOption[];
   showAssignedTo?: boolean;
 }
@@ -45,8 +44,7 @@ const FILTER_KEYS = [
   "priority",
   "category",
   "temperature",
-  "functional_team",
-  "support_team",
+  "team",
   "assigned_to",
   "created_from",
   "created_to",
@@ -57,8 +55,7 @@ export function TicketFilterBar({
   priorities,
   categories,
   temperatures,
-  functionalTeams,
-  supportTeams,
+  teams,
   supportMembers,
   showAssignedTo,
 }: TicketFilterBarProps) {
@@ -72,8 +69,7 @@ export function TicketFilterBar({
   const currentPriority = searchParams.get("priority") ?? "";
   const currentCategory = searchParams.get("category") ?? "";
   const currentTemperature = searchParams.get("temperature") ?? "";
-  const currentFunctionalTeam = searchParams.get("functional_team") ?? "";
-  const currentSupportTeam = searchParams.get("support_team") ?? "";
+  const currentTeam = searchParams.get("team") ?? "";
   const currentAssignedTo = searchParams.get("assigned_to") ?? "";
   const currentCreatedFrom = searchParams.get("created_from") ?? "";
   const currentCreatedTo = searchParams.get("created_to") ?? "";
@@ -128,8 +124,7 @@ export function TicketFilterBar({
     currentPriority,
     currentCategory,
     currentTemperature,
-    currentFunctionalTeam,
-    currentSupportTeam,
+    currentTeam,
     currentAssignedTo,
     currentCreatedFrom,
     currentCreatedTo,
@@ -276,42 +271,20 @@ export function TicketFilterBar({
           </SelectContent>
         </Select>
 
-        {/* Functional Team */}
-        {functionalTeams.length > 0 && (
+        {/* Team */}
+        {teams.length > 0 && (
           <Select
-            value={currentFunctionalTeam || ALL}
-            onValueChange={(v) => handleSelect("functional_team", v)}
+            value={currentTeam || ALL}
+            onValueChange={(v) => handleSelect("team", v)}
           >
             <SelectTrigger
-              className={cn(activeTriggerCn(currentFunctionalTeam), "min-w-[150px]")}
+              className={cn(activeTriggerCn(currentTeam), "min-w-[145px]")}
             >
-              <SelectValue placeholder="Functional Team" />
+              <SelectValue placeholder="Team" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL}>All functional teams</SelectItem>
-              {functionalTeams.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-
-        {/* Support Team */}
-        {supportTeams.length > 0 && (
-          <Select
-            value={currentSupportTeam || ALL}
-            onValueChange={(v) => handleSelect("support_team", v)}
-          >
-            <SelectTrigger
-              className={cn(activeTriggerCn(currentSupportTeam), "min-w-[145px]")}
-            >
-              <SelectValue placeholder="Support Team" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>All support teams</SelectItem>
-              {supportTeams.map((o) => (
+              <SelectItem value={ALL}>All teams</SelectItem>
+              {teams.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
                 </SelectItem>

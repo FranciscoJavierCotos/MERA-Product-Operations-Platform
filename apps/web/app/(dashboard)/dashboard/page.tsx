@@ -161,15 +161,10 @@ export default async function DashboardPage() {
                       </span>
                       <span className="hidden sm:inline text-xs text-gray-400 dark:text-gray-500 shrink-0">
                         {ticket.assigned_user?.full_name || "Unassigned"}
-                        {(ticket.functional_team?.name ||
-                          ticket.support_team?.name) && (
+                        {ticket.team?.name && (
                           <>
                             {" · "}
-                            {ticket.functional_team?.name}
-                            {ticket.functional_team?.name &&
-                              ticket.support_team?.name &&
-                              " / "}
-                            {ticket.support_team?.name}
+                            {ticket.team.name}
                           </>
                         )}
                         {" · "}

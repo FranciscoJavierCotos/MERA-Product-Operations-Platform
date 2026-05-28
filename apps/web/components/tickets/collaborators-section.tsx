@@ -22,8 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import {
-  getFunctionalTeams,
-  getAllSupportTeams,
+  getTeams,
   getTicketCollaborators,
   addTicketCollaborator,
   removeTicketCollaborator,
@@ -39,8 +38,7 @@ import { Plus, X, Users } from "lucide-react";
 interface CollaboratorsSectionProps {
   ticketId: string;
   initialCollaborators?: TicketCollaborator[];
-  availableFunctionalTeams?: Team[];
-  availableSupportTeams?: Team[];
+  availableTeams?: Team[];
   isSupportAgent: boolean;
   isClosed: boolean;
 }
@@ -48,8 +46,7 @@ interface CollaboratorsSectionProps {
 export function CollaboratorsSection({
   ticketId,
   initialCollaborators,
-  availableFunctionalTeams,
-  availableSupportTeams,
+  availableTeams,
   isSupportAgent,
   isClosed,
 }: CollaboratorsSectionProps) {
@@ -58,21 +55,12 @@ export function CollaboratorsSection({
   const [collaborators, setCollaborators] = useState<TicketCollaborator[]>(
     initialCollaborators ?? [],
   );
-  const [functionalTeams, setFunctionalTeams] = useState<Team[]>(
-    availableFunctionalTeams ?? [],
-  );
-  const [supportTeams, setSupportTeams] = useState<Team[]>(
-    availableSupportTeams ?? [],
-  );
+  const [teams, setTeams] = useState<Team[]>(availableTeams ?? []);
   const [isLoading, setIsLoading] = useState(!initialCollaborators);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const didInitFromProps = useRef(false);
 
-  // Form state
-  const [collaboratorType, setCollaboratorType] = useState<
-    "functional" | "support"
-  >("functional");
   const [selectedTeamId, setSelectedTeamId] = useState<string>("");
   const [notes, setNotes] = useState("");
 
@@ -81,10 +69,9 @@ export function CollaboratorsSection({
     didInitFromProps.current = true;
 
     if (initialCollaborators) setCollaborators(initialCollaborators);
-    if (availableFunctionalTeams) setFunctionalTeams(availableFunctionalTeams);
-    if (availableSupportTeams) setSupportTeams(availableSupportTeams);
+    if (availableTeams) setTeams(availableTeams);
     setIsLoading(false);
-  }, [initialCollaborators, availableFunctionalTeams, availableSupportTeams]);
+  }, [initialCollaborators, availableTeams]);
 
   useEffect(() => {
     if (initialCollaborators) return;
@@ -106,19 +93,11 @@ export function CollaboratorsSection({
 
   const ensureTeamOptionsLoaded = async () => {
     if (!isSupportAgent) return;
-    if (functionalTeams.length > 0 && supportTeams.length > 0) return;
+    if (teams.length > 0) return;
 
     try {
-      const [funcTeams, supTeams] = await Promise.all([
-        functionalTeams.length > 0
-          ? Promise.resolve(functionalTeams)
-          : getFunctionalTeams(supabase),
-        supportTeams.length > 0
-          ? Promise.resolve(supportTeams)
-          : getAllSupportTeams(supabase),
-      ]);
-      setFunctionalTeams(funcTeams);
-      setSupportTeams(supTeams);
+      const allTeams = await getTeams(supabase);
+      setTeams(allTeams);
     } catch (err) {
       console.error("Error loading team options:", err);
     }
@@ -133,45 +112,24 @@ export function CollaboratorsSection({
     }
   };
 
-  const getSupportLevel = (teamId: string): SupportLevel | undefined => {
-    const team = supportTeams.find((t) => t.id === teamId);
-    if (!team) return undefined;
-    if (team.category === "l1_support") return "L1";
-    if (team.category === "l2_technical") return "L2";
-    if (team.category === "l3_engineering") return "L3";
-    return undefined;
-  };
-
   const handleAddCollaborator = async () => {
     if (!selectedTeamId || isAdding) return;
 
     setIsAdding(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const team = teams.find((t) => t.id === selectedTeamId);
 
-      const collaborator: Parameters<typeof addTicketCollaborator>[1] = {
+      await addTicketCollaborator(supabase, {
         ticket_id: ticketId,
-        added_by: user?.id,
+        team_id: selectedTeamId,
+        support_level: team?.support_level ?? undefined,
         notes: notes || undefined,
-      };
+      });
 
-      if (collaboratorType === "functional") {
-        collaborator.functional_team_id = selectedTeamId;
-      } else {
-        collaborator.support_team_id = selectedTeamId;
-        collaborator.support_level = getSupportLevel(selectedTeamId);
-      }
-
-      await addTicketCollaborator(supabase, collaborator);
-
-      // Reset form
       setSelectedTeamId("");
       setNotes("");
       setIsDialogOpen(false);
 
-      // Reload data
       await refreshCollaborators();
       router.refresh();
     } catch (error) {
@@ -191,14 +149,10 @@ export function CollaboratorsSection({
     }
   };
 
-  const teamsForSelect =
-    collaboratorType === "functional" ? functionalTeams : supportTeams;
-
-  // Group support teams by level for better display
-  const groupedSupportTeams = {
-    l1: supportTeams.filter((t) => t.category === "l1_support"),
-    l2: supportTeams.filter((t) => t.category === "l2_technical"),
-    l3: supportTeams.filter((t) => t.category === "l3_engineering"),
+  const grouped = {
+    support: teams.filter((t) => t.team_type === "support"),
+    business: teams.filter((t) => t.team_type === "business"),
+    engineering: teams.filter((t) => t.team_type === "engineering"),
   };
 
   if (isLoading) {
@@ -212,7 +166,7 @@ export function CollaboratorsSection({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-gray-500" />
-          <h4 className="text-sm font-medium text-gray-700">Collaborators</h4>
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Collaborators</h4>
           <Badge variant="secondary" className="text-xs">
             {collaborators.length}
           </Badge>
@@ -237,92 +191,54 @@ export function CollaboratorsSection({
               </DialogHeader>
               <div className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <Label>Collaborator Type</Label>
+                  <Label>Team</Label>
                   <Select
-                    value={collaboratorType}
-                    onValueChange={(value) => {
-                      setCollaboratorType(value as "functional" | "support");
-                      setSelectedTeamId("");
-                    }}
+                    value={selectedTeamId}
+                    onValueChange={setSelectedTeamId}
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Select a team..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="functional">
-                        Functional Department
-                      </SelectItem>
-                      <SelectItem value="support">Support Team</SelectItem>
+                      {grouped.support.length > 0 && (
+                        <>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-blue-600">
+                            Support
+                          </div>
+                          {grouped.support.map((team) => (
+                            <SelectItem key={team.id} value={team.id}>
+                              {team.name}
+                              {team.support_level ? ` (${team.support_level})` : ""}
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
+                      {grouped.business.length > 0 && (
+                        <>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-purple-600">
+                            Business
+                          </div>
+                          {grouped.business.map((team) => (
+                            <SelectItem key={team.id} value={team.id}>
+                              {team.name}
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
+                      {grouped.engineering.length > 0 && (
+                        <>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-red-600">
+                            Engineering
+                          </div>
+                          {grouped.engineering.map((team) => (
+                            <SelectItem key={team.id} value={team.id}>
+                              {team.name}
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Team</Label>
-                  {collaboratorType === "functional" ? (
-                    <Select
-                      value={selectedTeamId}
-                      onValueChange={setSelectedTeamId}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a department..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {functionalTeams.map((team) => (
-                          <SelectItem key={team.id} value={team.id}>
-                            {team.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Select
-                      value={selectedTeamId}
-                      onValueChange={setSelectedTeamId}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a support team..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {groupedSupportTeams.l1.length > 0 && (
-                          <>
-                            <div className="px-2 py-1.5 text-xs font-semibold text-blue-600">
-                              L1 - Support Desk
-                            </div>
-                            {groupedSupportTeams.l1.map((team) => (
-                              <SelectItem key={team.id} value={team.id}>
-                                {team.name}
-                              </SelectItem>
-                            ))}
-                          </>
-                        )}
-                        {groupedSupportTeams.l2.length > 0 && (
-                          <>
-                            <div className="px-2 py-1.5 text-xs font-semibold text-amber-600">
-                              L2 - Technical
-                            </div>
-                            {groupedSupportTeams.l2.map((team) => (
-                              <SelectItem key={team.id} value={team.id}>
-                                {team.name}
-                              </SelectItem>
-                            ))}
-                          </>
-                        )}
-                        {groupedSupportTeams.l3.length > 0 && (
-                          <>
-                            <div className="px-2 py-1.5 text-xs font-semibold text-red-600">
-                              L3 - Engineering
-                            </div>
-                            {groupedSupportTeams.l3.map((team) => (
-                              <SelectItem key={team.id} value={team.id}>
-                                {team.name}
-                              </SelectItem>
-                            ))}
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -362,32 +278,18 @@ export function CollaboratorsSection({
           {collaborators.map((collab) => (
             <div
               key={collab.id}
-              className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
+              className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-md"
             >
               <div className="flex items-center gap-2">
-                {collab.functional_team && (
-                  <>
-                    <Badge variant="outline">
-                      {collab.functional_team.name}
-                    </Badge>
-                    <span className="text-xs text-gray-500">Functional</span>
-                  </>
+                {collab.support_level && (
+                  <Badge
+                    variant="secondary"
+                    className={SUPPORT_LEVEL_CONFIG[collab.support_level]?.color ?? ""}
+                  >
+                    {SUPPORT_LEVEL_CONFIG[collab.support_level]?.label ?? collab.support_level}
+                  </Badge>
                 )}
-                {collab.support_team && (
-                  <>
-                    {collab.support_level && (
-                      <Badge
-                        variant="secondary"
-                        className={
-                          SUPPORT_LEVEL_CONFIG[collab.support_level].color
-                        }
-                      >
-                        {SUPPORT_LEVEL_CONFIG[collab.support_level].label}
-                      </Badge>
-                    )}
-                    <span className="text-sm">{collab.support_team.name}</span>
-                  </>
-                )}
+                <span className="text-sm">{collab.team?.name}</span>
               </div>
               {isSupportAgent && !isClosed && (
                 <Button

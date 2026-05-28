@@ -19,8 +19,8 @@ export default async function BacklogPage({ params }: PageProps) {
   const [items, sprints, profiles, priorities] = await Promise.all([
     api.get<WorkItemWithRelations[]>("/work-items/backlog", { projectId: project.id }),
     api.get<SprintWithCounts[]>(`/projects/${project.id}/sprints`),
-    api.get<Profile[]>("/users"),
-    api.get<TicketPriorityRow[]>("/lookup/priorities"),
+    api.getRevalidated<Profile[]>("/users", 300),
+    api.getRevalidated<TicketPriorityRow[]>("/lookup/priorities", 3600),
   ]);
 
   return (

@@ -37,7 +37,7 @@ async function request<T>(
   opts: { query?: Query; body?: unknown } = {},
 ): Promise<T> {
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(opts.body !== undefined ? { "Content-Type": "application/json" } : {}),
     ...(await authHeader()),
   };
 

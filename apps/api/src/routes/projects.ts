@@ -3,6 +3,7 @@ import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import * as projects from "../services/projects";
 
 const IdParam = z.object({ id: z.string().uuid() });
+const MemberIdParam = z.object({ id: z.string().uuid(), mid: z.string().uuid() });
 const KeyParam = z.object({ key: z.string().min(1) });
 
 const CreateBody = z.object({
@@ -74,6 +75,62 @@ export const projectRoutes: FastifyPluginAsyncZod = async (app) => {
     { schema: { tags: ["projects"], params: IdParam } },
     async (req) => {
       await projects.deleteProject(req.supabase, req.params.id);
+      return { ok: true };
+    },
+  );
+
+  // ── Project member management (migration 034) ──────────────────────────────
+
+  const ProjectMemberBody = z.object({
+    user_id: z.string().uuid(),
+    role: z.enum(["owner", "developer", "viewer"]).default("developer"),
+  }).strict();
+
+  const ProjectMemberRoleBody = z.object({
+    role: z.enum(["owner", "developer", "viewer"]),
+  }).strict();
+
+  app.get(
+    "/projects/:id/members",
+    { schema: { tags: ["projects"], params: IdParam } },
+    async (req) => projects.getProjectMembers(req.supabase, req.params.id),
+  );
+
+  app.post(
+    "/projects/:id/members",
+    { schema: { tags: ["projects"], params: IdParam, body: ProjectMemberBody } },
+    async (req) =>
+      projects.addProjectMember(
+        req.supabase,
+        req.params.id,
+        req.body.user_id,
+        req.body.role,
+        req.user.id,
+      ),
+  );
+
+  app.patch(
+    "/projects/:id/members/:mid",
+    {
+      schema: {
+        tags: ["projects"],
+        params: MemberIdParam,
+        body: ProjectMemberRoleBody,
+      },
+    },
+    async (req) =>
+      projects.updateProjectMemberRole(
+        req.supabase,
+        req.params.mid,
+        req.body.role,
+      ),
+  );
+
+  app.delete(
+    "/projects/:id/members/:mid",
+    { schema: { tags: ["projects"], params: MemberIdParam } },
+    async (req) => {
+      await projects.removeProjectMember(req.supabase, req.params.mid);
       return { ok: true };
     },
   );

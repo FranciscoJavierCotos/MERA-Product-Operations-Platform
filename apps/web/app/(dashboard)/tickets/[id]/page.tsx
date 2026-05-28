@@ -22,7 +22,6 @@ import { StatusBadgeDropdown } from "@/components/shared/status-badge-dropdown";
 import { AssignedUserDropdown } from "@/components/shared/assigned-user-dropdown";
 import { PriorityBadgeDropdown } from "@/components/shared/priority-badge-dropdown";
 import { TemperatureBadgeDropdown } from "@/components/shared/temperature-badge-dropdown";
-import { FunctionalTeamDropdown } from "@/components/shared/functional-team-dropdown";
 import { SupportTeamDropdown } from "@/components/shared/support-team-dropdown";
 import { TicketCategoryDropdown } from "@/components/shared/ticket-category-dropdown";
 import { CcEmailInput } from "@/components/shared/cc-email-input";
@@ -116,8 +115,7 @@ export default async function TicketDetailPage({
 
   const [
     supportMembers,
-    functionalTeams,
-    supportTeams,
+    teams,
     statuses,
     priorities,
     categories,
@@ -126,8 +124,7 @@ export default async function TicketDetailPage({
   ] = isSupportAgent
     ? await Promise.all([
         api.get<Profile[]>("/users/support"),
-        api.get<Team[]>("/teams/functional"),
-        api.get<Team[]>("/teams/support"),
+        api.get<Team[]>("/teams"),
         api.get<TicketStatusRow[]>("/lookup/statuses"),
         api.get<TicketPriorityRow[]>("/lookup/priorities"),
         api.get<TicketCategoryRow[]>("/lookup/categories"),
@@ -136,7 +133,6 @@ export default async function TicketDetailPage({
       ])
     : await Promise.all([
         Promise.resolve([] as Profile[]),
-        Promise.resolve([] as Team[]),
         Promise.resolve([] as Team[]),
         api.get<TicketStatusRow[]>("/lookup/statuses"),
         api.get<TicketPriorityRow[]>("/lookup/priorities"),
@@ -197,33 +193,16 @@ export default async function TicketDetailPage({
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Functional Team
-                </h3>
-                <div className="mt-2">
-                  <FunctionalTeamDropdown
-                    ticketId={ticket.id}
-                    currentTeam={
-                      (ticket.functional_team as Team | undefined) || null
-                    }
-                    availableTeams={functionalTeams}
-                    isSupportAgent={!!isSupportAgent}
-                    isClosed={isClosed}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Support Team
+                  Team
                 </h3>
                 <div className="mt-2">
                   <SupportTeamDropdown
                     ticketId={ticket.id}
                     currentTeam={
-                      (ticket.support_team as Team | undefined) || null
+                      (ticket.team as Team | undefined) || null
                     }
                     currentLevel={currentSupportLevel}
-                    availableTeams={supportTeams}
+                    availableTeams={teams}
                     isSupportAgent={!!isSupportAgent}
                     isClosed={isClosed}
                   />
@@ -377,8 +356,7 @@ export default async function TicketDetailPage({
               <CollaboratorsSection
                 ticketId={ticket.id}
                 initialCollaborators={collaborators}
-                availableFunctionalTeams={functionalTeams}
-                availableSupportTeams={supportTeams}
+                availableTeams={teams}
                 isSupportAgent={!!isSupportAgent}
                 isClosed={isClosed}
               />

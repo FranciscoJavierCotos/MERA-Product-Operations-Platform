@@ -46,12 +46,8 @@ export interface Database {
           id: string;
           name: string;
           description: string | null;
-          category:
-            | "functional"
-            | "l1_support"
-            | "l2_technical"
-            | "l3_engineering"
-            | null;
+          team_type: "business" | "support" | "engineering" | null;
+          support_level: "L1" | "L2" | "L3" | null;
           created_at: string;
           updated_at: string;
         };
@@ -59,12 +55,8 @@ export interface Database {
           id?: string;
           name: string;
           description?: string | null;
-          category?:
-            | "functional"
-            | "l1_support"
-            | "l2_technical"
-            | "l3_engineering"
-            | null;
+          team_type?: "business" | "support" | "engineering" | null;
+          support_level?: "L1" | "L2" | "L3" | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -72,14 +64,126 @@ export interface Database {
           id?: string;
           name?: string;
           description?: string | null;
-          category?:
-            | "functional"
-            | "l1_support"
-            | "l2_technical"
-            | "l3_engineering"
-            | null;
+          team_type?: "business" | "support" | "engineering" | null;
+          support_level?: "L1" | "L2" | "L3" | null;
           created_at?: string;
           updated_at?: string;
+        };
+      };
+      team_members: {
+        Row: {
+          id: string;
+          team_id: string;
+          user_id: string;
+          role: "lead" | "member";
+          joined_at: string;
+          added_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          team_id: string;
+          user_id: string;
+          role?: "lead" | "member";
+          joined_at?: string;
+          added_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          team_id?: string;
+          user_id?: string;
+          role?: "lead" | "member";
+          joined_at?: string;
+          added_by?: string | null;
+        };
+      };
+      project_members: {
+        Row: {
+          id: string;
+          project_id: string;
+          user_id: string;
+          role: "owner" | "developer" | "viewer";
+          joined_at: string;
+          added_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          user_id: string;
+          role?: "owner" | "developer" | "viewer";
+          joined_at?: string;
+          added_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          user_id?: string;
+          role?: "owner" | "developer" | "viewer";
+          joined_at?: string;
+          added_by?: string | null;
+        };
+      };
+      escalation_history: {
+        Row: {
+          id: string;
+          ticket_id: string;
+          user_id: string | null;
+          from_support_level: "L1" | "L2" | "L3" | null;
+          to_support_level: "L1" | "L2" | "L3";
+          from_team_id: string | null;
+          to_team_id: string;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          ticket_id: string;
+          user_id?: string | null;
+          from_support_level?: "L1" | "L2" | "L3" | null;
+          to_support_level: "L1" | "L2" | "L3";
+          from_team_id?: string | null;
+          to_team_id: string;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          ticket_id?: string;
+          user_id?: string | null;
+          from_support_level?: "L1" | "L2" | "L3" | null;
+          to_support_level?: "L1" | "L2" | "L3";
+          from_team_id?: string | null;
+          to_team_id?: string;
+          notes?: string | null;
+          created_at?: string;
+        };
+      };
+      ticket_collaborators: {
+        Row: {
+          id: string;
+          ticket_id: string;
+          team_id: string;
+          support_level: "L1" | "L2" | "L3" | null;
+          added_by: string | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          ticket_id: string;
+          team_id: string;
+          support_level?: "L1" | "L2" | "L3" | null;
+          added_by?: string | null;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          ticket_id?: string;
+          team_id?: string;
+          support_level?: "L1" | "L2" | "L3" | null;
+          added_by?: string | null;
+          notes?: string | null;
+          created_at?: string;
         };
       };
       ticket_statuses: {
@@ -252,7 +356,6 @@ export interface Database {
           created_by: string | null;
           assigned_to: string | null;
           team_id: string | null;
-          functional_team_id: string | null;
           client_email: string | null;
           client_name: string | null;
           attachments: Json;
@@ -281,7 +384,6 @@ export interface Database {
           created_by?: string | null;
           assigned_to?: string | null;
           team_id?: string | null;
-          functional_team_id?: string | null;
           client_email?: string | null;
           client_name?: string | null;
           attachments?: Json;
@@ -310,7 +412,6 @@ export interface Database {
           created_by?: string | null;
           assigned_to?: string | null;
           team_id?: string | null;
-          functional_team_id?: string | null;
           client_email?: string | null;
           client_name?: string | null;
           attachments?: Json;

@@ -202,7 +202,6 @@ export function SprintBoardClient({
         before_rank: before,
         after_rank: after,
       });
-      router.refresh();
     } catch {
       setColumns(toMap(initialBoard));
     }
@@ -248,7 +247,6 @@ export function SprintBoardClient({
         before_rank: before,
         after_rank: after,
       });
-      router.refresh();
     } catch {
       setNextColumns(toMap(nextSprintBoard));
     }

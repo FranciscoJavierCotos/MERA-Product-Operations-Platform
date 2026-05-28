@@ -93,7 +93,6 @@ export interface Ticket {
   created_by?: string;
   assigned_to?: string;
   team_id?: string;
-  functional_team_id?: string;
   client_email?: string;
   client_name?: string;
   cc_email?: string | null;
@@ -117,8 +116,7 @@ export interface Ticket {
   // Joined entity relations
   assigned_user?: Profile;
   creator?: Profile;
-  functional_team?: Team;
-  support_team?: Team;
+  team?: Team;
   collaborators?: TicketCollaborator[];
   sla_instance?: SlaInstance | SlaInstance[] | null;
 }

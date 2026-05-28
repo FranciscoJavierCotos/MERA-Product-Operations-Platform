@@ -137,8 +137,7 @@ export default function SearchPage() {
                       <TableHead>Ticket</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Priority</TableHead>
-                      <TableHead>Functional Team</TableHead>
-                      <TableHead>Support Team</TableHead>
+                      <TableHead>Team</TableHead>
                       <TableHead>Assigned To</TableHead>
                       <TableHead>Created</TableHead>
                     </TableRow>
@@ -173,12 +172,7 @@ export default function SearchPage() {
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-gray-600">
-                            {ticket.functional_team?.name || "-"}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-gray-600">
-                            {ticket.support_team?.name || "-"}
+                            {ticket.team?.name || "-"}
                           </span>
                         </TableCell>
                         <TableCell>

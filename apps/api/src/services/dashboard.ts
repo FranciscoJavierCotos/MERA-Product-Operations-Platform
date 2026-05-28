@@ -58,15 +58,14 @@ export async function getRecentTickets(supabase: Client, limit: number = 10) {
       `
       id, ticket_number, title, cc_email,
       status_id, priority_id, category_id, support_level_id, temperature_id,
-      created_by, assigned_to, team_id, functional_team_id,
+      created_by, assigned_to, team_id,
       client_email, client_name, time_worked_minutes, created_at, updated_at,
       resolved_at, closed_at,
       status:ticket_statuses(id, name, label, badge_variant, is_final, display_order),
       priority:ticket_priorities(id, name, label, color_class, display_order),
       assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email),
       creator:profiles!tickets_created_by_fkey(id, full_name, email),
-      functional_team:teams!tickets_functional_team_id_fkey(id, name),
-      support_team:teams!tickets_team_id_fkey(id, name)
+      team:teams!tickets_team_id_fkey(id, name, team_type, support_level)
     `,
     )
     .order("created_at", { ascending: false })

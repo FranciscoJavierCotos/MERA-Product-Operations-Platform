@@ -6,6 +6,7 @@ import type {
   CreateProjectInput,
   UpdateProjectInput,
 } from "../types/project.types";
+import type { ProjectMember, ProjectMemberRole } from "../types/team.types";
 
 type Client = SupabaseClient<Database>;
 
@@ -293,4 +294,71 @@ export async function getActiveProjectsForDashboard(
         : null,
     };
   });
+}
+
+// ── Project member management (migration 034) ─────────────────────────────────
+
+const PROJECT_MEMBER_SELECT = `
+  id, project_id, user_id, role, joined_at, added_by,
+  user:profiles!project_members_user_id_fkey(id, full_name, email, avatar_url)
+`;
+
+export async function getProjectMembers(
+  supabase: Client,
+  projectId: string,
+): Promise<ProjectMember[]> {
+  const { data, error } = await supabase
+    .from("project_members")
+    .select(PROJECT_MEMBER_SELECT)
+    .eq("project_id", projectId)
+    .order("role", { ascending: true })
+    .order("joined_at", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as ProjectMember[];
+}
+
+export async function addProjectMember(
+  supabase: Client,
+  projectId: string,
+  userId: string,
+  role: ProjectMemberRole,
+  addedBy: string,
+): Promise<ProjectMember> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from("project_members") as any)
+    .insert([{ project_id: projectId, user_id: userId, role, added_by: addedBy }])
+    .select(PROJECT_MEMBER_SELECT)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data as unknown as ProjectMember;
+}
+
+export async function updateProjectMemberRole(
+  supabase: Client,
+  memberId: string,
+  role: ProjectMemberRole,
+): Promise<ProjectMember> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.from("project_members") as any)
+    .update({ role })
+    .eq("id", memberId)
+    .select(PROJECT_MEMBER_SELECT)
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data as unknown as ProjectMember;
+}
+
+export async function removeProjectMember(
+  supabase: Client,
+  memberId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("project_members")
+    .delete()
+    .eq("id", memberId);
+
+  if (error) throw new Error(error.message);
 }

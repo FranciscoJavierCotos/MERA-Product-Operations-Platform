@@ -9,7 +9,6 @@ import { TicketCategoryDropdown } from "@/components/shared/ticket-category-drop
 import { StatusBadgeDropdown } from "@/components/shared/status-badge-dropdown";
 import { PriorityBadgeDropdown } from "@/components/shared/priority-badge-dropdown";
 import { TemperatureBadgeDropdown } from "@/components/shared/temperature-badge-dropdown";
-import { FunctionalTeamDropdown } from "@/components/shared/functional-team-dropdown";
 import { SupportTeamDropdown } from "@/components/shared/support-team-dropdown";
 import { AssignedUserDropdown } from "@/components/shared/assigned-user-dropdown";
 import type { Team, SupportLevel } from "@/types/team.types";
@@ -47,8 +46,7 @@ const BASE_COLUMNS: ColDef[] = [
   { key: "status",        label: "Status",          defaultWidth: 145, sortCol: "status_id" },
   { key: "priority",      label: "Priority",        defaultWidth: 120, sortCol: "priority_id" },
   { key: "sla",           label: "SLA",             defaultWidth: 180 },
-  { key: "functional_team", label: "Functional Team", defaultWidth: 165 },
-  { key: "support_team",  label: "Support Team",    defaultWidth: 200 },
+  { key: "team",          label: "Team",            defaultWidth: 200 },
 ];
 
 const ASSIGNED_TO_COL: ColDef = { key: "assigned_to_col", label: "Assigned To",  defaultWidth: 175 };
@@ -69,8 +67,7 @@ export interface TicketRow {
   temperature?: TicketTemperatureRow | null;
   support_level?: TicketSupportLevelRow | null;
   sla_instance: SlaInstance | SlaInstance[] | null | undefined;
-  functional_team: Team | null | undefined;
-  support_team: Team | null | undefined;
+  team: Team | null | undefined;
   assigned_user: {
     id: string;
     full_name: string | null;
@@ -449,26 +446,12 @@ function TicketTableRow({
         </div>
       </td>
 
-      {/* Functional Team */}
-      <td className={cellClass}>
-        <div className={innerClass} style={{ height: h }}>
-          <FunctionalTeamDropdown
-            ticketId={ticket.id}
-            currentTeam={(ticket.functional_team as Team | undefined) ?? null}
-            isSupportAgent={isSupportAgent}
-            isClosed={isClosed}
-            quietEmpty
-            chevronClassName={CHEVRON_HIDE}
-          />
-        </div>
-      </td>
-
-      {/* Support Team */}
+      {/* Team */}
       <td className={cellClass}>
         <div className={innerClass} style={{ height: h }}>
           <SupportTeamDropdown
             ticketId={ticket.id}
-            currentTeam={(ticket.support_team as Team | undefined) ?? null}
+            currentTeam={(ticket.team as Team | undefined) ?? null}
             currentLevel={(ticket.support_level?.name as SupportLevel) || "L1"}
             isSupportAgent={isSupportAgent}
             isClosed={isClosed}

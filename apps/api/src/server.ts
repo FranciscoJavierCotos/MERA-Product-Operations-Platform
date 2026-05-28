@@ -58,10 +58,22 @@ async function build() {
     contentSecurityPolicy: false,
   });
   await app.register(fastifyRateLimit, {
-    // Global rate limit: 100 requests per IP per 15-minute window.
-    // Tighten specific routes (e.g. auth-adjacent paths) as needed.
-    max: 100,
+    max: 300,
     timeWindow: "15 minutes",
+    keyGenerator: (request) => {
+      try {
+        const auth = request.headers.authorization;
+        if (typeof auth === "string" && auth.startsWith("Bearer ")) {
+          const payload = JSON.parse(
+            Buffer.from(auth.split(".")[1], "base64url").toString("utf-8"),
+          );
+          if (typeof payload.sub === "string") return `user:${payload.sub}`;
+        }
+      } catch {
+        // fall through to IP-based fallback
+      }
+      return request.ip;
+    },
   });
   await app.register(fastifyCors, {
     origin: env.corsOrigins,

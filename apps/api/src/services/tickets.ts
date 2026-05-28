@@ -20,8 +20,7 @@ export interface TicketFilters {
   priority_id?: number;
   category_id?: number;
   temperature_id?: number;
-  functional_team_id?: string;
-  support_team_id?: string;
+  team_id?: string;
   assigned_to?: string;
   created_from?: string;
   created_to?: string;
@@ -43,7 +42,7 @@ const SORTABLE_COLUMNS = new Set([
 const TICKET_SELECT = `
   id, ticket_number, title, description, resolution, cc_email,
   status_id, priority_id, category_id, support_level_id, temperature_id,
-  created_by, assigned_to, team_id, functional_team_id,
+  created_by, assigned_to, team_id,
   client_email, client_name, attachments, custom_fields,
   time_worked_minutes, created_at, updated_at, resolved_at, closed_at,
   status:ticket_statuses(id, name, label, badge_variant, is_final, display_order),
@@ -54,15 +53,14 @@ const TICKET_SELECT = `
   tags:ticket_tags(tag:tags(id, name, slug, color_class)),
   assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email, avatar_url),
   creator:profiles!tickets_created_by_fkey(id, full_name, email),
-  functional_team:teams!tickets_functional_team_id_fkey(id, name),
-  support_team:teams!tickets_team_id_fkey(id, name),
+  team:teams!tickets_team_id_fkey(id, name, team_type, support_level),
   sla_instance:sla_instances(id, response_due_at, resolution_due_at, responded_at, paused_at, total_paused_minutes, policy:sla_policies(name, priority_id, response_time_minutes, resolution_time_minutes))
 `;
 
 const TICKET_SELECT_DETAIL = `
   id, ticket_number, title, description, resolution, cc_email,
   status_id, priority_id, category_id, support_level_id, temperature_id,
-  created_by, assigned_to, team_id, functional_team_id,
+  created_by, assigned_to, team_id,
   client_email, client_name, attachments, custom_fields,
   time_worked_minutes, created_at, updated_at, resolved_at, closed_at,
   status:ticket_statuses(id, name, label, badge_variant, is_final, display_order),
@@ -73,8 +71,7 @@ const TICKET_SELECT_DETAIL = `
   tags:ticket_tags(tag:tags(id, name, slug, color_class)),
   assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email, avatar_url, role),
   creator:profiles!tickets_created_by_fkey(id, full_name, email),
-  functional_team:teams!tickets_functional_team_id_fkey(id, name, category),
-  support_team:teams!tickets_team_id_fkey(id, name, category),
+  team:teams!tickets_team_id_fkey(id, name, team_type, support_level),
   sla_instance:sla_instances(id, response_due_at, resolution_due_at, responded_at, paused_at, total_paused_minutes, policy:sla_policies(name, priority_id, response_time_minutes, resolution_time_minutes))
 `;
 
@@ -86,10 +83,8 @@ function applyFilters(query: any, filters?: TicketFilters) {
   if (filters.category_id) query = query.eq("category_id", filters.category_id);
   if (filters.temperature_id)
     query = query.eq("temperature_id", filters.temperature_id);
-  if (filters.functional_team_id)
-    query = query.eq("functional_team_id", filters.functional_team_id);
-  if (filters.support_team_id)
-    query = query.eq("team_id", filters.support_team_id);
+  if (filters.team_id)
+    query = query.eq("team_id", filters.team_id);
   if (filters.assigned_to) query = query.eq("assigned_to", filters.assigned_to);
   if (filters.created_from)
     query = query.gte("created_at", `${filters.created_from}T00:00:00.000Z`);

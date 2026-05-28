@@ -44,6 +44,7 @@ Most ops teams operate across a fragmented stack: a ticketing tool, a chat threa
 | **SLA Engine**          | Per-priority response & resolution policies, auto-assigned on creation, pause/resume on customer-blocked statuses, computed at read time — no cron, no drift |
 | **AI Knowledge Center** | Past resolutions + uploaded PDFs chunked and embedded via Gemini. Unified retrieval ranked by similarity, governed by admin-tunable weights and thresholds   |
 | **Projects & Scrum**    | Projects, sprints, work items (epic / story / task / bug), drag-and-drop sprint board, backlog planning — same auth, same teams                              |
+| **Team Management**     | Business teams, support teams (L1/L2), and engineering squads — managed inline on the `/teams` page (full CRUD). Many-to-many membership with roles, project allocation, and team detail views |
 
 ---
 

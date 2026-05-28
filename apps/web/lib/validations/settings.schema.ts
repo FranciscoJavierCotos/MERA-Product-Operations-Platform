@@ -2,25 +2,44 @@ import { z } from "zod";
 
 // ── Teams ─────────────────────────────────────────────────────────────────────
 
-export const teamCategorySchema = z.enum([
-  "functional",
-  "l1_support",
-  "l2_technical",
-  "l3_engineering",
-]);
+export const teamTypeSchema = z.enum(["business", "support", "engineering"]);
+export const supportLevelSchema = z.enum(["L1", "L2", "L3"]);
+export const teamMemberRoleSchema = z.enum(["lead", "member"]);
+export const projectMemberRoleSchema = z.enum(["owner", "developer", "viewer"]);
 
 export const teamSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
   description: z.string().max(500).optional().nullable(),
-  category: teamCategorySchema,
+  team_type: teamTypeSchema.optional().nullable(),
+  support_level: supportLevelSchema.optional().nullable(),
 });
 
 export const updateTeamSchema = teamSchema
   .partial()
   .extend({ id: z.string().uuid() });
 
+export const addTeamMemberSchema = z.object({
+  user_id: z.string().uuid(),
+  role: teamMemberRoleSchema.default("member"),
+});
+
+export const addProjectMemberSchema = z.object({
+  user_id: z.string().uuid(),
+  role: projectMemberRoleSchema.default("developer"),
+});
+
+export const updateMemberRoleSchema = z.object({
+  role: teamMemberRoleSchema,
+});
+
+export const updateProjectMemberRoleSchema = z.object({
+  role: projectMemberRoleSchema,
+});
+
 export type TeamFormData = z.infer<typeof teamSchema>;
 export type UpdateTeamData = z.infer<typeof updateTeamSchema>;
+export type AddTeamMemberData = z.infer<typeof addTeamMemberSchema>;
+export type AddProjectMemberData = z.infer<typeof addProjectMemberSchema>;
 
 // ── Ticket Statuses ───────────────────────────────────────────────────────────
 

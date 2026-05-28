@@ -4,8 +4,6 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { api, ApiError } from "@/lib/api-client";
 import {
-  teamSchema,
-  updateTeamSchema,
   ticketStatusSchema,
   updateTicketStatusSchema,
   ticketPrioritySchema,
@@ -18,7 +16,6 @@ import {
   updateSlaPolicySchema,
   profileAdminUpdateSchema,
 } from "@/lib/validations/settings.schema";
-import type { Team } from "@/types/team.types";
 import type {
   TicketStatusRow,
   TicketPriorityRow,
@@ -68,56 +65,6 @@ function handleError(err: unknown): string {
 function revalidateAll() {
   revalidatePath("/settings");
   revalidatePath("/tickets");
-}
-
-// ── Teams ─────────────────────────────────────────────────────────────────────
-
-export async function createTeamAction(
-  input: unknown,
-): Promise<ActionResult<Team>> {
-  try {
-    await assertAdmin();
-    const parsed = teamSchema.safeParse(input);
-    if (!parsed.success) {
-      return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
-    }
-    const team = await api.post<Team>("/teams", parsed.data);
-    revalidatePath("/settings");
-    return { ok: true, data: team };
-  } catch (err) {
-    return { ok: false, error: handleError(err) };
-  }
-}
-
-export async function updateTeamAction(
-  input: unknown,
-): Promise<ActionResult<Team>> {
-  try {
-    await assertAdmin();
-    const parsed = updateTeamSchema.safeParse(input);
-    if (!parsed.success) {
-      return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
-    }
-    const { id, ...rest } = parsed.data;
-    const team = await api.patch<Team>(`/teams/${id}`, rest);
-    revalidatePath("/settings");
-    return { ok: true, data: team };
-  } catch (err) {
-    return { ok: false, error: handleError(err) };
-  }
-}
-
-export async function deleteTeamAction(
-  id: string,
-): Promise<ActionResult<void>> {
-  try {
-    await assertAdmin();
-    await api.del(`/teams/${id}`);
-    revalidatePath("/settings");
-    return { ok: true, data: undefined };
-  } catch (err) {
-    return { ok: false, error: handleError(err) };
-  }
 }
 
 // ── Ticket Statuses ───────────────────────────────────────────────────────────

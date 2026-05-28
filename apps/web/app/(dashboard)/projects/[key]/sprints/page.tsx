@@ -18,8 +18,8 @@ export default async function SprintsPage({ params }: PageProps) {
 
   const [sprints, profiles, priorities] = await Promise.all([
     api.get<SprintWithCounts[]>(`/projects/${project.id}/sprints`),
-    api.get<Profile[]>("/users"),
-    api.get<TicketPriorityRow[]>("/lookup/priorities"),
+    api.getRevalidated<Profile[]>("/users", 300),
+    api.getRevalidated<TicketPriorityRow[]>("/lookup/priorities", 3600),
   ]);
 
   // Fetch items for all non-completed sprints in parallel.

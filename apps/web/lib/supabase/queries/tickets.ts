@@ -30,8 +30,7 @@ export interface TicketFilters {
   priority_id?: number;
   category_id?: number;
   temperature_id?: number;
-  functional_team_id?: string;
-  support_team_id?: string;
+  team_id?: string;
   assigned_to?: string;
   created_from?: string;
   created_to?: string;

@@ -22,8 +22,7 @@ const FIELD_LABELS: Record<string, string> = {
   status: "Status",
   priority: "Priority",
   assigned_to: "Assigned To",
-  team_id: "Support Team",
-  functional_team_id: "Functional Department",
+  team_id: "Team",
   support_level: "Support Level",
   category: "Category",
   cc_email: "CC Email",
@@ -105,7 +104,7 @@ export function TicketHistory({
 
   if (isLoading) {
     if (inline)
-      return <p className="text-sm text-gray-500 py-4">Loading history…</p>;
+      return <p className="text-sm text-muted-foreground py-4">Loading history…</p>;
     return (
       <Card>
         <CardHeader>
@@ -115,7 +114,7 @@ export function TicketHistory({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-500">Loading...</p>
+          <p className="text-sm text-muted-foreground">Loading...</p>
         </CardContent>
       </Card>
     );
@@ -126,7 +125,7 @@ export function TicketHistory({
   }
 
   const historyList = (
-    <div className="divide-y divide-slate-100">
+    <div className="divide-y divide-border">
           {history.map((entry) => {
             const fieldLabel = entry.field_name
               ? FIELD_LABELS[entry.field_name] || entry.field_name
@@ -157,34 +156,34 @@ export function TicketHistory({
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold text-slate-900">
+                      <span className="text-sm font-semibold text-foreground">
                         {entry.user?.full_name || "System"}
                       </span>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         {formatDateTime(entry.created_at)}
                       </span>
                     </div>
 
-                    <div className="mt-2 text-sm text-slate-700">
-                      <span className="font-medium text-slate-800">
+                    <div className="mt-2 text-sm text-foreground/80">
+                      <span className="font-medium text-foreground">
                         {fieldLabel}
                       </span>
                       {entry.action === "ticket_created" ? (
-                        <span className="ml-2 text-slate-500">created</span>
+                        <span className="ml-2 text-muted-foreground">created</span>
                       ) : actionLabel && entry.action !== "task_edited" ? (
                         <span className="ml-2 inline-flex flex-wrap items-center gap-2">
-                          <span className="text-slate-500">{actionLabel}</span>
-                          <span className="rounded-md bg-slate-900 px-2 py-1 text-xs text-white">
+                          <span className="text-muted-foreground">{actionLabel}</span>
+                          <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20 dark:bg-violet-500/15 dark:text-violet-300 dark:ring-violet-500/25">
                             {resolveValue(entry.new_value || entry.old_value)}
                           </span>
                         </span>
                       ) : (
                         <span className="ml-2 inline-flex flex-wrap items-center gap-2">
-                          <span className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                          <span className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:ring-1 dark:ring-inset dark:ring-border">
                             {resolveValue(entry.old_value, oldLabel)}
                           </span>
-                          <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
-                          <span className="rounded-md bg-slate-900 px-2 py-1 text-xs text-white">
+                          <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20 dark:bg-violet-500/15 dark:text-violet-300 dark:ring-violet-500/25">
                             {resolveValue(entry.new_value, newLabel)}
                           </span>
                         </span>
@@ -192,7 +191,7 @@ export function TicketHistory({
                     </div>
 
                     {isTaskEntry && (
-                      <div className="mt-2 text-xs text-slate-500">
+                      <div className="mt-2 text-xs text-muted-foreground">
                         Task: {normalizeValue(taskTitle)} · Priority:{" "}
                         {normalizeValue(taskPriority)} · Due:{" "}
                         {formatTaskDueDate(taskDueDate)}
@@ -218,7 +217,7 @@ export function TicketHistory({
             <History className="h-5 w-5" />
             Ticket History
           </CardTitle>
-          <span className="rounded-full border border-slate-200/70 bg-slate-50 px-2.5 py-1 text-xs text-slate-500">
+          <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-xs text-muted-foreground">
             {history.length} {history.length === 1 ? "event" : "events"}
           </span>
         </div>

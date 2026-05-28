@@ -33,8 +33,7 @@ interface MyTicketsPageProps {
     priority?: string;
     category?: string;
     temperature?: string;
-    functional_team?: string;
-    support_team?: string;
+    team?: string;
     created_from?: string;
     created_to?: string;
     sort?: string;
@@ -72,16 +71,14 @@ export default async function MyTicketsPage({
     categories,
     temperatures,
     supportLevels,
-    functionalTeams,
-    supportTeams,
+    teams,
   ] = await Promise.all([
     api.get<TicketStatusRow[]>("/lookup/statuses"),
     api.get<TicketPriorityRow[]>("/lookup/priorities"),
     api.get<TicketCategoryRow[]>("/lookup/categories"),
     api.get<TicketTemperatureRow[]>("/lookup/temperatures"),
     api.get<TicketSupportLevelRow[]>("/lookup/support-levels"),
-    api.get<Team[]>("/teams/functional"),
-    api.get<Team[]>("/teams/support"),
+    api.get<Team[]>("/teams"),
   ]);
 
   const statusId = statuses.find((s) => s.name === params.status)?.id;
@@ -99,8 +96,7 @@ export default async function MyTicketsPage({
       priority_id: priorityId,
       category_id: categoryId,
       temperature_id: temperatureId,
-      functional_team_id: params.functional_team,
-      support_team_id: params.support_team,
+      team_id: params.team,
       created_from: params.created_from,
       created_to: params.created_to,
       sort_column: params.sort,
@@ -127,8 +123,7 @@ export default async function MyTicketsPage({
         priorities={priorities}
         categories={categories}
         temperatures={temperatures}
-        functionalTeams={functionalTeams.map((t) => ({ value: t.id, label: t.name }))}
-        supportTeams={supportTeams.map((t) => ({ value: t.id, label: t.name }))}
+        teams={teams.map((t) => ({ value: t.id, label: t.name }))}
       />
 
       <div className="bg-white dark:bg-card shadow rounded-lg overflow-hidden">

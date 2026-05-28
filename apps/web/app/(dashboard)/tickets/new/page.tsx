@@ -18,7 +18,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Profile } from "@/types/user.types";
 import type { Team } from "@/types/team.types";
-import { L1_SUPPORT_DESK_ID } from "@/types/team.types";
 import type {
   TicketStatusRow,
   TicketPriorityRow,
@@ -35,16 +34,16 @@ export default function NewTicketPage() {
   const [priorityId, setPriorityId] = useState<number | null>(null);
   const [statusId, setStatusId] = useState<number | null>(null);
   const [assignedTo, setAssignedTo] = useState<string>("");
-  const [functionalTeamId, setFunctionalTeamId] = useState<string>("");
+  const [teamId, setTeamId] = useState<string>("");
 
   const [statuses, setStatuses] = useState<TicketStatusRow[]>([]);
   const [priorities, setPriorities] = useState<TicketPriorityRow[]>([]);
   const [categories, setCategories] = useState<TicketCategoryRow[]>([]);
-  const [functionalTeams, setFunctionalTeams] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [supportMembers, setSupportMembers] = useState<Profile[]>([]);
   const [defaultStatusId, setDefaultStatusId] = useState<number>(1);
   const [defaultPriorityId, setDefaultPriorityId] = useState<number>(2);
-  const [l1SupportLevelId, setL1SupportLevelId] = useState<number>(1);
+  const [supportLevelIds, setSupportLevelIds] = useState<Record<string, number>>({ L1: 1, L2: 2, L3: 3 });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,9 +58,9 @@ export default function NewTicketPage() {
       categoryId !== null ||
       ccEmail.trim() !== "" ||
       assignedTo !== "" ||
-      functionalTeamId !== ""
+      teamId !== ""
     );
-  }, [title, description, categoryId, ccEmail, assignedTo, functionalTeamId]);
+  }, [title, description, categoryId, ccEmail, assignedTo, teamId]);
 
   useEffect(() => {
     unsavedChangesContext.setHasUnsavedChanges(hasUnsavedChanges);
@@ -82,7 +81,7 @@ export default function NewTicketPage() {
       setPriorityId(null);
       setStatusId(null);
       setAssignedTo("");
-      setFunctionalTeamId("");
+      setTeamId("");
     };
     unsavedChangesContext.registerHandlers({ onSave: handleSave, onDiscard: handleDiscard });
     return () => { unsavedChangesContext.unregisterHandlers(); };
@@ -91,28 +90,29 @@ export default function NewTicketPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [members, teams, fetchedStatuses, fetchedPriorities, fetchedCategories, supportLevels] =
+        const [members, fetchedTeams, fetchedStatuses, fetchedPriorities, fetchedCategories, supportLevels] =
           await Promise.all([
             apiBrowser.get<Profile[]>("/users/support"),
-            apiBrowser.get<Team[]>("/teams/functional"),
+            apiBrowser.get<Team[]>("/teams"),
             apiBrowser.get<TicketStatusRow[]>("/lookup/statuses"),
             apiBrowser.get<TicketPriorityRow[]>("/lookup/priorities"),
             apiBrowser.get<TicketCategoryRow[]>("/lookup/categories"),
             apiBrowser.get<{ id: number; name: string }[]>("/lookup/support-levels"),
           ]);
         setSupportMembers(members);
-        setFunctionalTeams(teams);
+        setTeams(fetchedTeams);
         setStatuses(fetchedStatuses);
         setPriorities(fetchedPriorities);
         setCategories(fetchedCategories);
 
         const newStatus = fetchedStatuses.find((s) => s.name === "new");
         const mediumPriority = fetchedPriorities.find((p) => p.name === "medium");
-        const l1Level = supportLevels.find((sl) => sl.name === "L1");
+        const levelMap: Record<string, number> = {};
+        for (const sl of supportLevels) levelMap[sl.name] = sl.id;
+        if (Object.keys(levelMap).length > 0) setSupportLevelIds(levelMap);
 
         if (newStatus) { setDefaultStatusId(newStatus.id); setStatusId(newStatus.id); }
         if (mediumPriority) { setDefaultPriorityId(mediumPriority.id); setPriorityId(mediumPriority.id); }
-        if (l1Level) setL1SupportLevelId(l1Level.id);
       } catch (err) {
         console.error("Error loading data:", err);
       }
@@ -129,8 +129,8 @@ export default function NewTicketPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      if (!functionalTeamId) {
-        setError("Please select a functional department");
+      if (!teamId) {
+        setError("Please select a team");
         setLoading(false);
         return;
       }
@@ -149,6 +149,10 @@ export default function NewTicketPage() {
 
       const resolvedStatusId = assignedTo ? (statusId ?? defaultStatusId) : defaultStatusId;
 
+      const selectedTeam = teams.find((t) => t.id === teamId);
+      const levelKey = selectedTeam?.support_level ?? "L1";
+      const resolvedSupportLevelId = supportLevelIds[levelKey] ?? supportLevelIds.L1 ?? 1;
+
       const ticket = await apiBrowser.post<{ id: string }>("/tickets", {
         title,
         description,
@@ -157,9 +161,8 @@ export default function NewTicketPage() {
         priority_id: priorityId,
         status_id: resolvedStatusId,
         assigned_to: assignedTo || null,
-        functional_team_id: functionalTeamId,
-        team_id: L1_SUPPORT_DESK_ID,
-        support_level_id: l1SupportLevelId,
+        team_id: teamId,
+        support_level_id: resolvedSupportLevelId,
       });
 
       unsavedChangesContext.setHasUnsavedChanges(false);
@@ -218,31 +221,63 @@ export default function NewTicketPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="functional-team">Functional Department *</Label>
+              <Label htmlFor="team">Team *</Label>
               <Select
-                value={functionalTeamId || "none"}
+                value={teamId || "none"}
                 onValueChange={(value) =>
-                  setFunctionalTeamId(value === "none" ? "" : value)
+                  setTeamId(value === "none" ? "" : value)
                 }
                 disabled={loading}
               >
-                <SelectTrigger id="functional-team">
-                  <SelectValue placeholder="Select department..." />
+                <SelectTrigger id="team">
+                  <SelectValue placeholder="Select team..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none" disabled>
-                    Select department...
+                    Select team...
                   </SelectItem>
-                  {functionalTeams.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
+                  {teams.filter((t) => t.team_type === "support").length > 0 && (
+                    <>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-blue-600">Support</div>
+                      {teams
+                        .filter((t) => t.team_type === "support")
+                        .map((team) => (
+                          <SelectItem key={team.id} value={team.id}>
+                            {team.name}
+                            {team.support_level ? ` (${team.support_level})` : ""}
+                          </SelectItem>
+                        ))}
+                    </>
+                  )}
+                  {teams.filter((t) => t.team_type === "business").length > 0 && (
+                    <>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-purple-600">Business</div>
+                      {teams
+                        .filter((t) => t.team_type === "business")
+                        .map((team) => (
+                          <SelectItem key={team.id} value={team.id}>
+                            {team.name}
+                          </SelectItem>
+                        ))}
+                    </>
+                  )}
+                  {teams.filter((t) => t.team_type === "engineering").length > 0 && (
+                    <>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-red-600">Engineering</div>
+                      {teams
+                        .filter((t) => t.team_type === "engineering")
+                        .map((team) => (
+                          <SelectItem key={team.id} value={team.id}>
+                            {team.name}
+                          </SelectItem>
+                        ))}
+                    </>
+                  )}
                 </SelectContent>
               </Select>
-              {!functionalTeamId && (
+              {!teamId && (
                 <p className="text-xs text-gray-500">
-                  Select the business area this ticket relates to
+                  Select the team this ticket should be routed to
                 </p>
               )}
             </div>

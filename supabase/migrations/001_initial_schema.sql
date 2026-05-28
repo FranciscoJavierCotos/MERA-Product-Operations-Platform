@@ -49,12 +49,13 @@ CREATE TYPE work_item_status    AS ENUM ('todo', 'in_progress', 'in_review', 'do
 -- (created before profiles so the FK can be added there)
 
 CREATE TABLE teams (
-  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name        TEXT        NOT NULL,
-  description TEXT,
-  category    TEXT        CHECK (category IN ('functional','l1_support','l2_technical','l3_engineering')),
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  name          TEXT        NOT NULL,
+  description   TEXT,
+  team_type     TEXT        CHECK (team_type IN ('business', 'support', 'engineering')),
+  support_level TEXT        CHECK (support_level IN ('L1', 'L2', 'L3')),
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- ── 4b. Ticket status lookup ─────────────────────────────────
@@ -245,7 +246,6 @@ CREATE TABLE tickets (
   created_by           UUID        REFERENCES profiles(id) ON DELETE SET NULL,
   assigned_to          UUID        REFERENCES profiles(id) ON DELETE SET NULL,
   team_id              UUID        REFERENCES teams(id) ON DELETE SET NULL,
-  functional_team_id   UUID        REFERENCES teams(id) ON DELETE SET NULL,
   -- Client info (for tickets submitted on behalf of a client)
   client_email         TEXT,
   client_name          TEXT,
@@ -275,7 +275,6 @@ CREATE INDEX idx_tickets_temperature_id   ON tickets (temperature_id);
 CREATE INDEX idx_tickets_created_by       ON tickets (created_by);
 CREATE INDEX idx_tickets_assigned_to      ON tickets (assigned_to);
 CREATE INDEX idx_tickets_team_id          ON tickets (team_id);
-CREATE INDEX idx_tickets_functional_team  ON tickets (functional_team_id);
 CREATE INDEX idx_tickets_created_at       ON tickets (created_at DESC);
 CREATE INDEX idx_tickets_search_vector    ON tickets USING gin(search_vector);
 CREATE INDEX idx_tickets_resolution_ivfflat
@@ -765,7 +764,75 @@ CREATE INDEX idx_item_links_source_work_item ON item_links (source_work_item_id)
 
 
 -- ============================================================
--- 10. STORAGE BUCKETS
+-- 10. TEAM & PROJECT MEMBERSHIP TABLES (migration 034)
+-- ============================================================
+
+-- ── 10a. team_members — many-to-many users ↔ teams ──────────
+
+CREATE TABLE team_members (
+  id        UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  team_id   UUID        NOT NULL REFERENCES teams(id)    ON DELETE CASCADE,
+  user_id   UUID        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  role      TEXT        NOT NULL DEFAULT 'member' CHECK (role IN ('lead', 'member')),
+  joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  added_by  UUID        REFERENCES profiles(id) ON DELETE SET NULL,
+  CONSTRAINT team_members_unique_membership UNIQUE (team_id, user_id)
+);
+
+CREATE INDEX idx_team_members_team_id ON team_members (team_id);
+CREATE INDEX idx_team_members_user_id ON team_members (user_id);
+
+-- ── 10b. project_members — many-to-many users ↔ projects ────
+
+CREATE TABLE project_members (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID        NOT NULL REFERENCES projects(id)  ON DELETE CASCADE,
+  user_id    UUID        NOT NULL REFERENCES profiles(id)  ON DELETE CASCADE,
+  role       TEXT        NOT NULL DEFAULT 'developer' CHECK (role IN ('owner', 'developer', 'viewer')),
+  joined_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  added_by   UUID        REFERENCES profiles(id) ON DELETE SET NULL,
+  CONSTRAINT project_members_unique_membership UNIQUE (project_id, user_id)
+);
+
+CREATE INDEX idx_project_members_project_id ON project_members (project_id);
+CREATE INDEX idx_project_members_user_id    ON project_members (user_id);
+
+-- ── 10c. escalation_history — ticket support-level escalations ─
+
+CREATE TABLE escalation_history (
+  id                      UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  ticket_id               UUID        NOT NULL REFERENCES tickets(id)  ON DELETE CASCADE,
+  user_id                 UUID        REFERENCES profiles(id) ON DELETE SET NULL,
+  from_support_level      TEXT        CHECK (from_support_level IN ('L1', 'L2', 'L3')),
+  to_support_level        TEXT        NOT NULL CHECK (to_support_level IN ('L1', 'L2', 'L3')),
+  from_team_id            UUID        REFERENCES teams(id) ON DELETE SET NULL,
+  to_team_id              UUID        NOT NULL REFERENCES teams(id) ON DELETE SET NULL,
+  notes                   TEXT,
+  created_at              TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_escalation_history_ticket  ON escalation_history (ticket_id, created_at DESC);
+CREATE INDEX idx_escalation_history_user    ON escalation_history (user_id);
+CREATE INDEX idx_escalation_history_to_team ON escalation_history (to_team_id);
+
+-- ── 10d. ticket_collaborators — secondary teams on a ticket ──
+
+CREATE TABLE ticket_collaborators (
+  id                 UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  ticket_id          UUID        NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+  team_id            UUID        NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+  support_level      TEXT        CHECK (support_level IN ('L1', 'L2', 'L3')),
+  added_by           UUID        REFERENCES profiles(id) ON DELETE SET NULL,
+  notes              TEXT,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_ticket_collaborators_ticket ON ticket_collaborators (ticket_id, created_at DESC);
+CREATE INDEX idx_ticket_collaborators_team   ON ticket_collaborators (team_id);
+
+
+-- ============================================================
+-- 10b. STORAGE BUCKETS
 -- ============================================================
 
 -- Ticket attachments (public read, auth write)
@@ -842,6 +909,83 @@ $$;
 CREATE TRIGGER teams_touch
   BEFORE UPDATE ON teams
   FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+-- ── 11b-i. teams category ↔ team_type bi-directional sync ────
+--  Keeps the legacy 'category' column and new team_type/support_level
+--  columns in sync during the migration 034→035 transition window.
+
+CREATE OR REPLACE FUNCTION sync_team_type_category_on_insert()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.team_type IS NOT NULL AND NEW.category IS NULL THEN
+    NEW.category := CASE
+      WHEN NEW.team_type = 'department'                            THEN 'functional'
+      WHEN NEW.team_type = 'support' AND NEW.support_level = 'L1' THEN 'l1_support'
+      WHEN NEW.team_type = 'support' AND NEW.support_level = 'L2' THEN 'l2_technical'
+      WHEN NEW.team_type = 'support' AND NEW.support_level = 'L3' THEN 'l3_engineering'
+      ELSE NULL
+    END;
+  END IF;
+  IF NEW.category IS NOT NULL AND NEW.team_type IS NULL THEN
+    NEW.team_type := CASE NEW.category
+      WHEN 'functional'     THEN 'department'
+      WHEN 'l1_support'     THEN 'support'
+      WHEN 'l2_technical'   THEN 'support'
+      WHEN 'l3_engineering' THEN 'support'
+      ELSE NULL
+    END;
+    NEW.support_level := CASE NEW.category
+      WHEN 'l1_support'     THEN 'L1'
+      WHEN 'l2_technical'   THEN 'L2'
+      WHEN 'l3_engineering' THEN 'L3'
+      ELSE NULL
+    END;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER teams_sync_type_category_insert
+  BEFORE INSERT ON teams
+  FOR EACH ROW EXECUTE FUNCTION sync_team_type_category_on_insert();
+
+CREATE OR REPLACE FUNCTION sync_team_type_category()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  IF (NEW.team_type IS DISTINCT FROM OLD.team_type
+      OR NEW.support_level IS DISTINCT FROM OLD.support_level)
+     AND NEW.team_type IS NOT NULL THEN
+    NEW.category := CASE
+      WHEN NEW.team_type = 'department'                            THEN 'functional'
+      WHEN NEW.team_type = 'support' AND NEW.support_level = 'L1' THEN 'l1_support'
+      WHEN NEW.team_type = 'support' AND NEW.support_level = 'L2' THEN 'l2_technical'
+      WHEN NEW.team_type = 'support' AND NEW.support_level = 'L3' THEN 'l3_engineering'
+      ELSE NULL
+    END;
+  END IF;
+  IF NEW.category IS DISTINCT FROM OLD.category
+     AND NEW.team_type IS NOT DISTINCT FROM OLD.team_type THEN
+    NEW.team_type := CASE NEW.category
+      WHEN 'functional'     THEN 'department'
+      WHEN 'l1_support'     THEN 'support'
+      WHEN 'l2_technical'   THEN 'support'
+      WHEN 'l3_engineering' THEN 'support'
+      ELSE NULL
+    END;
+    NEW.support_level := CASE NEW.category
+      WHEN 'l1_support'     THEN 'L1'
+      WHEN 'l2_technical'   THEN 'L2'
+      WHEN 'l3_engineering' THEN 'L3'
+      ELSE NULL
+    END;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER teams_sync_type_category
+  BEFORE UPDATE OF team_type, support_level, category ON teams
+  FOR EACH ROW EXECUTE FUNCTION sync_team_type_category();
 
 CREATE TRIGGER profiles_touch
   BEFORE UPDATE ON profiles
@@ -1297,17 +1441,6 @@ BEGIN
     VALUES (
       NEW.id, v_user_id, 'field_changed', 'team_id',
       OLD.team_id::TEXT, NEW.team_id::TEXT, 'tickets',
-      jsonb_build_object('old_label', v_old_label, 'new_label', v_new_label)
-    );
-  END IF;
-
-  IF NEW.functional_team_id IS DISTINCT FROM OLD.functional_team_id THEN
-    SELECT name INTO v_old_label FROM teams WHERE id = OLD.functional_team_id;
-    SELECT name INTO v_new_label FROM teams WHERE id = NEW.functional_team_id;
-    INSERT INTO ticket_history (ticket_id, user_id, action, field_name, old_value, new_value, source_table, metadata)
-    VALUES (
-      NEW.id, v_user_id, 'field_changed', 'functional_team_id',
-      OLD.functional_team_id::TEXT, NEW.functional_team_id::TEXT, 'tickets',
       jsonb_build_object('old_label', v_old_label, 'new_label', v_new_label)
     );
   END IF;
@@ -2254,3 +2387,126 @@ CREATE POLICY "item_links_update" ON item_links FOR UPDATE TO authenticated
 CREATE POLICY "item_links_delete" ON item_links FOR DELETE TO authenticated
   USING (item_links_can_write(source_ticket_id, source_work_item_id, target_work_item_id, auth.uid()));
 CREATE POLICY "item_links_service" ON item_links FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- ── team_members ──────────────────────────────────────────────
+ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "team_members_read"
+  ON team_members FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "team_members_insert"
+  ON team_members FOR INSERT TO authenticated
+  WITH CHECK (
+    is_admin(auth.uid())
+    OR EXISTS (
+      SELECT 1 FROM team_members tm2
+       WHERE tm2.team_id = team_members.team_id
+         AND tm2.user_id = auth.uid()
+         AND tm2.role    = 'lead'
+    )
+  );
+
+CREATE POLICY "team_members_update"
+  ON team_members FOR UPDATE TO authenticated
+  USING (
+    is_admin(auth.uid())
+    OR EXISTS (
+      SELECT 1 FROM team_members tm2
+       WHERE tm2.team_id = team_members.team_id
+         AND tm2.user_id = auth.uid()
+         AND tm2.role    = 'lead'
+    )
+  );
+
+CREATE POLICY "team_members_delete"
+  ON team_members FOR DELETE TO authenticated
+  USING (
+    is_admin(auth.uid())
+    OR auth.uid() = user_id
+    OR EXISTS (
+      SELECT 1 FROM team_members tm2
+       WHERE tm2.team_id = team_members.team_id
+         AND tm2.user_id = auth.uid()
+         AND tm2.role    = 'lead'
+    )
+  );
+
+CREATE POLICY "team_members_service"
+  ON team_members FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- ── project_members ───────────────────────────────────────────
+ALTER TABLE project_members ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "project_members_read"
+  ON project_members FOR SELECT TO authenticated
+  USING (pm_can_read_project(project_id, auth.uid()));
+
+CREATE POLICY "project_members_insert"
+  ON project_members FOR INSERT TO authenticated
+  WITH CHECK (
+    is_admin(auth.uid())
+    OR EXISTS (
+      SELECT 1 FROM projects p
+       WHERE p.id = project_members.project_id
+         AND (p.lead_id = auth.uid() OR p.team_id IN (
+           SELECT tm.team_id FROM team_members tm
+            WHERE tm.user_id = auth.uid() AND tm.role = 'lead'
+         ))
+    )
+  );
+
+CREATE POLICY "project_members_update"
+  ON project_members FOR UPDATE TO authenticated
+  USING (
+    is_admin(auth.uid())
+    OR EXISTS (
+      SELECT 1 FROM projects p
+       WHERE p.id = project_members.project_id AND p.lead_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "project_members_delete"
+  ON project_members FOR DELETE TO authenticated
+  USING (
+    is_admin(auth.uid())
+    OR auth.uid() = user_id
+    OR EXISTS (
+      SELECT 1 FROM projects p
+       WHERE p.id = project_members.project_id AND p.lead_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "project_members_service"
+  ON project_members FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- ── escalation_history ────────────────────────────────────────
+ALTER TABLE escalation_history ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "escalation_history_read"
+  ON escalation_history FOR SELECT TO authenticated
+  USING (is_support_or_admin(auth.uid()));
+
+CREATE POLICY "escalation_history_insert"
+  ON escalation_history FOR INSERT TO authenticated
+  WITH CHECK (is_support_or_admin(auth.uid()));
+
+CREATE POLICY "escalation_history_service"
+  ON escalation_history FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- ── ticket_collaborators ──────────────────────────────────────
+ALTER TABLE ticket_collaborators ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "ticket_collaborators_read"
+  ON ticket_collaborators FOR SELECT TO authenticated
+  USING (is_support_or_admin(auth.uid()));
+
+CREATE POLICY "ticket_collaborators_insert"
+  ON ticket_collaborators FOR INSERT TO authenticated
+  WITH CHECK (is_support_or_admin(auth.uid()));
+
+CREATE POLICY "ticket_collaborators_delete"
+  ON ticket_collaborators FOR DELETE TO authenticated
+  USING (is_support_or_admin(auth.uid()));
+
+CREATE POLICY "ticket_collaborators_service"
+  ON ticket_collaborators FOR ALL TO service_role USING (true) WITH CHECK (true);

@@ -27,8 +27,8 @@ export default async function ProjectBoardPage({ params, searchParams }: PagePro
       api.get<Sprint | null>(`/projects/${project.id}/sprints/active`),
       api.get<Sprint | null>(`/projects/${project.id}/sprints/next`),
       api.get<WorkItemWithRelations[]>("/work-items/backlog", { projectId: project.id }),
-      api.get<Profile[]>("/users"),
-      api.get<TicketPriorityRow[]>("/lookup/priorities"),
+      api.getRevalidated<Profile[]>("/users", 300),
+      api.getRevalidated<TicketPriorityRow[]>("/lookup/priorities", 3600),
       api.get<SprintWithCounts[]>(`/projects/${project.id}/sprints`),
     ]);
 
