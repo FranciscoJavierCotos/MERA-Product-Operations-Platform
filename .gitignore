@@ -97,6 +97,4 @@ kubeconfig
 .claude
 
 # Documentation
-docs/*
-!docs/screenshots/
-!docs/screenshots/**
+docs/Documentation.pdf
