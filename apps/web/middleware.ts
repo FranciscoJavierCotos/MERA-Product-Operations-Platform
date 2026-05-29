@@ -30,8 +30,15 @@ export async function middleware(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Public routes reachable without authentication. `/support` is the external
+  // client portal; `/login` is the auth entry point.
+  const PUBLIC_PATHS = ["/login", "/support"];
+  const isPublicPath = PUBLIC_PATHS.some((p) =>
+    req.nextUrl.pathname.startsWith(p),
+  );
+
   // Protected routes - redirect to login if not authenticated
-  if (!user && !req.nextUrl.pathname.startsWith("/login")) {
+  if (!user && !isPublicPath) {
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = "/login";
     return NextResponse.redirect(redirectUrl);

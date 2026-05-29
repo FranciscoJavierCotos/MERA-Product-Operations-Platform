@@ -40,6 +40,7 @@ Most ops teams fragment their work across a ticketing tool, a chat thread, a tas
 | **AI Knowledge Center** | Closed tickets + uploaded PDFs chunked and embedded via Gemini. Unified retrieval ranked by similarity, governed by admin-tunable weights and thresholds |
 | **Projects & Scrum** | Projects, sprints, work items (epic / story / task / bug), drag-and-drop sprint board, backlog planning — same auth, same teams |
 | **Team Management** | Business, support (L1/L2), and engineering squads — CRUD inline, many-to-many membership with roles |
+| **Client Support Portal** | Public, unauthenticated animated hero at `/support` where external clients submit tickets — validates, simulates submission, and tags the payload `source: "client-portal"` to distinguish external from internal requests |
 
 ---
 

@@ -530,3 +530,136 @@
 .hljs-strong {
   font-weight: bold;
 }
+
+/* ─────────────────────────────────────────────
+   Client support portal (/support)
+   Public, always-dark hero. Ambient animated
+   blooms behind the form + staggered load reveals
+   + interactive field focus glow + success check.
+   All motion guarded by prefers-reduced-motion so
+   the page degrades to a clean static layout.
+   ───────────────────────────────────────────── */
+
+/* Base atmosphere — two layered radial blooms (violet + cyber-cyan)
+   plus a faint grid. Static by default; animated below. */
+.portal-bg {
+  position: relative;
+  background-color: hsl(220 8% 8%);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* The drifting aurora blobs live in ::before / ::after so the markup
+   stays clean and they sit behind content (z-index < 0). */
+.portal-bg::before,
+.portal-bg::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border-radius: 9999px;
+  filter: blur(80px);
+  opacity: 0.5;
+  pointer-events: none;
+  will-change: transform;
+}
+.portal-bg::before {
+  width: 52rem;
+  height: 52rem;
+  top: -18rem;
+  left: -14rem;
+  background: radial-gradient(
+    circle at center,
+    hsl(243 80% 50% / 0.55),
+    transparent 65%
+  );
+}
+.portal-bg::after {
+  width: 44rem;
+  height: 44rem;
+  bottom: -16rem;
+  right: -12rem;
+  background: radial-gradient(
+    circle at center,
+    hsl(188 90% 45% / 0.4),
+    transparent 65%
+  );
+}
+
+/* Faint precision grid overlay — reads as "engineered", not decorative. */
+.portal-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, hsl(220 6% 22% / 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(220 6% 22% / 0.35) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 30%, transparent 75%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 30%, transparent 75%);
+}
+
+/* Reveal-up: the building block for staggered load-in. */
+@keyframes portal-reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Aurora drift: slow, looping translate/scale — transform/opacity only. */
+@keyframes portal-aurora-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(6rem, 4rem, 0) scale(1.12); }
+}
+@keyframes portal-aurora-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
+  50%      { transform: translate3d(-5rem, -3rem, 0) scale(0.92); }
+}
+
+/* Success check stroke draw. */
+@keyframes portal-check-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Soft pulse for the live "operational" status dot. */
+@keyframes portal-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.82); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .portal-bg::before { animation: portal-aurora-a 22s ease-in-out infinite; }
+  .portal-bg::after  { animation: portal-aurora-b 26s ease-in-out infinite; }
+
+  /* Staggered children: each direct child of .portal-stagger fades up,
+     offset by its --i custom property. */
+  .portal-stagger > * {
+    opacity: 0;
+    animation: portal-reveal-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation-delay: calc(var(--i, 0) * 80ms);
+  }
+
+  .portal-check path {
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: portal-check-draw 0.5s ease-out 0.15s forwards;
+  }
+
+  .portal-pulse { animation: portal-pulse 2.2s ease-in-out infinite; }
+}
+
+/* Interactive field focus glow — cyber-cyan edge on the focused control.
+   Covers both bare inputs/selects (:focus) and wrappers (:focus-within). */
+.portal-field:focus,
+.portal-field:focus-within {
+  border-color: hsl(188 90% 55% / 0.6);
+  box-shadow:
+    0 0 0 1px hsl(188 90% 55% / 0.4),
+    0 0 24px -6px hsl(188 90% 55% / 0.45);
+}
