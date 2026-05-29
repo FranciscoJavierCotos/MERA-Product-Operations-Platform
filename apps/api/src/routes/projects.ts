@@ -13,6 +13,7 @@ const CreateBody = z.object({
   methodology: z.string().optional(),
   sprint_duration_weeks: z.number().int().min(1).max(4).optional(),
   team_id: z.string().uuid().nullable().optional(),
+  company_id: z.string().uuid().nullable().optional(),
   lead_id: z.string().uuid().nullable().optional(),
 }).strict();
 
@@ -23,6 +24,7 @@ const UpdateBody = z.object({
   status: z.string().optional(),
   sprint_duration_weeks: z.number().int().min(1).max(4).optional(),
   team_id: z.string().uuid().nullable().optional(),
+  company_id: z.string().uuid().nullable().optional(),
   lead_id: z.string().uuid().nullable().optional(),
 }).strict();
 

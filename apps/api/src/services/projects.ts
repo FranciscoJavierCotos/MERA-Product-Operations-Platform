@@ -12,9 +12,10 @@ type Client = SupabaseClient<Database>;
 
 const PROJECT_SELECT = `
   id, key, name, description, methodology, status,
-  team_id, lead_id, next_item_number, sprint_duration_weeks,
+  team_id, company_id, lead_id, next_item_number, sprint_duration_weeks,
   created_by, created_at, updated_at,
   team:teams(id, name),
+  company:companies!projects_company_id_fkey(id, name),
   lead:profiles!projects_lead_id_fkey(id, full_name, email, avatar_url),
   creator:profiles!projects_created_by_fkey(id, full_name, email)
 `;
@@ -71,6 +72,7 @@ export async function createProject(
         methodology: input.methodology ?? "scrum",
         sprint_duration_weeks: input.sprint_duration_weeks ?? 2,
         team_id: input.team_id ?? null,
+        company_id: input.company_id ?? null,
         lead_id: input.lead_id ?? null,
         created_by: input.created_by,
       },

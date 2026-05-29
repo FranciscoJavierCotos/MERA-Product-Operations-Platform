@@ -18,6 +18,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Profile } from "@/types/user.types";
 import type { Team } from "@/types/team.types";
+import type { Company } from "@/types/company.types";
 import type {
   TicketStatusRow,
   TicketPriorityRow,
@@ -35,11 +36,13 @@ export default function NewTicketPage() {
   const [statusId, setStatusId] = useState<number | null>(null);
   const [assignedTo, setAssignedTo] = useState<string>("");
   const [teamId, setTeamId] = useState<string>("");
+  const [companyId, setCompanyId] = useState<string>("");
 
   const [statuses, setStatuses] = useState<TicketStatusRow[]>([]);
   const [priorities, setPriorities] = useState<TicketPriorityRow[]>([]);
   const [categories, setCategories] = useState<TicketCategoryRow[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [supportMembers, setSupportMembers] = useState<Profile[]>([]);
   const [defaultStatusId, setDefaultStatusId] = useState<number>(1);
   const [defaultPriorityId, setDefaultPriorityId] = useState<number>(2);
@@ -90,7 +93,7 @@ export default function NewTicketPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [members, fetchedTeams, fetchedStatuses, fetchedPriorities, fetchedCategories, supportLevels] =
+        const [members, fetchedTeams, fetchedStatuses, fetchedPriorities, fetchedCategories, supportLevels, fetchedCompanies] =
           await Promise.all([
             apiBrowser.get<Profile[]>("/users/support"),
             apiBrowser.get<Team[]>("/teams"),
@@ -98,12 +101,14 @@ export default function NewTicketPage() {
             apiBrowser.get<TicketPriorityRow[]>("/lookup/priorities"),
             apiBrowser.get<TicketCategoryRow[]>("/lookup/categories"),
             apiBrowser.get<{ id: number; name: string }[]>("/lookup/support-levels"),
+            apiBrowser.get<Company[]>("/companies"),
           ]);
         setSupportMembers(members);
         setTeams(fetchedTeams);
         setStatuses(fetchedStatuses);
         setPriorities(fetchedPriorities);
         setCategories(fetchedCategories);
+        setCompanies(fetchedCompanies);
 
         const newStatus = fetchedStatuses.find((s) => s.name === "new");
         const mediumPriority = fetchedPriorities.find((p) => p.name === "medium");
@@ -162,6 +167,7 @@ export default function NewTicketPage() {
         status_id: resolvedStatusId,
         assigned_to: assignedTo || null,
         team_id: teamId,
+        company_id: companyId || null,
         support_level_id: resolvedSupportLevelId,
       });
 
@@ -280,6 +286,32 @@ export default function NewTicketPage() {
                   Select the team this ticket should be routed to
                 </p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="company">Company</Label>
+              <Select
+                value={companyId || "none"}
+                onValueChange={(value) =>
+                  setCompanyId(value === "none" ? "" : value)
+                }
+                disabled={loading}
+              >
+                <SelectTrigger id="company">
+                  <SelectValue placeholder="No company" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No company</SelectItem>
+                  {companies.map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                Optionally associate this ticket with a client company
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

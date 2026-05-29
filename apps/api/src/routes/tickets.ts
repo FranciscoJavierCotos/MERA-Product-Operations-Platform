@@ -40,6 +40,7 @@ const TicketCreateBody = z.object({
   cc_email: z.string().email().nullable().optional(),
   assigned_to: z.string().uuid().nullable().optional(),
   team_id: z.string().uuid().optional(),
+  company_id: z.string().uuid().nullable().optional(),
   support_level_id: z.number().int().optional(),
 }).strict();
 
@@ -53,6 +54,7 @@ const TicketUpdateBody = z.object({
   temperature_id: z.number().int().nullable().optional(),
   support_level_id: z.number().int().optional(),
   team_id: z.string().uuid().nullable().optional(),
+  company_id: z.string().uuid().nullable().optional(),
   assigned_to: z.string().uuid().nullable().optional(),
   cc_email: z.string().nullable().optional(),
 }).strict();

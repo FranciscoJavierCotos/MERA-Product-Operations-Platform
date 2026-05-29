@@ -140,6 +140,26 @@ INSERT INTO ticket_temperatures (id, name, label, emoji, color_class, display_or
   (2, 'warm', 'Warm', '🟡', 'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80', 2),
   (3, 'hot',  'Hot',  '🔴', 'bg-red-100 text-red-800 hover:bg-red-100',                                        3);
 
+-- ── 4f-bis. Company health status lookup (migration 037) ────
+-- Drives the CRM "happiness meter". `level` (1..5) drives the fill.
+
+CREATE TABLE company_health_statuses (
+  id            SMALLINT PRIMARY KEY,
+  name          TEXT     NOT NULL UNIQUE,
+  label         TEXT     NOT NULL,
+  color_class   TEXT     NOT NULL,
+  emoji         TEXT     NOT NULL,
+  level         SMALLINT NOT NULL,
+  display_order SMALLINT NOT NULL
+);
+
+INSERT INTO company_health_statuses (id, name, label, color_class, emoji, level, display_order) VALUES
+  (1, 'critical', 'Critical', 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',                '🔴', 1, 1),
+  (2, 'at_risk',  'At Risk',  'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',    '🟠', 2, 2),
+  (3, 'neutral',  'Neutral',  'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',    '🟡', 3, 3),
+  (4, 'healthy',  'Healthy',  'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',         '🟢', 4, 4),
+  (5, 'thriving', 'Thriving', 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300', '🌟', 5, 5);
+
 -- ── 4g. Free-form ticket tags ────────────────────────────────
 
 CREATE TABLE tags (
@@ -226,6 +246,56 @@ AS $$
   );
 $$;
 
+-- ── 5a-bis. Companies (CRM — migration 037) ──────────────────
+-- Defined before tickets/projects so their company_id FK columns resolve.
+
+CREATE TABLE companies (
+  id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  name              TEXT        NOT NULL,
+  description       TEXT,
+  industry          TEXT,
+  website           TEXT,
+  logo_url          TEXT,
+  health_status_id  SMALLINT    NOT NULL REFERENCES company_health_statuses(id) DEFAULT 3,
+  health_note       TEXT,
+  health_updated_at TIMESTAMPTZ,
+  health_updated_by UUID        REFERENCES profiles(id) ON DELETE SET NULL,
+  account_owner_id  UUID        REFERENCES profiles(id) ON DELETE SET NULL,
+  created_by        UUID        REFERENCES profiles(id) ON DELETE SET NULL,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_companies_health_status ON companies (health_status_id);
+
+CREATE TABLE company_contacts (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id  UUID        NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  full_name   TEXT        NOT NULL,
+  email       TEXT        NOT NULL,
+  title       TEXT,
+  phone       TEXT,
+  is_primary  BOOLEAN     NOT NULL DEFAULT false,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (company_id, email)
+);
+
+CREATE INDEX idx_company_contacts_company ON company_contacts (company_id);
+
+CREATE TABLE company_health_history (
+  id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id     UUID        NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  from_status_id SMALLINT    REFERENCES company_health_statuses(id),
+  to_status_id   SMALLINT    NOT NULL REFERENCES company_health_statuses(id),
+  note           TEXT,
+  changed_by     UUID        REFERENCES profiles(id) ON DELETE SET NULL,
+  changed_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_company_health_history_company
+  ON company_health_history (company_id, changed_at DESC);
+
 -- ── 5b. Tickets ──────────────────────────────────────────────
 
 CREATE SEQUENCE ticket_number_seq START WITH 1 INCREMENT BY 1;
@@ -246,6 +316,7 @@ CREATE TABLE tickets (
   created_by           UUID        REFERENCES profiles(id) ON DELETE SET NULL,
   assigned_to          UUID        REFERENCES profiles(id) ON DELETE SET NULL,
   team_id              UUID        REFERENCES teams(id) ON DELETE SET NULL,
+  company_id           UUID        REFERENCES companies(id) ON DELETE SET NULL,
   -- Client info (for tickets submitted on behalf of a client)
   client_email         TEXT,
   client_name          TEXT,
@@ -275,6 +346,7 @@ CREATE INDEX idx_tickets_temperature_id   ON tickets (temperature_id);
 CREATE INDEX idx_tickets_created_by       ON tickets (created_by);
 CREATE INDEX idx_tickets_assigned_to      ON tickets (assigned_to);
 CREATE INDEX idx_tickets_team_id          ON tickets (team_id);
+CREATE INDEX idx_tickets_company          ON tickets (company_id);
 CREATE INDEX idx_tickets_created_at       ON tickets (created_at DESC);
 CREATE INDEX idx_tickets_search_vector    ON tickets USING gin(search_vector);
 CREATE INDEX idx_tickets_resolution_ivfflat
@@ -592,6 +664,7 @@ CREATE TABLE projects (
   methodology          project_methodology NOT NULL DEFAULT 'scrum',
   status               project_status      NOT NULL DEFAULT 'active',
   team_id              UUID                REFERENCES teams(id)    ON DELETE SET NULL,
+  company_id           UUID                REFERENCES companies(id) ON DELETE SET NULL,
   lead_id              UUID                REFERENCES profiles(id) ON DELETE SET NULL,
   next_item_number     INT                 NOT NULL DEFAULT 1 CHECK (next_item_number >= 1),
   sprint_duration_weeks SMALLINT           NOT NULL DEFAULT 2
@@ -601,8 +674,9 @@ CREATE TABLE projects (
   updated_at           TIMESTAMPTZ         NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_projects_team   ON projects (team_id);
-CREATE INDEX idx_projects_status ON projects (status);
+CREATE INDEX idx_projects_team    ON projects (team_id);
+CREATE INDEX idx_projects_company ON projects (company_id);
+CREATE INDEX idx_projects_status  ON projects (status);
 
 -- ── 8b. Sprints ───────────────────────────────────────────────
 
@@ -909,6 +983,35 @@ $$;
 CREATE TRIGGER teams_touch
   BEFORE UPDATE ON teams
   FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+-- ── 11b-bis. Companies (CRM — migration 037) ─────────────────
+
+CREATE TRIGGER companies_touch
+  BEFORE UPDATE ON companies
+  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+CREATE TRIGGER company_contacts_touch
+  BEFORE UPDATE ON company_contacts
+  FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
+
+-- Records every health_status_id change into company_health_history.
+CREATE OR REPLACE FUNCTION log_company_health_change()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  IF NEW.health_status_id IS DISTINCT FROM OLD.health_status_id THEN
+    INSERT INTO company_health_history (company_id, from_status_id, to_status_id, note, changed_by)
+    VALUES (NEW.id, OLD.health_status_id, NEW.health_status_id, NEW.health_note, auth.uid());
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER companies_health_history
+  AFTER UPDATE ON companies
+  FOR EACH ROW EXECUTE FUNCTION log_company_health_change();
 
 -- ── 11b-i. teams category ↔ team_type bi-directional sync ────
 --  Keeps the legacy 'category' column and new team_type/support_level
@@ -2017,6 +2120,49 @@ CREATE POLICY "teams_read_authenticated"
 CREATE POLICY "teams_admin_write"
   ON teams FOR ALL TO authenticated
   USING (is_admin(auth.uid())) WITH CHECK (is_admin(auth.uid()));
+
+-- ── Companies (CRM — migration 037) ──────────────────────────
+ALTER TABLE company_health_statuses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE companies               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE company_contacts        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE company_health_history  ENABLE ROW LEVEL SECURITY;
+
+-- company_health_statuses: readable by any authenticated user.
+CREATE POLICY "company_health_statuses_read" ON company_health_statuses FOR SELECT TO authenticated
+  USING (true);
+CREATE POLICY "company_health_statuses_service" ON company_health_statuses FOR ALL TO service_role
+  USING (true) WITH CHECK (true);
+
+-- companies: read = support_or_admin; write = admin only.
+CREATE POLICY "companies_read" ON companies FOR SELECT TO authenticated
+  USING (is_support_or_admin(auth.uid()));
+CREATE POLICY "companies_insert" ON companies FOR INSERT TO authenticated
+  WITH CHECK (is_admin(auth.uid()));
+CREATE POLICY "companies_update" ON companies FOR UPDATE TO authenticated
+  USING (is_support_or_admin(auth.uid()))
+  WITH CHECK (is_support_or_admin(auth.uid()));
+CREATE POLICY "companies_delete" ON companies FOR DELETE TO authenticated
+  USING (is_admin(auth.uid()));
+CREATE POLICY "companies_service" ON companies FOR ALL TO service_role
+  USING (true) WITH CHECK (true);
+
+-- company_contacts: read + write = support_or_admin.
+CREATE POLICY "company_contacts_read" ON company_contacts FOR SELECT TO authenticated
+  USING (is_support_or_admin(auth.uid()));
+CREATE POLICY "company_contacts_write" ON company_contacts FOR ALL TO authenticated
+  USING (is_support_or_admin(auth.uid()))
+  WITH CHECK (is_support_or_admin(auth.uid()));
+CREATE POLICY "company_contacts_service" ON company_contacts FOR ALL TO service_role
+  USING (true) WITH CHECK (true);
+
+-- company_health_history: read + write = support_or_admin (rows written by the trigger).
+CREATE POLICY "company_health_history_read" ON company_health_history FOR SELECT TO authenticated
+  USING (is_support_or_admin(auth.uid()));
+CREATE POLICY "company_health_history_write" ON company_health_history FOR ALL TO authenticated
+  USING (is_support_or_admin(auth.uid()))
+  WITH CHECK (is_support_or_admin(auth.uid()));
+CREATE POLICY "company_health_history_service" ON company_health_history FOR ALL TO service_role
+  USING (true) WITH CHECK (true);
 
 -- ── Profiles ─────────────────────────────────────────────────
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;

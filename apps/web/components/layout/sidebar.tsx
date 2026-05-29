@@ -11,6 +11,7 @@ import {
   Brain,
   FolderKanban,
   Users,
+  Building2,
   Settings,
   ChevronsLeft,
   ChevronsRight,
@@ -34,6 +35,7 @@ const navigation: Array<{
   { name: "All Tickets", href: "/tickets", icon: Ticket },
   { name: "Projects", href: "/projects", icon: FolderKanban },
   { name: "Teams", href: "/teams", icon: Users },
+  { name: "Companies", href: "/companies", icon: Building2 },
   { name: "AI Knowledge", href: "/knowledge", icon: Brain, adminOnly: true },
   { name: "Settings", href: "/settings", icon: Settings, adminOnly: true },
 ];

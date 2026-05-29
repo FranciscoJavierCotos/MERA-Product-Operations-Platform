@@ -65,6 +65,15 @@ export async function getTags(supabase: Client): Promise<TicketTagRow[]> {
   return data as TicketTagRow[];
 }
 
+export async function getCompanyHealthStatuses(supabase: Client) {
+  const { data, error } = await supabase
+    .from("company_health_statuses")
+    .select("*")
+    .order("display_order");
+  if (error) throw error;
+  return data;
+}
+
 // ── Mutations ─────────────────────────────────────────────────────────────────
 
 // Ticket Statuses

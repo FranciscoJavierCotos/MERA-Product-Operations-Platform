@@ -20,6 +20,7 @@ import { meRoute } from "./routes/me.js";
 import { lookupRoutes } from "./routes/lookup.js";
 import { userRoutes } from "./routes/users.js";
 import { teamRoutes } from "./routes/teams.js";
+import { companyRoutes } from "./routes/companies.js";
 import { ticketRoutes } from "./routes/tickets.js";
 import { taskRoutes } from "./routes/tasks.js";
 import { dashboardRoutes } from "./routes/dashboard.js";
@@ -89,6 +90,7 @@ async function build() {
   await app.register(lookupRoutes);
   await app.register(userRoutes);
   await app.register(teamRoutes);
+  await app.register(companyRoutes);
   await app.register(ticketRoutes);
   await app.register(taskRoutes);
   await app.register(dashboardRoutes);

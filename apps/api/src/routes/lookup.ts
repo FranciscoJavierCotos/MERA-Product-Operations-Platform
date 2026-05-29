@@ -51,6 +51,9 @@ export const lookupRoutes: FastifyPluginAsyncZod = async (app) => {
   app.get("/lookup/tags", { schema: { tags: ["lookup"] } }, async (req) =>
     lookup.getTags(req.supabase),
   );
+  app.get("/lookup/company-health-statuses", { schema: { tags: ["lookup"] } }, async (req) =>
+    lookup.getCompanyHealthStatuses(req.supabase),
+  );
 
   // Statuses
   app.post("/lookup/statuses", { schema: { tags: ["lookup"], body: StatusBody } }, async (req) =>

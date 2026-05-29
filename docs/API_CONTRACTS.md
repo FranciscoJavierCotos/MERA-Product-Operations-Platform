@@ -107,9 +107,9 @@ Authenticated user + profile row.
 
 **`TicketFilters`** (all optional): `search`, `status_id` int, `priority_id` int, `category_id` int, `temperature_id` int, `team_id` uuid, `assigned_to` uuid, `created_from`, `created_to`, `sort_column`, `sort_dir: "asc"|"desc"`.
 
-**`TicketCreate`** `.strict()`: `{ title: string(min1), description?, category_id: int, priority_id: int, status_id: int, cc_email?: email | null, assigned_to?: uuid | null, team_id?: uuid, support_level_id?: int }`
+**`TicketCreate`** `.strict()`: `{ title: string(min1), description?, category_id: int, priority_id: int, status_id: int, cc_email?: email | null, assigned_to?: uuid | null, team_id?: uuid, company_id?: uuid | null, support_level_id?: int }`
 
-**`TicketUpdate`** `.strict()` (all optional): `title`, `description`, `resolution: string | null`, `status_id` int, `priority_id` int, `category_id` int, `temperature_id` int|null, `support_level_id` int, `team_id` uuid|null, `assigned_to` uuid|null, `cc_email` string|null.
+**`TicketUpdate`** `.strict()` (all optional): `title`, `description`, `resolution: string | null`, `status_id` int, `priority_id` int, `category_id` int, `temperature_id` int|null, `support_level_id` int, `team_id` uuid|null, `company_id` uuid|null, `assigned_to` uuid|null, `cc_email` string|null.
 
 > `resolution` is required by a DB trigger when transitioning to a final status → surfaces as `422 constraint_violation`. `resolution_plain` / `resolution_embedding` are derived server-side; never set manually.
 
@@ -189,6 +189,32 @@ Team types: `business` / `support` / `engineering`. Support levels: `L1`/`L2`/`L
 
 ---
 
+## Companies (CRM) — [routes/companies.ts](../apps/api/src/routes/companies.ts)
+
+Client companies. Access control (enforced by RLS): read = support/admin; company create/update/delete = **admin only**; health updates + contact CRUD = support/admin. Health statuses lookup is readable by any authenticated user.
+
+| Method | Path | Body / Query |
+|---|---|---|
+| `GET` | `/companies` | — (all companies, with `healthStatus` + `account_owner`) |
+| `GET` | `/companies/:id/detail` | — (company + contacts + healthStatus + healthHistory + openTickets/closedTickets + projects + stats) |
+| `GET` | `/companies/:id/contacts` | — |
+| `GET` | `/companies/:id` | — |
+| `POST` | `/companies` | `CompanyBody` (admin; `created_by` from JWT) |
+| `PATCH` | `/companies/:id` | `CompanyBody` (partial; admin) |
+| `DELETE` | `/companies/:id` | → `{ ok: true }` (admin) |
+| `PATCH` | `/companies/:id/health` | `{ health_status_id: int, health_note?: string\|null }` (`health_updated_by`/`health_updated_at` set server-side; a DB trigger records `company_health_history`) |
+| `POST` | `/companies/:id/contacts` | `ContactBody` |
+| `PATCH` | `/companies/:id/contacts/:cid` | `ContactBody` (partial) |
+| `DELETE` | `/companies/:id/contacts/:cid` | → `{ ok: true }` |
+
+**`CompanyBody`** `.strict()`: `{ name: string(min1), description?: string|null, industry?: string|null, website?: string|null, logo_url?: string|null, health_status_id?: int, health_note?: string|null, account_owner_id?: uuid|null }`
+
+**`ContactBody`** `.strict()`: `{ full_name: string(min1), email: email, title?: string|null, phone?: string|null, is_primary?: boolean }`
+
+> Route ordering: `/companies/:id/detail` and `/companies/:id/contacts` are registered before `/companies/:id` to avoid param clashes. Health-status options come from `GET /lookup/company-health-statuses`.
+
+---
+
 ## Projects — [routes/projects.ts](../apps/api/src/routes/projects.ts)
 
 | Method | Path | Body / Query |
@@ -206,7 +232,7 @@ Team types: `business` / `support` / `engineering`. Support levels: `L1`/`L2`/`L
 | `PATCH` | `/projects/:id/members/:mid` | `{ role: "owner"\|"developer"\|"viewer" }` |
 | `DELETE` | `/projects/:id/members/:mid` | → `{ ok: true }` |
 
-**`ProjectCreate`** `.strict()`: `{ key: string(min1), name: string(min1), description?: string|null, methodology?: string, sprint_duration_weeks?: int 1..4, team_id?: uuid|null, lead_id?: uuid|null }`
+**`ProjectCreate`** `.strict()`: `{ key: string(min1), name: string(min1), description?: string|null, methodology?: string, sprint_duration_weeks?: int 1..4, team_id?: uuid|null, company_id?: uuid|null, lead_id?: uuid|null }`
 **`ProjectUpdate`** `.strict()`: same minus `key`, plus `status?: string`.
 
 ---

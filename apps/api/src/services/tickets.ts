@@ -42,7 +42,7 @@ const SORTABLE_COLUMNS = new Set([
 const TICKET_SELECT = `
   id, ticket_number, title, description, resolution, cc_email,
   status_id, priority_id, category_id, support_level_id, temperature_id,
-  created_by, assigned_to, team_id,
+  created_by, assigned_to, team_id, company_id,
   client_email, client_name, attachments, custom_fields,
   time_worked_minutes, created_at, updated_at, resolved_at, closed_at,
   status:ticket_statuses(id, name, label, badge_variant, is_final, display_order),
@@ -54,13 +54,14 @@ const TICKET_SELECT = `
   assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email, avatar_url),
   creator:profiles!tickets_created_by_fkey(id, full_name, email),
   team:teams!tickets_team_id_fkey(id, name, team_type, support_level),
+  company:companies!tickets_company_id_fkey(id, name),
   sla_instance:sla_instances(id, response_due_at, resolution_due_at, responded_at, paused_at, total_paused_minutes, policy:sla_policies(name, priority_id, response_time_minutes, resolution_time_minutes))
 `;
 
 const TICKET_SELECT_DETAIL = `
   id, ticket_number, title, description, resolution, cc_email,
   status_id, priority_id, category_id, support_level_id, temperature_id,
-  created_by, assigned_to, team_id,
+  created_by, assigned_to, team_id, company_id,
   client_email, client_name, attachments, custom_fields,
   time_worked_minutes, created_at, updated_at, resolved_at, closed_at,
   status:ticket_statuses(id, name, label, badge_variant, is_final, display_order),
@@ -72,6 +73,7 @@ const TICKET_SELECT_DETAIL = `
   assigned_user:profiles!tickets_assigned_to_fkey(id, full_name, email, avatar_url, role),
   creator:profiles!tickets_created_by_fkey(id, full_name, email),
   team:teams!tickets_team_id_fkey(id, name, team_type, support_level),
+  company:companies!tickets_company_id_fkey(id, name),
   sla_instance:sla_instances(id, response_due_at, resolution_due_at, responded_at, paused_at, total_paused_minutes, policy:sla_policies(name, priority_id, response_time_minutes, resolution_time_minutes))
 `;
 

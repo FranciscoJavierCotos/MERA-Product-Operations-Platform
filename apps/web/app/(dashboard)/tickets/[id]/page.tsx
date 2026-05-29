@@ -24,6 +24,7 @@ import { PriorityBadgeDropdown } from "@/components/shared/priority-badge-dropdo
 import { TemperatureBadgeDropdown } from "@/components/shared/temperature-badge-dropdown";
 import { SupportTeamDropdown } from "@/components/shared/support-team-dropdown";
 import { TicketCategoryDropdown } from "@/components/shared/ticket-category-dropdown";
+import { CompanyDropdown } from "@/components/shared/company-dropdown";
 import { CcEmailInput } from "@/components/shared/cc-email-input";
 import { formatTicketNumber } from "@/lib/utils/format";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils/date";
@@ -34,6 +35,7 @@ import { TicketTasksSection } from "@/components/tasks/ticket-tasks-section";
 import { CollaboratorsSection } from "@/components/tickets/collaborators-section";
 import { CommentsActivitySection } from "@/components/tickets/comments-activity-section";
 import { Team, SupportLevel } from "@/types/team.types";
+import type { Company } from "@/types/company.types";
 import { isUuid } from "@/lib/utils/uuid";
 import { TicketNavigationButtons } from "@/components/tickets/ticket-navigation-buttons";
 import { SlaDetailBlock } from "@/components/tickets/sla-detail-block";
@@ -121,6 +123,7 @@ export default async function TicketDetailPage({
     categories,
     temperatures,
     supportLevels,
+    companies,
   ] = isSupportAgent
     ? await Promise.all([
         api.get<Profile[]>("/users/support"),
@@ -130,6 +133,7 @@ export default async function TicketDetailPage({
         api.get<TicketCategoryRow[]>("/lookup/categories"),
         api.get<TicketTemperatureRow[]>("/lookup/temperatures"),
         api.get<TicketSupportLevelRow[]>("/lookup/support-levels"),
+        api.get<Company[]>("/companies"),
       ])
     : await Promise.all([
         Promise.resolve([] as Profile[]),
@@ -139,6 +143,7 @@ export default async function TicketDetailPage({
         api.get<TicketCategoryRow[]>("/lookup/categories"),
         api.get<TicketTemperatureRow[]>("/lookup/temperatures"),
         api.get<TicketSupportLevelRow[]>("/lookup/support-levels"),
+        Promise.resolve([] as Company[]),
       ]);
 
   if (!ticket) {
@@ -310,8 +315,21 @@ export default async function TicketDetailPage({
               </div>
             </div>
 
-            {/* Fifth column — Category, CC, Time Worked */}
+            {/* Fifth column — Company, Category, CC, Time Worked */}
             <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Company</h3>
+                <div className="mt-2">
+                  <CompanyDropdown
+                    ticketId={ticket.id}
+                    currentCompany={ticket.company ?? null}
+                    companies={companies}
+                    isSupportAgent={!!isSupportAgent}
+                    isClosed={isClosed}
+                  />
+                </div>
+              </div>
+
               <div>
                 <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Category</h3>
                 <div className="mt-2">

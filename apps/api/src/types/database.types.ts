@@ -70,6 +70,149 @@ export interface Database {
           updated_at?: string;
         };
       };
+      company_health_statuses: {
+        Row: {
+          id: number;
+          name: string;
+          label: string;
+          color_class: string;
+          emoji: string;
+          level: number;
+          display_order: number;
+        };
+        Insert: {
+          id: number;
+          name: string;
+          label: string;
+          color_class: string;
+          emoji: string;
+          level: number;
+          display_order: number;
+        };
+        Update: {
+          id?: number;
+          name?: string;
+          label?: string;
+          color_class?: string;
+          emoji?: string;
+          level?: number;
+          display_order?: number;
+        };
+      };
+      companies: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          industry: string | null;
+          website: string | null;
+          logo_url: string | null;
+          health_status_id: number;
+          health_note: string | null;
+          health_updated_at: string | null;
+          health_updated_by: string | null;
+          account_owner_id: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          industry?: string | null;
+          website?: string | null;
+          logo_url?: string | null;
+          health_status_id?: number;
+          health_note?: string | null;
+          health_updated_at?: string | null;
+          health_updated_by?: string | null;
+          account_owner_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          industry?: string | null;
+          website?: string | null;
+          logo_url?: string | null;
+          health_status_id?: number;
+          health_note?: string | null;
+          health_updated_at?: string | null;
+          health_updated_by?: string | null;
+          account_owner_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      company_contacts: {
+        Row: {
+          id: string;
+          company_id: string;
+          full_name: string;
+          email: string;
+          title: string | null;
+          phone: string | null;
+          is_primary: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          full_name: string;
+          email: string;
+          title?: string | null;
+          phone?: string | null;
+          is_primary?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          company_id?: string;
+          full_name?: string;
+          email?: string;
+          title?: string | null;
+          phone?: string | null;
+          is_primary?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      company_health_history: {
+        Row: {
+          id: string;
+          company_id: string;
+          from_status_id: number | null;
+          to_status_id: number;
+          note: string | null;
+          changed_by: string | null;
+          changed_at: string;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          from_status_id?: number | null;
+          to_status_id: number;
+          note?: string | null;
+          changed_by?: string | null;
+          changed_at?: string;
+        };
+        Update: {
+          id?: string;
+          company_id?: string;
+          from_status_id?: number | null;
+          to_status_id?: number;
+          note?: string | null;
+          changed_by?: string | null;
+          changed_at?: string;
+        };
+      };
       team_members: {
         Row: {
           id: string;
@@ -356,6 +499,7 @@ export interface Database {
           created_by: string | null;
           assigned_to: string | null;
           team_id: string | null;
+          company_id: string | null;
           client_email: string | null;
           client_name: string | null;
           attachments: Json;
@@ -384,6 +528,7 @@ export interface Database {
           created_by?: string | null;
           assigned_to?: string | null;
           team_id?: string | null;
+          company_id?: string | null;
           client_email?: string | null;
           client_name?: string | null;
           attachments?: Json;
@@ -412,6 +557,7 @@ export interface Database {
           created_by?: string | null;
           assigned_to?: string | null;
           team_id?: string | null;
+          company_id?: string | null;
           client_email?: string | null;
           client_name?: string | null;
           attachments?: Json;
@@ -1011,6 +1157,7 @@ export interface Database {
           methodology: "scrum" | "kanban" | "waterfall";
           status: "active" | "archived";
           team_id: string | null;
+          company_id: string | null;
           lead_id: string | null;
           next_item_number: number;
           sprint_duration_weeks: number;
@@ -1026,6 +1173,7 @@ export interface Database {
           methodology?: "scrum" | "kanban" | "waterfall";
           status?: "active" | "archived";
           team_id?: string | null;
+          company_id?: string | null;
           lead_id?: string | null;
           next_item_number?: number;
           sprint_duration_weeks?: number;
@@ -1041,6 +1189,7 @@ export interface Database {
           methodology?: "scrum" | "kanban" | "waterfall";
           status?: "active" | "archived";
           team_id?: string | null;
+          company_id?: string | null;
           lead_id?: string | null;
           next_item_number?: number;
           sprint_duration_weeks?: number;
