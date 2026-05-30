@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   Ticket,
   CheckSquare,
-  User,
   Brain,
   FolderKanban,
   Users,
@@ -31,8 +30,7 @@ const navigation: Array<{
 }> = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "My Tasks", href: "/tasks", icon: CheckSquare },
-  { name: "My Tickets", href: "/my-tickets", icon: User },
-  { name: "All Tickets", href: "/tickets", icon: Ticket },
+  { name: "Tickets", href: "/tickets", icon: Ticket },
   { name: "Projects", href: "/projects", icon: FolderKanban },
   { name: "Teams", href: "/teams", icon: Users },
   { name: "Companies", href: "/companies", icon: Building2 },

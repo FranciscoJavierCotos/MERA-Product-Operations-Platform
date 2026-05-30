@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Filter, Search, X } from "lucide-react";
+import { Filter, Search, UserCheck, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,9 +34,14 @@ export interface TicketFilterBarProps {
   teams: FilterOption[];
   supportMembers?: FilterOption[];
   showAssignedTo?: boolean;
+  /** Current logged-in user id — enables the "Assigned to me" toggle. */
+  currentUserId?: string | null;
 }
 
 const ALL = "_all";
+
+/** Remembers whether the "Assigned to me" toggle was active across sessions. */
+const ASSIGNED_TO_ME_KEY = "tickets-assigned-to-me";
 
 const FILTER_KEYS = [
   "search",
@@ -58,6 +63,7 @@ export function TicketFilterBar({
   teams,
   supportMembers,
   showAssignedTo,
+  currentUserId,
 }: TicketFilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -117,6 +123,37 @@ export function TicketFilterBar({
       router.push(qs ? `${pathname}?${qs}` : pathname);
     });
   };
+
+  // ── "Assigned to me" toggle (persisted across sessions) ──────────────────
+  // The toggle is just a shortcut for assigned_to=<me>, so it derives its
+  // on/off state straight from the URL and stays in sync with the dropdown.
+  const assignedToMe =
+    !!currentUserId && currentAssignedTo === currentUserId;
+
+  const toggleAssignedToMe = () => {
+    if (!currentUserId) return;
+    applyFilter("assigned_to", assignedToMe ? null : currentUserId);
+  };
+
+  // Restore the remembered toggle on first mount, then keep localStorage in
+  // sync with the live state so it's reflected on the next visit.
+  const didRestore = useRef(false);
+  useEffect(() => {
+    if (didRestore.current || !currentUserId) return;
+    didRestore.current = true;
+    const remembered = localStorage.getItem(ASSIGNED_TO_ME_KEY) === "1";
+    if (remembered && !searchParams.get("assigned_to")) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("assigned_to", currentUserId);
+      params.delete("page");
+      router.replace(`${pathname}?${params.toString()}`);
+    }
+  }, [currentUserId, searchParams, pathname, router]);
+
+  useEffect(() => {
+    if (!didRestore.current || !currentUserId) return;
+    localStorage.setItem(ASSIGNED_TO_ME_KEY, assignedToMe ? "1" : "0");
+  }, [assignedToMe, currentUserId]);
 
   const activeCount = [
     currentSearch,
@@ -198,6 +235,25 @@ export function TicketFilterBar({
             </button>
           )}
         </div>
+
+        {/* Assigned to me — quick toggle */}
+        {currentUserId && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={toggleAssignedToMe}
+            disabled={isPending}
+            aria-pressed={assignedToMe}
+            className={cn(
+              "h-9 gap-1.5 text-sm font-medium",
+              assignedToMe &&
+                "border-primary-300 bg-primary-50 text-primary-800 hover:bg-primary-100 hover:text-primary-800",
+            )}
+          >
+            <UserCheck className="h-3.5 w-3.5" />
+            Assigned to me
+          </Button>
+        )}
 
         {/* Status */}
         <Select

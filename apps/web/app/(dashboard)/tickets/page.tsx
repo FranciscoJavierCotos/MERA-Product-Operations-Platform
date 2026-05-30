@@ -122,7 +122,7 @@ export default async function TicketsPage({ searchParams }: TicketsPageProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">All Tickets</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Tickets</h1>
           <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
             Manage and track all support tickets
           </p>
@@ -146,6 +146,7 @@ export default async function TicketsPage({ searchParams }: TicketsPageProps) {
           label: m.full_name ?? m.email,
         }))}
         showAssignedTo
+        currentUserId={user?.id ?? null}
       />
 
       <div className="bg-white dark:bg-card shadow rounded-lg overflow-hidden">

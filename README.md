@@ -50,8 +50,8 @@ Most ops teams fragment their work across a ticketing tool, a chat thread, a tas
 <table>
   <tr>
     <td align="center" width="50%">
-      <img src="./docs/screenshots/all-tickets.png" alt="All Tickets" />
-      <br/><sub><b>Ticket Queue</b> — status, priority, SLA countdown, temperature, team filters</sub>
+      <img src="./docs/screenshots/all-tickets.png" alt="Tickets" />
+      <br/><sub><b>Ticket Queue</b> — status, priority, SLA countdown, temperature, team & "assigned to me" filters</sub>
     </td>
     <td align="center" width="50%">
       <img src="./docs/screenshots/scrum-project.png" alt="Scrum Board" />

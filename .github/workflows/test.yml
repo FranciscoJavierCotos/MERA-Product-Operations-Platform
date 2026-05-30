@@ -179,12 +179,19 @@ jobs:
         run: supabase db reset
 
       - name: Export Supabase connection vars to GitHub env
-        # `supabase status -o env` emits KEY=value lines directly matching the
-        # names apps/api/src/config.ts expects: SUPABASE_URL, SUPABASE_ANON_KEY,
-        # SUPABASE_SERVICE_ROLE_KEY. Appending to $GITHUB_ENV makes them
-        # available for subsequent steps; dotenv in config.ts won't override
-        # these since process.env values always win over .env file values.
-        run: supabase status -o env >> $GITHUB_ENV
+        # `supabase status -o env` defaults to names like API_URL / ANON_KEY /
+        # SERVICE_ROLE_KEY, which do NOT match what apps/api/src/config.ts
+        # expects (SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY).
+        # Use --override-name to emit the names config.ts validates. Appending
+        # to $GITHUB_ENV makes them available for subsequent steps; dotenv in
+        # config.ts won't override these since process.env always wins over
+        # .env file values.
+        run: |
+          supabase status -o env \
+            --override-name api.url=SUPABASE_URL \
+            --override-name auth.anon_key=SUPABASE_ANON_KEY \
+            --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
+            >> "$GITHUB_ENV"
 
       - name: Integration tests — api
         run: pnpm --filter api test:integration

@@ -59,17 +59,17 @@ export function TicketNavigationButtons({
     <div className="flex items-center gap-1">
       <NavigationButton
         href={firstTicketId ? `/tickets/${firstTicketId}` : null}
-        ariaLabel="Go to first ticket in My Tickets"
+        ariaLabel="Go to first ticket"
         icon={ChevronsLeft}
       />
       <NavigationButton
         href={previousTicketId ? `/tickets/${previousTicketId}` : null}
-        ariaLabel="Go to previous ticket in My Tickets"
+        ariaLabel="Go to previous ticket"
         icon={ChevronLeft}
       />
       <NavigationButton
         href={nextTicketId ? `/tickets/${nextTicketId}` : null}
-        ariaLabel="Go to next ticket in My Tickets"
+        ariaLabel="Go to next ticket"
         icon={ChevronRight}
       />
     </div>
