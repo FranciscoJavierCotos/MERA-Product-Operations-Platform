@@ -179,20 +179,40 @@ jobs:
         run: supabase db reset
 
       - name: Export Supabase connection vars to GitHub env
-        # `supabase status -o env` output changed across CLI versions:
-        #   Old (< 1.168): API_URL / ANON_KEY / SERVICE_ROLE_KEY
-        #   New (≥ 1.168): SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY
-        # sed rewrites old names → new names; new names pass through unchanged.
-        # Appending to $GITHUB_ENV makes vars available for subsequent steps;
-        # dotenv in config.ts won't override these since process.env always
-        # wins over .env file values (no override: true in config.ts).
+        # IMPORTANT: do NOT derive these from `supabase status -o env`.
+        # That format wraps every value in double quotes, e.g.
+        #   API_URL="http://127.0.0.1:54321"
+        # When appended verbatim to $GITHUB_ENV the surrounding quotes become
+        # part of the value, so downstream `process.env.SUPABASE_URL` is
+        #   "http://127.0.0.1:54321"  (with literal quotes)
+        # which fails `z.string().url()` → "Invalid url". The local CLI uses
+        # deterministic ports, so we hardcode the URL and pull only the keys
+        # (which contain no URL chars) from the JSON output via jq -r.
         run: |
-          supabase status -o env \
-            | sed \
-                -e 's/^API_URL=/SUPABASE_URL=/' \
-                -e 's/^ANON_KEY=/SUPABASE_ANON_KEY=/' \
-                -e 's/^SERVICE_ROLE_KEY=/SUPABASE_SERVICE_ROLE_KEY=/' \
-            >> "$GITHUB_ENV"
+          echo "SUPABASE_URL=http://127.0.0.1:54321" >> "$GITHUB_ENV"
+          echo "SUPABASE_ANON_KEY=$(supabase status -o json | jq -r '.ANON_KEY')" >> "$GITHUB_ENV"
+          echo "SUPABASE_SERVICE_ROLE_KEY=$(supabase status -o json | jq -r '.SERVICE_ROLE_KEY')" >> "$GITHUB_ENV"
+
+      - name: Debug env values
+        # Temporary diagnostics — confirms the vars are present and well-formed
+        # before the test runner boots. Remove once integration CI is green.
+        run: |
+          echo "==== DEBUG ===="
+          echo "SUPABASE_URL=<$SUPABASE_URL>"
+          echo "SUPABASE_ANON_KEY length=${#SUPABASE_ANON_KEY}"
+          echo "SUPABASE_SERVICE_ROLE_KEY length=${#SUPABASE_SERVICE_ROLE_KEY}"
+          node -e "
+            console.log('Node sees:', JSON.stringify(process.env.SUPABASE_URL))
+            try {
+              new URL(process.env.SUPABASE_URL)
+              console.log('VALID URL')
+            } catch (e) {
+              console.log('INVALID URL:', e.message)
+            }
+          "
+
+      - name: Verify local API reachable
+        run: curl -sv http://127.0.0.1:54321/rest/v1/ || true
 
       - name: Integration tests — api
         run: pnpm --filter api test:integration
