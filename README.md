@@ -16,7 +16,7 @@
 ![Semgrep](https://img.shields.io/badge/Semgrep-OWASP_Top_10-1B2A4E?style=flat-square)
 
 <p align="center">
-  <img src="./docs/screenshots/Ad.png" width="960" alt="MERA Dashboard" />
+  <img src="./docs/screenshots/ad-dark.png" width="960" alt="MERA Dashboard" />
 </p>
 
 ---
