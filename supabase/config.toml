@@ -10,6 +10,12 @@ max_rows = 1000
 port = 54322
 major_version = 15
 
+# Apply supabase/seed.sql on `supabase db reset` / `supabase start`.
+# Restores the three integration-test users (admin@/support@/client@test.mera.local).
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
 [studio]
 enabled = true
 port = 54323
