@@ -11,6 +11,9 @@ export interface DashboardStats {
   openTickets: number;
   myTasks: number;
   resolvedToday: number;
+  breachedSlas: number;
+  atRiskCompanies: number;
+  hotTickets: number;
 }
 
 /** @deprecated */

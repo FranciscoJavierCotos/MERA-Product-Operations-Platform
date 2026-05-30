@@ -179,18 +179,19 @@ jobs:
         run: supabase db reset
 
       - name: Export Supabase connection vars to GitHub env
-        # `supabase status -o env` defaults to names like API_URL / ANON_KEY /
-        # SERVICE_ROLE_KEY, which do NOT match what apps/api/src/config.ts
-        # expects (SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY).
-        # Use --override-name to emit the names config.ts validates. Appending
-        # to $GITHUB_ENV makes them available for subsequent steps; dotenv in
-        # config.ts won't override these since process.env always wins over
-        # .env file values.
+        # `supabase status -o env` output changed across CLI versions:
+        #   Old (< 1.168): API_URL / ANON_KEY / SERVICE_ROLE_KEY
+        #   New (≥ 1.168): SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY
+        # sed rewrites old names → new names; new names pass through unchanged.
+        # Appending to $GITHUB_ENV makes vars available for subsequent steps;
+        # dotenv in config.ts won't override these since process.env always
+        # wins over .env file values (no override: true in config.ts).
         run: |
           supabase status -o env \
-            --override-name api.url=SUPABASE_URL \
-            --override-name auth.anon_key=SUPABASE_ANON_KEY \
-            --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
+            | sed \
+                -e 's/^API_URL=/SUPABASE_URL=/' \
+                -e 's/^ANON_KEY=/SUPABASE_ANON_KEY=/' \
+                -e 's/^SERVICE_ROLE_KEY=/SUPABASE_SERVICE_ROLE_KEY=/' \
             >> "$GITHUB_ENV"
 
       - name: Integration tests — api

@@ -94,7 +94,14 @@ function ProjectCard({ project }: { project: ProjectDashboardCard }) {
       href={`/projects/${project.key}`}
       className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl"
     >
-      <div className="h-full border border-gray-200 dark:border-border/70 rounded-xl p-4 bg-white dark:bg-card hover:border-primary-300 dark:hover:border-primary/60 hover:shadow-sm dark:magnetic transition-all flex flex-col gap-3">
+      <div className={cn(
+          "h-full border rounded-xl p-4 bg-white dark:bg-card hover:border-primary-300 dark:hover:border-primary/60 hover:shadow-sm dark:magnetic transition-all flex flex-col gap-3",
+          days !== null && days <= 0
+            ? "border-red-400 dark:border-red-500/60 ring-1 ring-red-400/40 dark:ring-red-500/30"
+            : days !== null && days <= 3
+              ? "border-amber-400 dark:border-amber-500/60 ring-1 ring-amber-400/40 dark:ring-amber-500/30"
+              : "border-gray-200 dark:border-border/70",
+        )}>
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
