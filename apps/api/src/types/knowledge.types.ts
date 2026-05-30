@@ -1,4 +1,4 @@
-import type { Database } from "./database.types";
+﻿import type { Database } from "@stms/contracts";
 
 type T = Database["public"]["Tables"];
 

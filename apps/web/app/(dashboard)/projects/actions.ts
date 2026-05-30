@@ -75,17 +75,14 @@ export async function createProjectAction(
 
     const projectInput = { ...parsed.data };
 
-    // Support members must scope new projects to their own team or themselves.
+    // Support members without an explicit team or lead scoping fall back to
+    // themselves as project lead (team_id is now resolved via team_members RLS).
     if (
       profile.role === "support_member" &&
       !projectInput.team_id &&
       !projectInput.lead_id
     ) {
-      if (profile.team_id) {
-        projectInput.team_id = profile.team_id;
-      } else {
-        projectInput.lead_id = user.id;
-      }
+      projectInput.lead_id = user.id;
     }
 
     const project = await api.post<Project>("/projects", projectInput);

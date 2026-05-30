@@ -1,5 +1,5 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "../types/database.types";
+﻿import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "@stms/contracts";
 import type {
   TicketStatusRow,
   TicketPriorityRow,
@@ -74,7 +74,7 @@ export async function getCompanyHealthStatuses(supabase: Client) {
   return data;
 }
 
-// ── Mutations ─────────────────────────────────────────────────────────────────
+// â”€â”€ Mutations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Ticket Statuses
 export async function createTicketStatus(
@@ -202,7 +202,7 @@ export async function createTag(
 
 export async function updateTag(
   supabase: Client,
-  id: number,
+  id: string,
   input: Partial<Omit<TicketTagRow, "id">>,
 ): Promise<TicketTagRow> {
   const { data, error } = await (supabase.from("tags") as any)
@@ -214,7 +214,7 @@ export async function updateTag(
   return data as TicketTagRow;
 }
 
-export async function deleteTag(supabase: Client, id: number): Promise<void> {
+export async function deleteTag(supabase: Client, id: string): Promise<void> {
   const { error } = await (supabase.from("tags") as any).delete().eq("id", id);
   if (error) throw error;
 }

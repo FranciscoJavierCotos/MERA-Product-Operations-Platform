@@ -1,10 +1,12 @@
-import { apiBrowser } from "@/lib/api-client-browser";
+﻿import { apiBrowser } from "@/lib/api-client-browser";
 import type { TeamMember, TeamMemberRole } from "@/types/team.types";
 
+/** @deprecated */
 export async function getTeamMembers(teamId: string): Promise<TeamMember[]> {
   return apiBrowser.get<TeamMember[]>(`/teams/${teamId}/members`);
 }
 
+/** @deprecated */
 export async function addTeamMember(
   teamId: string,
   data: { user_id: string; role: TeamMemberRole },
@@ -12,6 +14,7 @@ export async function addTeamMember(
   return apiBrowser.post<TeamMember>(`/teams/${teamId}/members`, data);
 }
 
+/** @deprecated */
 export async function updateTeamMemberRole(
   teamId: string,
   memberId: string,
@@ -22,6 +25,7 @@ export async function updateTeamMemberRole(
   });
 }
 
+/** @deprecated */
 export async function removeTeamMember(
   teamId: string,
   memberId: string,

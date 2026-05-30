@@ -1,5 +1,5 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../types/database.types";
+﻿import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@stms/contracts";
 import type {
   Project,
   ProjectListItem,
@@ -116,7 +116,7 @@ export async function archiveProject(
  * Order of operations (prevents FK / trigger issues):
  *  1. Collect the IDs of every work_item in this project.
  *  2. Delete item_links where any of those work_items is the source OR the
- *     target — while the work_items still exist so the audit triggers can read
+ *     target â€” while the work_items still exist so the audit triggers can read
  *     them cleanly.
  *  3. Delete the project row; ON DELETE CASCADE removes sprints, work_items,
  *     work_item_comments, and work_item_history automatically.
@@ -136,17 +136,19 @@ export async function deleteProject(
     const ids = workItems.map((wi) => wi.id);
 
     // 2a. Delete links where our work items are the target
-    //     (ticket → our item, other-project item → our item).
-    const { error: ltErr } = await (supabase.from("item_links") as any)
+    //     (ticket â†’ our item, other-project item â†’ our item).
+    // ticket_work_item_links and work_item_links have ON DELETE CASCADE on
+    // work_item_id / source_id / target_id so they are removed automatically
+    // when work_items are deleted.  The explicit deletes below are kept for
+    // cross-project links (where the work item survives but the link doesn't).
+    const { error: ltErr } = await (supabase.from("ticket_work_item_links") as any)
       .delete()
-      .in("target_work_item_id", ids);
+      .in("work_item_id", ids);
     if (ltErr) throw new Error(ltErr.message);
 
-    // 2b. Delete links where our work items are the source
-    //     (our item → other-project item).
-    const { error: lsErr } = await (supabase.from("item_links") as any)
+    const { error: lsErr } = await (supabase.from("work_item_links") as any)
       .delete()
-      .in("source_work_item_id", ids);
+      .in("source_id", ids);
     if (lsErr) throw new Error(lsErr.message);
   }
 
@@ -158,7 +160,7 @@ export async function deleteProject(
   if (error) throw new Error(error.message);
 }
 
-// ─── Dashboard overview ────────────────────────────────────────────────────
+// â”€â”€â”€ Dashboard overview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface ProjectSprintSummary {
   id: string;
@@ -298,7 +300,7 @@ export async function getActiveProjectsForDashboard(
   });
 }
 
-// ── Project member management (migration 034) ─────────────────────────────────
+// â”€â”€ Project member management (migration 034) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const PROJECT_MEMBER_SELECT = `
   id, project_id, user_id, role, joined_at, added_by,

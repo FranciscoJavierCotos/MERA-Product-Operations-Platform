@@ -1,4 +1,4 @@
-/** Thin client-side shim around the owned API. */
+﻿/** Thin client-side shim around the owned API. */
 
 import { apiBrowser } from "@/lib/api-client-browser";
 import type {
@@ -10,18 +10,22 @@ import type {
 
 type AnyClient = unknown;
 
+/** @deprecated */
 export async function listProjects(_sb: AnyClient): Promise<ProjectListItem[]> {
   return apiBrowser.get<ProjectListItem[]>("/projects");
 }
 
+/** @deprecated */
 export async function getProjectByKey(_sb: AnyClient, key: string) {
   return apiBrowser.get<Project | null>(`/projects/by-key/${key}`);
 }
 
+/** @deprecated */
 export async function getProjectById(_sb: AnyClient, id: string) {
   return apiBrowser.get<Project | null>(`/projects/${id}`);
 }
 
+/** @deprecated */
 export async function createProject(
   _sb: AnyClient,
   input: CreateProjectInput & { created_by: string },
@@ -30,6 +34,7 @@ export async function createProject(
   return apiBrowser.post<Project>("/projects", body);
 }
 
+/** @deprecated */
 export async function updateProject(
   _sb: AnyClient,
   id: string,
@@ -38,10 +43,12 @@ export async function updateProject(
   return apiBrowser.patch<Project>(`/projects/${id}`, updates);
 }
 
+/** @deprecated */
 export async function archiveProject(_sb: AnyClient, id: string) {
   await apiBrowser.post(`/projects/${id}/archive`);
 }
 
+/** @deprecated */
 export async function deleteProject(_sb: AnyClient, id: string) {
   await apiBrowser.del(`/projects/${id}`);
 }
@@ -69,6 +76,7 @@ export interface ProjectDashboardCard {
   activeSprint: ProjectSprintSummary | null;
 }
 
+/** @deprecated */
 export async function getActiveProjectsForDashboard(_sb: AnyClient) {
   return apiBrowser.get<ProjectDashboardCard[]>("/projects/active");
 }

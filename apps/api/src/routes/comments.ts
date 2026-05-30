@@ -7,7 +7,6 @@ const TicketIdParam = z.object({ ticketId: z.string().uuid() });
 
 const CreateBody = z.object({
   content: z.string().min(1),
-  time_worked_minutes: z.number().int().min(0).optional(),
   is_internal: z.boolean().optional(),
 });
 
@@ -23,7 +22,6 @@ export const commentRoutes: FastifyPluginAsyncZod = async (app) => {
       comments.createComment(req.supabase, {
         ticket_id: req.params.ticketId,
         content: req.body.content,
-        time_worked_minutes: req.body.time_worked_minutes,
         is_internal: req.body.is_internal,
       }),
   );

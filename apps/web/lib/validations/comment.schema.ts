@@ -5,12 +5,6 @@ export const commentSchema = z.object({
     .string()
     .min(1, "Comment cannot be empty")
     .max(5000000, "Comment is too long (max 5MB including images)"),
-  time_worked_minutes: z
-    .number()
-    .min(0, "Time worked cannot be negative")
-    .max(1440, "Time worked cannot exceed 24 hours (1440 minutes)")
-    .optional()
-    .default(0),
   is_internal: z.boolean().default(false),
 });
 

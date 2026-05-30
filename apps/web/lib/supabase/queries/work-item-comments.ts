@@ -1,10 +1,11 @@
-/** Thin client-side shim around the owned API. */
+﻿/** Thin client-side shim around the owned API. */
 
 import { apiBrowser } from "@/lib/api-client-browser";
 import type { WorkItemComment } from "@/types/work-item.types";
 
 type AnyClient = unknown;
 
+/** @deprecated */
 export async function listWorkItemComments(
   _sb: AnyClient,
   workItemId: string,
@@ -14,6 +15,7 @@ export async function listWorkItemComments(
   );
 }
 
+/** @deprecated */
 export async function createWorkItemComment(
   _sb: AnyClient,
   input: { work_item_id: string; user_id: string; content: string },

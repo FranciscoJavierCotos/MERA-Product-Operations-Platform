@@ -255,7 +255,7 @@ export async function updateTagAction(
 }
 
 export async function deleteTagAction(
-  id: number,
+  id: string,
 ): Promise<ActionResult<void>> {
   try {
     await assertAdmin();

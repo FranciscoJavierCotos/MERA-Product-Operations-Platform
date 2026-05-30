@@ -1,5 +1,5 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "../types/database.types";
+﻿import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "@stms/contracts";
 import {
   Team,
   TeamType,
@@ -18,7 +18,7 @@ const TEAM_MEMBER_SELECT = `
   user:profiles!team_members_user_id_fkey(id, full_name, email, avatar_url, role)
 `;
 
-// ── Queries ───────────────────────────────────────────────────────────────────
+// â”€â”€ Queries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getTeams(supabase: Client) {
   const { data, error } = await supabase
@@ -101,7 +101,7 @@ export async function getTeamById(supabase: Client, teamId: string) {
   return data as unknown as Team;
 }
 
-// ── Team detail (aggregated) ──────────────────────────────────────────────────
+// â”€â”€ Team detail (aggregated) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getTeamDetail(
   supabase: Client,
@@ -162,7 +162,7 @@ export async function getTeamDetail(
   };
 }
 
-// ── Team member management ────────────────────────────────────────────────────
+// â”€â”€ Team member management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getTeamMembers(
   supabase: Client,
@@ -194,18 +194,7 @@ export async function addTeamMember(
 
   if (error) throw error;
 
-  const { data: profile } = await (supabase.from("profiles") as any)
-    .select("team_id")
-    .eq("id", userId)
-    .single();
-
-  if (profile && !profile.team_id) {
-    await (supabase.from("profiles") as any)
-      .update({ team_id: teamId })
-      .eq("id", userId);
-  }
-
-  return data as unknown as TeamMember;
+return data as unknown as TeamMember;
 }
 
 export async function updateTeamMemberRole(
@@ -236,7 +225,7 @@ export async function removeTeamMember(
   if (error) throw error;
 }
 
-// ── Escalation history ────────────────────────────────────────────────────────
+// â”€â”€ Escalation history â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getEscalationHistory(
   supabase: Client,
@@ -281,7 +270,7 @@ export async function addEscalationHistory(
   return data as unknown as EscalationHistory;
 }
 
-// ── Ticket collaborators ──────────────────────────────────────────────────────
+// â”€â”€ Ticket collaborators â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getTicketCollaborators(
   supabase: Client,
@@ -341,7 +330,7 @@ export async function removeTicketCollaborator(
   if (error) throw error;
 }
 
-// ── Mutations ─────────────────────────────────────────────────────────────────
+// â”€â”€ Mutations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function createTeam(
   supabase: Client,

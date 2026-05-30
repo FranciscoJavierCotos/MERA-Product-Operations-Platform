@@ -38,7 +38,7 @@ export interface ColumnDef<T> {
   render: (row: T) => React.ReactNode;
 }
 
-export interface LookupTableManagerProps<T extends { id: number }> {
+export interface LookupTableManagerProps<T extends { id: number | string }> {
   title: string;
   description?: string;
   rows: T[];
@@ -50,11 +50,11 @@ export interface LookupTableManagerProps<T extends { id: number }> {
     onCancel: () => void;
   }>;
   onAdd: (data: Omit<T, "id">) => Promise<ActionResult<T>>;
-  onEdit: (data: Partial<T> & { id: number }) => Promise<ActionResult<T>>;
-  onDelete: (id: number) => Promise<ActionResult<void>>;
+  onEdit: (data: Partial<T> & { id: T["id"] }) => Promise<ActionResult<T>>;
+  onDelete: (id: T["id"]) => Promise<ActionResult<void>>;
 }
 
-export function LookupTableManager<T extends { id: number }>({
+export function LookupTableManager<T extends { id: number | string }>({
   title,
   description,
   rows,
@@ -72,7 +72,7 @@ export function LookupTableManager<T extends { id: number }>({
   const [editingRow, setEditingRow] = useState<T | null>(null);
 
   // Inline delete confirm state
-  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | string | null>(null);
 
   const openAddDialog = () => {
     setEditingRow(null);
@@ -92,7 +92,7 @@ export function LookupTableManager<T extends { id: number }>({
   const handleFormSubmit = (data: Omit<T, "id">) => {
     startTransition(async () => {
       const result = editingRow
-        ? await onEdit({ ...data, id: editingRow.id } as Partial<T> & { id: number })
+        ? await onEdit({ ...data, id: editingRow.id } as Partial<T> & { id: T["id"] })
         : await onAdd(data);
 
       if (!result.ok) {
@@ -107,7 +107,7 @@ export function LookupTableManager<T extends { id: number }>({
     });
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: T["id"]) => {
     startTransition(async () => {
       const result = await onDelete(id);
       if (!result.ok) {

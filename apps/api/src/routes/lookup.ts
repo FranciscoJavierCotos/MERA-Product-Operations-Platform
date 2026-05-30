@@ -3,6 +3,7 @@ import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import * as lookup from "../services/lookup";
 
 const IdParam = z.object({ id: z.coerce.number().int() });
+const UuidParam = z.object({ id: z.string().uuid() });
 
 const StatusBody = z.object({
   name: z.string(),
@@ -95,10 +96,10 @@ export const lookupRoutes: FastifyPluginAsyncZod = async (app) => {
   app.post("/lookup/tags", { schema: { tags: ["lookup"], body: TagBody } }, async (req) =>
     lookup.createTag(req.supabase, req.body as any),
   );
-  app.patch("/lookup/tags/:id", { schema: { tags: ["lookup"], params: IdParam, body: TagBody.partial() } }, async (req) =>
+  app.patch("/lookup/tags/:id", { schema: { tags: ["lookup"], params: UuidParam, body: TagBody.partial() } }, async (req) =>
     lookup.updateTag(req.supabase, req.params.id, req.body as any),
   );
-  app.delete("/lookup/tags/:id", { schema: { tags: ["lookup"], params: IdParam } }, async (req) => {
+  app.delete("/lookup/tags/:id", { schema: { tags: ["lookup"], params: UuidParam } }, async (req) => {
     await lookup.deleteTag(req.supabase, req.params.id);
     return { ok: true };
   });

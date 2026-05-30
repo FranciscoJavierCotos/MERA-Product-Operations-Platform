@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * Thin client-side shims that delegate to the owned API.
@@ -15,16 +15,17 @@ import type { TicketComment } from "@/types/ticket.types";
 // Unused first arg kept for signature compatibility with the old impl.
 type AnyClient = unknown;
 
+/** @deprecated */
 export async function getCommentsByTicket(_sb: AnyClient, ticketId: string) {
   return apiBrowser.get<TicketComment[]>(`/tickets/${ticketId}/comments`);
 }
 
+/** @deprecated */
 export async function createComment(
   _sb: AnyClient,
   comment: {
     ticket_id: string;
     content: string;
-    time_worked_minutes?: number;
     is_internal?: boolean;
   },
 ) {
@@ -32,12 +33,12 @@ export async function createComment(
     `/tickets/${comment.ticket_id}/comments`,
     {
       content: comment.content,
-      time_worked_minutes: comment.time_worked_minutes,
       is_internal: comment.is_internal,
     },
   );
 }
 
+/** @deprecated */
 export async function updateComment(
   _sb: AnyClient,
   commentId: string,
@@ -46,6 +47,7 @@ export async function updateComment(
   return apiBrowser.patch<TicketComment>(`/comments/${commentId}`, { content });
 }
 
+/** @deprecated */
 export async function deleteComment(_sb: AnyClient, commentId: string) {
   await apiBrowser.del(`/comments/${commentId}`);
   return { success: true } as const;
@@ -55,6 +57,7 @@ export async function deleteComment(_sb: AnyClient, commentId: string) {
  * Uploads an image to the ticket-attachments bucket via the API-issued
  * one-shot signed URL, then returns the public URL.
  */
+/** @deprecated */
 export async function uploadCommentImage(
   _sb: AnyClient,
   file: File,

@@ -1,21 +1,20 @@
 /**
- * Integration tests: Ticket comment CRUD + time tracking
+ * Integration tests: Ticket comment CRUD
  *
  * Covers the day-to-day support workflow:
- *   - POST   /tickets/:ticketId/comments   create a comment with time_worked_minutes
- *   - PATCH  /comments/:id                 edit comment content (immutable time field)
+ *   - POST   /tickets/:ticketId/comments   create a comment
+ *   - PATCH  /comments/:id                 edit comment content
  *   - DELETE /comments/:id                 remove a comment
  *   - GET    /tickets/:id/comments         list comments (returns most-recent first)
  *
  * Verifies that:
- *   - time_worked_minutes is stored verbatim and surfaced via GET.
- *   - When time_worked_minutes is omitted, the service defaults to 0
- *     (see services/comments.ts → `comment.time_worked_minutes || 0`).
- *   - Editing content does NOT clobber the time_worked_minutes field.
+ *   - Content and is_internal flag round-trip correctly.
+ *   - Editing content does not affect other fields.
  *   - Deleting a comment removes it from the list.
  *   - is_internal flag round-trips correctly when set by support staff.
  *
- * Separate from comments.integration.test.ts which covers RLS visibility.
+ * Note: time_worked_minutes was removed from ticket_comments (Sprint 1 / item 1.3).
+ * Time tracking belongs on the parent ticket (tickets.time_worked_minutes).
  *
  * Requires: local Supabase running with seed data.
  */
@@ -27,14 +26,13 @@ import { authHeader } from "../test-helpers/auth.js";
 interface CommentRow {
   id: string;
   content: string;
-  time_worked_minutes: number;
   is_internal: boolean;
   ticket_id: string;
   created_at: string;
   updated_at: string;
 }
 
-describe("Comment CRUD + time tracking", () => {
+describe("Comment CRUD", () => {
   let app: FastifyInstance;
   let ticketId: string;
 
@@ -66,7 +64,6 @@ describe("Comment CRUD + time tracking", () => {
   afterAll(async () => {
     if (ticketId) {
       const adminHeaders = await authHeader("admin");
-      // Deleting the ticket cascades to comments
       await app.inject({
         method: "DELETE",
         url: `/tickets/${ticketId}`,
@@ -78,63 +75,19 @@ describe("Comment CRUD + time tracking", () => {
 
   // ── Create ────────────────────────────────────────────────────────────────
 
-  it("POST /tickets/:id/comments stores time_worked_minutes verbatim", async () => {
+  it("POST /tickets/:id/comments creates a comment and returns it", async () => {
     const adminHeaders = await authHeader("admin");
     const res = await app.inject({
       method: "POST",
       url: `/tickets/${ticketId}/comments`,
       headers: adminHeaders,
-      payload: {
-        content: "[test-comments] Spent 45 minutes investigating",
-        time_worked_minutes: 45,
-      },
+      payload: { content: "[test-comments] Basic comment" },
     });
     expect(res.statusCode).toBe(200);
     const created = res.json() as CommentRow;
-    expect(created.time_worked_minutes).toBe(45);
-    expect(created.content).toBe("[test-comments] Spent 45 minutes investigating");
+    expect(created.content).toBe("[test-comments] Basic comment");
     expect(created.ticket_id).toBe(ticketId);
-  });
-
-  it("POST without time_worked_minutes defaults to 0", async () => {
-    const adminHeaders = await authHeader("admin");
-    const res = await app.inject({
-      method: "POST",
-      url: `/tickets/${ticketId}/comments`,
-      headers: adminHeaders,
-      payload: { content: "[test-comments] No time field" },
-    });
-    expect(res.statusCode).toBe(200);
-    expect(res.json().time_worked_minutes).toBe(0);
-  });
-
-  it("POST with time_worked_minutes=0 is accepted", async () => {
-    const adminHeaders = await authHeader("admin");
-    const res = await app.inject({
-      method: "POST",
-      url: `/tickets/${ticketId}/comments`,
-      headers: adminHeaders,
-      payload: {
-        content: "[test-comments] Zero-time comment (admin note)",
-        time_worked_minutes: 0,
-      },
-    });
-    expect(res.statusCode).toBe(200);
-    expect(res.json().time_worked_minutes).toBe(0);
-  });
-
-  it("POST with negative time_worked_minutes → 400 (schema: min(0))", async () => {
-    const adminHeaders = await authHeader("admin");
-    const res = await app.inject({
-      method: "POST",
-      url: `/tickets/${ticketId}/comments`,
-      headers: adminHeaders,
-      payload: {
-        content: "[test-comments] Negative time",
-        time_worked_minutes: -10,
-      },
-    });
-    expect(res.statusCode).toBe(400);
+    expect(created.is_internal).toBe(false);
   });
 
   it("POST with empty content → 400 (schema: min(1))", async () => {
@@ -157,12 +110,10 @@ describe("Comment CRUD + time tracking", () => {
       payload: {
         content: "[test-comments] Internal investigation note",
         is_internal: true,
-        time_worked_minutes: 15,
       },
     });
     expect(res.statusCode).toBe(200);
     expect(res.json().is_internal).toBe(true);
-    expect(res.json().time_worked_minutes).toBe(15);
   });
 
   // ── Read ──────────────────────────────────────────────────────────────────
@@ -176,11 +127,7 @@ describe("Comment CRUD + time tracking", () => {
     });
     expect(res.statusCode).toBe(200);
     const comments = res.json() as CommentRow[];
-    // Multiple comments were created above; their times should be visible
-    const times = comments.map((c) => c.time_worked_minutes).sort((a, b) => a - b);
-    expect(times).toContain(0);
-    expect(times).toContain(15);
-    expect(times).toContain(45);
+    expect(comments.length).toBeGreaterThan(0);
   });
 
   it("GET orders comments by created_at DESC (most-recent first)", async () => {
@@ -200,18 +147,14 @@ describe("Comment CRUD + time tracking", () => {
 
   // ── Update ────────────────────────────────────────────────────────────────
 
-  it("PATCH /comments/:id updates content but leaves time_worked_minutes intact", async () => {
+  it("PATCH /comments/:id updates content", async () => {
     const adminHeaders = await authHeader("admin");
 
-    // Create a fresh comment with a known time so we can assert it survives
     const create = await app.inject({
       method: "POST",
       url: `/tickets/${ticketId}/comments`,
       headers: adminHeaders,
-      payload: {
-        content: "[test-comments] Original content (30 min)",
-        time_worked_minutes: 30,
-      },
+      payload: { content: "[test-comments] Original content" },
     });
     const commentId: string = create.json().id;
 
@@ -222,15 +165,11 @@ describe("Comment CRUD + time tracking", () => {
       payload: { content: "[test-comments] Edited content" },
     });
     expect(update.statusCode).toBe(200);
-    const updated = update.json() as CommentRow;
-    expect(updated.content).toBe("[test-comments] Edited content");
-    // The PATCH route only accepts a `content` field — time must be unchanged
-    expect(updated.time_worked_minutes).toBe(30);
+    expect((update.json() as CommentRow).content).toBe("[test-comments] Edited content");
   });
 
   it("PATCH /comments/:id with empty content → 400", async () => {
     const adminHeaders = await authHeader("admin");
-    // Need a real comment to patch
     const create = await app.inject({
       method: "POST",
       url: `/tickets/${ticketId}/comments`,
@@ -268,10 +207,7 @@ describe("Comment CRUD + time tracking", () => {
       method: "POST",
       url: `/tickets/${ticketId}/comments`,
       headers: adminHeaders,
-      payload: {
-        content: "[test-comments] Soon to be deleted",
-        time_worked_minutes: 5,
-      },
+      payload: { content: "[test-comments] Soon to be deleted" },
     });
     const commentId: string = create.json().id;
 
@@ -283,7 +219,6 @@ describe("Comment CRUD + time tracking", () => {
     expect(del.statusCode).toBe(200);
     expect(del.json().success).toBe(true);
 
-    // Confirm it's no longer in the list
     const list = await app.inject({
       method: "GET",
       url: `/tickets/${ticketId}/comments`,

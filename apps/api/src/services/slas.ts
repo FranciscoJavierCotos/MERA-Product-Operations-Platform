@@ -1,5 +1,5 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "../types/database.types";
+﻿import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "@stms/contracts";
 import type { SlaInstance, SlaPolicy, SlaStats } from "../types/sla.types";
 
 type Client = SupabaseClient<Database>;

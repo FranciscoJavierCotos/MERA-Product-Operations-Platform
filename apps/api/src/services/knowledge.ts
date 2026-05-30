@@ -1,5 +1,5 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../types/database.types";
+﻿import { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@stms/contracts";
 import type {
   KbCollection,
   KbDocument,
@@ -16,9 +16,9 @@ import type {
 
 type Client = SupabaseClient<Database>;
 
-// ────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Collections
-// ────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getCollections(supabase: Client): Promise<KbCollection[]> {
   const { data, error } = await supabase
@@ -38,9 +38,9 @@ export async function getTags(supabase: Client): Promise<KbTag[]> {
   return (data ?? []) as KbTag[];
 }
 
-// ────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Documents
-// ────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface DocumentFilters {
   search?: string;
@@ -173,9 +173,9 @@ export async function getDocumentChunks(
   return (data ?? []) as KbDocumentChunk[];
 }
 
-// ────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Resolutions (governance side)
-// ────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface ResolutionFilters {
   search?: string;
@@ -248,9 +248,9 @@ export async function getResolutionRows(
   });
 }
 
-// ────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Retrieval config
-// ────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getRetrievalConfig(
   supabase: Client,
@@ -258,21 +258,19 @@ export async function getRetrievalConfig(
   const { data, error } = await supabase
     .from("kb_retrieval_config")
     .select("*")
-    .eq("id", true)
+    .eq("environment", "production")
     .single();
   if (error) throw error;
   return data as KbRetrievalConfig;
 }
 
-// ────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // KPIs
-// ────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getKnowledgeKpis(
   supabase: Client,
 ): Promise<KbKpiSnapshot> {
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-
   const [
     indexed,
     disabledRes,
@@ -281,7 +279,7 @@ export async function getKnowledgeKpis(
     pending,
     failed,
     retrievals,
-    topLogs,
+    topSourceRes,
   ] = await Promise.all([
     supabase
       .from("tickets")
@@ -308,29 +306,15 @@ export async function getKnowledgeKpis(
     supabase
       .from("kb_retrieval_log")
       .select("id", { count: "exact", head: true })
-      .gte("created_at", sevenDaysAgo),
-    supabase
-      .from("kb_retrieval_log")
-      .select("results")
-      .gte("created_at", sevenDaysAgo)
-      .limit(500),
+      .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+    // SQL aggregate via RPC (replaces O(n Ã— m) JS tally â€” see migration 038).
+    // Cast needed: generated types don't yet include this function.
+    (supabase as unknown as { rpc: (fn: string, args?: unknown) => Promise<{ data: unknown; error: unknown }> })
+      .rpc("get_top_kb_source", { days_back: 7 }),
   ]);
 
-  let topSource: { title: string; count: number } | null = null;
-  if (topLogs.data && topLogs.data.length > 0) {
-    const tally: Record<string, number> = {};
-    for (const row of topLogs.data as { results: unknown }[]) {
-      if (!Array.isArray(row.results)) continue;
-      for (const r of row.results as Array<{ title?: string }>) {
-        if (!r?.title) continue;
-        tally[r.title] = (tally[r.title] ?? 0) + 1;
-      }
-    }
-    const sorted = Object.entries(tally).sort((a, b) => b[1] - a[1]);
-    if (sorted.length > 0) {
-      topSource = { title: sorted[0][0], count: sorted[0][1] };
-    }
-  }
+  const topRow = (topSourceRes.data as Array<{ title: string; cnt: number }> | null)?.[0];
+  const topSource = topRow ? { title: topRow.title, count: Number(topRow.cnt) } : null;
 
   return {
     resolutions_indexed: indexed.count ?? 0,
@@ -344,9 +328,9 @@ export async function getKnowledgeKpis(
   };
 }
 
-// ────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Audit + retrieval (read)
-// ────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getRecentAudit(
   supabase: Client,
@@ -361,9 +345,9 @@ export async function getRecentAudit(
   return (data ?? []) as KbAuditLog[];
 }
 
-// ────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Retrieval RPC
-// ────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function matchKnowledge(
   supabase: Client,

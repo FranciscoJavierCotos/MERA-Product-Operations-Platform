@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Thin client-side shim around the owned API.
  *
  * Every function here delegates to apiBrowser; the Supabase client
@@ -53,6 +53,7 @@ export interface ResolutionMatch {
 
 // ── Reads ────────────────────────────────────────────────────────────────────
 
+/** @deprecated */
 export async function getTickets(
   _sb: AnyClient,
   filters?: { status_id?: number; priority_id?: number; assigned_to?: string },
@@ -60,6 +61,7 @@ export async function getTickets(
   return apiBrowser.get<Ticket[]>("/tickets", filters);
 }
 
+/** @deprecated */
 export async function getTicketsPaginated(
   _sb: AnyClient,
   page: number,
@@ -73,6 +75,7 @@ export async function getTicketsPaginated(
   });
 }
 
+/** @deprecated */
 export async function getMyTicketsPaginated(
   _sb: AnyClient,
   _userId: string,
@@ -87,22 +90,27 @@ export async function getMyTicketsPaginated(
   });
 }
 
+/** @deprecated */
 export async function getTicketById(_sb: AnyClient, id: string) {
   return apiBrowser.get<Ticket | null>(`/tickets/${id}`);
 }
 
+/** @deprecated */
 export async function getTicketComments(_sb: AnyClient, ticketId: string) {
   return apiBrowser.get<TicketComment[]>(`/tickets/${ticketId}/comments`);
 }
 
+/** @deprecated */
 export async function getTicketHistory(_sb: AnyClient, ticketId: string) {
   return apiBrowser.get<TicketHistory[]>(`/tickets/${ticketId}/history`);
 }
 
+/** @deprecated */
 export async function getMyTickets(_sb: AnyClient, _userId: string) {
   return apiBrowser.get<Ticket[]>("/tickets/me");
 }
 
+/** @deprecated */
 export async function getMyTicketNavigation(
   _sb: AnyClient,
   _userId: string,
@@ -113,11 +121,13 @@ export async function getMyTicketNavigation(
   });
 }
 
+/** @deprecated */
 export async function searchTickets(_sb: AnyClient, query: string) {
   if (!query.trim()) return [] as Ticket[];
   return apiBrowser.get<Ticket[]>("/tickets/search", { q: query });
 }
 
+/** @deprecated */
 export async function findSimilarResolutions(
   _sb: AnyClient,
   embedding: number[],
@@ -133,6 +143,7 @@ export async function findSimilarResolutions(
 
 // ── Mutations ───────────────────────────────────────────────────────────────
 
+/** @deprecated */
 export async function createTicket(
   _sb: AnyClient,
   ticket: Record<string, unknown>,
@@ -140,6 +151,7 @@ export async function createTicket(
   return apiBrowser.post<Ticket>("/tickets", ticket);
 }
 
+/** @deprecated */
 export async function updateTicket(
   _sb: AnyClient,
   id: string,
@@ -148,11 +160,13 @@ export async function updateTicket(
   return apiBrowser.patch<Ticket>(`/tickets/${id}`, updates);
 }
 
+/** @deprecated */
 export async function deleteTicket(_sb: AnyClient, id: string) {
   await apiBrowser.del(`/tickets/${id}`);
   return { success: true } as const;
 }
 
+/** @deprecated */
 export async function updateTimeWorked(
   _sb: AnyClient,
   ticketId: string,
@@ -163,6 +177,7 @@ export async function updateTimeWorked(
   });
 }
 
+/** @deprecated */
 export async function createComment(
   _sb: AnyClient,
   comment: {

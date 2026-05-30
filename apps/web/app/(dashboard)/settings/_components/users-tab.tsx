@@ -43,7 +43,6 @@ import {
 } from "@/lib/validations/settings.schema";
 import { updateProfileAdminAction } from "../actions";
 import type { Profile, UserRole } from "@/types/user.types";
-import type { Team } from "@/types/team.types";
 
 // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -77,14 +76,12 @@ function getInitials(name: string): string {
 
 function EditProfileForm({
   profile,
-  teams,
   currentUserId,
   onSubmit,
   isPending,
   onCancel,
 }: {
   profile: Profile;
-  teams: Team[];
   currentUserId?: string;
   onSubmit: (data: ProfileAdminUpdateData) => void;
   isPending: boolean;
@@ -95,7 +92,6 @@ function EditProfileForm({
     defaultValues: {
       id: profile.id,
       role: profile.role,
-      team_id: profile.team_id ?? null,
     },
   });
 
@@ -139,27 +135,6 @@ function EditProfileForm({
         )}
       </div>
 
-      <div className="space-y-1">
-        <Label>Team</Label>
-        <Select
-          defaultValue={profile.team_id ?? "none"}
-          onValueChange={(v) =>
-            setValue("team_id", v === "none" ? null : v)
-          }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="No team" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">No team</SelectItem>
-            {teams.map((t) => (
-              <SelectItem key={t.id} value={t.id}>
-                {t.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel}>
@@ -177,15 +152,12 @@ function EditProfileForm({
 
 interface UsersTabProps {
   profiles: Profile[];
-  teams: Team[];
 }
 
-export function UsersTab({ profiles, teams }: UsersTabProps) {
+export function UsersTab({ profiles }: UsersTabProps) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
-
-  const teamMap = Object.fromEntries(teams.map((t) => [t.id, t]));
 
   const handleSubmit = (data: ProfileAdminUpdateData) => {
     startTransition(async () => {
@@ -228,7 +200,6 @@ export function UsersTab({ profiles, teams }: UsersTabProps) {
               <TableRow>
                 <TableHead>User</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Team</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
@@ -257,11 +228,6 @@ export function UsersTab({ profiles, teams }: UsersTabProps) {
                     <Badge variant={ROLE_BADGE_VARIANTS[profile.role]}>
                       {ROLE_LABELS[profile.role]}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-gray-600">
-                    {profile.team_id
-                      ? (teamMap[profile.team_id]?.name ?? "Unknown team")
-                      : "â€”"}
                   </TableCell>
                   <TableCell>
                     <Button
@@ -292,7 +258,6 @@ export function UsersTab({ profiles, teams }: UsersTabProps) {
           {editingProfile && (
             <EditProfileForm
               profile={editingProfile}
-              teams={teams}
               onSubmit={handleSubmit}
               isPending={isPending}
               onCancel={() => setEditingProfile(null)}

@@ -48,14 +48,17 @@ CREATE TYPE work_item_status    AS ENUM ('todo', 'in_progress', 'in_review', 'do
 -- ── 4a. Teams ────────────────────────────────────────────────
 -- (created before profiles so the FK can be added there)
 
+CREATE TYPE team_type_enum    AS ENUM ('business', 'support', 'engineering');
+CREATE TYPE support_level_enum AS ENUM ('L1', 'L2', 'L3');
+
 CREATE TABLE teams (
-  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name          TEXT        NOT NULL,
+  id            UUID              PRIMARY KEY DEFAULT gen_random_uuid(),
+  name          TEXT              NOT NULL,
   description   TEXT,
-  team_type     TEXT        CHECK (team_type IN ('business', 'support', 'engineering')),
-  support_level TEXT        CHECK (support_level IN ('L1', 'L2', 'L3')),
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+  team_type     team_type_enum,
+  support_level support_level_enum,
+  created_at    TIMESTAMPTZ       NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ       NOT NULL DEFAULT now()
 );
 
 -- ── 4b. Ticket status lookup ─────────────────────────────────
@@ -163,7 +166,7 @@ INSERT INTO company_health_statuses (id, name, label, color_class, emoji, level,
 -- ── 4g. Free-form ticket tags ────────────────────────────────
 
 CREATE TABLE tags (
-  id          SERIAL  PRIMARY KEY,
+  id          UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
   name        TEXT    NOT NULL UNIQUE,
   slug        TEXT    NOT NULL UNIQUE,
   color_class TEXT    NOT NULL DEFAULT 'bg-gray-100 text-gray-800'
@@ -205,18 +208,17 @@ INSERT INTO kb_document_statuses (id, code, label) VALUES
 -- Mirrors auth.users. Created automatically via trigger (section 11).
 
 CREATE TABLE profiles (
-  id          UUID        PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
-  email       TEXT        NOT NULL,
-  full_name   TEXT        NOT NULL,
-  role        user_role   NOT NULL DEFAULT 'support_member',
+  id          UUID      PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
+  email       TEXT      NOT NULL,
+  full_name   TEXT      NOT NULL,
+  role        user_role NOT NULL DEFAULT 'support_member',
   avatar_url  TEXT,
-  team_id     UUID        REFERENCES teams(id) ON DELETE SET NULL,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_profiles_role    ON profiles (role);
-CREATE INDEX idx_profiles_team_id ON profiles (team_id);
+ALTER TABLE profiles ADD CONSTRAINT profiles_email_unique UNIQUE (email);
+CREATE INDEX idx_profiles_role ON profiles (role);
 
 -- ── Helper functions (depend on profiles) ────────────────────
 -- Defined here so the profiles table already exists when Postgres
@@ -267,6 +269,7 @@ CREATE TABLE companies (
 );
 
 CREATE INDEX idx_companies_health_status ON companies (health_status_id);
+CREATE UNIQUE INDEX companies_name_ci      ON companies (lower(name));
 
 CREATE TABLE company_contacts (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -298,11 +301,9 @@ CREATE INDEX idx_company_health_history_company
 
 -- ── 5b. Tickets ──────────────────────────────────────────────
 
-CREATE SEQUENCE ticket_number_seq START WITH 1 INCREMENT BY 1;
-
 CREATE TABLE tickets (
   id                   UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  ticket_number        INTEGER     NOT NULL UNIQUE DEFAULT nextval('ticket_number_seq'),
+  ticket_number        INTEGER     NOT NULL UNIQUE GENERATED ALWAYS AS IDENTITY,
   title                TEXT        NOT NULL,
   description          TEXT        NOT NULL,
   cc_email             TEXT,
@@ -349,15 +350,16 @@ CREATE INDEX idx_tickets_team_id          ON tickets (team_id);
 CREATE INDEX idx_tickets_company          ON tickets (company_id);
 CREATE INDEX idx_tickets_created_at       ON tickets (created_at DESC);
 CREATE INDEX idx_tickets_search_vector    ON tickets USING gin(search_vector);
-CREATE INDEX idx_tickets_resolution_ivfflat
-  ON tickets USING ivfflat (resolution_embedding vector_cosine_ops)
-  WITH (lists = 100);
+CREATE INDEX idx_tickets_resolution_hnsw
+  ON tickets USING hnsw (resolution_embedding vector_cosine_ops)
+  WITH (m = 16, ef_construction = 64);
 
 -- ── 5c. Ticket ↔ Tag junction ────────────────────────────────
 
 CREATE TABLE ticket_tags (
-  ticket_id UUID    NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
-  tag_id    INTEGER NOT NULL REFERENCES tags(id)    ON DELETE CASCADE,
+  ticket_id  UUID        NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+  tag_id     UUID        NOT NULL REFERENCES tags(id)    ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (ticket_id, tag_id)
 );
 
@@ -366,33 +368,59 @@ CREATE INDEX idx_ticket_tags_tag_id    ON ticket_tags (tag_id);
 
 -- ── 5d. Tasks ────────────────────────────────────────────────
 
+CREATE TYPE task_priority_enum AS ENUM ('low', 'medium', 'high', 'urgent');
+
+CREATE TABLE task_statuses (
+  id         SMALLINT PRIMARY KEY,
+  name       TEXT     NOT NULL UNIQUE,
+  label      TEXT     NOT NULL,
+  is_final   BOOLEAN  NOT NULL DEFAULT FALSE,
+  sort_order SMALLINT NOT NULL DEFAULT 0
+);
+
+INSERT INTO task_statuses (id, name, label, is_final, sort_order) VALUES
+  (1, 'pending',   'Pending',   FALSE, 0),
+  (2, 'completed', 'Completed', TRUE,  1);
+
+CREATE TABLE task_action_tags (
+  id         SMALLINT PRIMARY KEY,
+  name       TEXT     NOT NULL UNIQUE,
+  label      TEXT     NOT NULL,
+  sort_order SMALLINT NOT NULL DEFAULT 0
+);
+
+INSERT INTO task_action_tags (id, name, label, sort_order) VALUES
+  ( 1, 'meeting',         'Meeting',         0),
+  ( 2, 'pending_customer','Pending Customer', 1),
+  ( 3, 'for_review',      'For Review',       2),
+  ( 4, 'send_email',      'Send Email',       3),
+  ( 5, 'follow_up',       'Follow Up',        4),
+  ( 6, 'internal_review', 'Internal Review',  5),
+  ( 7, 'documentation',   'Documentation',    6),
+  ( 8, 'testing',         'Testing',          7),
+  ( 9, 'deployment',      'Deployment',       8),
+  (10, 'other',           'Other',            9);
+
 CREATE TABLE tasks (
-  id                 UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  title              TEXT        NOT NULL,
+  id                 UUID               PRIMARY KEY DEFAULT gen_random_uuid(),
+  title              TEXT               NOT NULL,
   description        TEXT,
-  status             TEXT        NOT NULL DEFAULT 'pending'
-                       CHECK (status IN ('pending', 'completed')),
-  priority           TEXT        NOT NULL DEFAULT 'medium'
-                       CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
-  action_tag         TEXT        NOT NULL DEFAULT 'other'
-                       CHECK (action_tag IN (
-                         'meeting', 'pending_customer', 'for_review', 'send_email',
-                         'follow_up', 'internal_review', 'documentation',
-                         'testing', 'deployment', 'other'
-                       )),
-  ticket_id          UUID        REFERENCES tickets(id) ON DELETE SET NULL,
-  assigned_to        UUID        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  created_by         UUID        REFERENCES profiles(id) ON DELETE SET NULL,
+  status_id          SMALLINT           NOT NULL DEFAULT 1 REFERENCES task_statuses(id),
+  priority           task_priority_enum NOT NULL DEFAULT 'medium',
+  action_tag_id      SMALLINT           NOT NULL DEFAULT 10 REFERENCES task_action_tags(id),
+  ticket_id          UUID               REFERENCES tickets(id) ON DELETE SET NULL,
+  assigned_to        UUID               NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  created_by         UUID               REFERENCES profiles(id) ON DELETE SET NULL,
   due_date           DATE,
   completed_at       TIMESTAMPTZ,
   time_spent_minutes INTEGER,
-  created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at         TIMESTAMPTZ        NOT NULL DEFAULT now(),
+  updated_at         TIMESTAMPTZ        NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_tasks_ticket_id   ON tasks (ticket_id);
 CREATE INDEX idx_tasks_assigned_to ON tasks (assigned_to);
-CREATE INDEX idx_tasks_status      ON tasks (status);
+CREATE INDEX idx_tasks_status_id   ON tasks (status_id);
 CREATE INDEX idx_tasks_due_date    ON tasks (due_date);
 
 -- ── 5e. Ticket comments ──────────────────────────────────────
@@ -408,8 +436,9 @@ CREATE TABLE ticket_comments (
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_ticket_comments_ticket_id ON ticket_comments (ticket_id, created_at DESC);
-CREATE INDEX idx_ticket_comments_user_id   ON ticket_comments (user_id);
+CREATE INDEX idx_ticket_comments_ticket_id          ON ticket_comments (ticket_id, created_at DESC);
+CREATE INDEX idx_ticket_comments_user_id             ON ticket_comments (user_id);
+CREATE INDEX idx_ticket_comments_attachments_gin     ON ticket_comments USING gin (attachments jsonb_path_ops);
 
 -- ── 5f. Ticket history (immutable audit trail) ───────────────
 -- Written exclusively by DB triggers. App code must never INSERT here.
@@ -487,9 +516,12 @@ CREATE TABLE sla_instances (
   updated_at           TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_sla_instances_ticket_id      ON sla_instances (ticket_id);
-CREATE INDEX idx_sla_instances_resolution_due ON sla_instances (resolution_due_at);
-CREATE INDEX idx_sla_instances_response_due   ON sla_instances (response_due_at);
+CREATE INDEX idx_sla_instances_ticket_id           ON sla_instances (ticket_id);
+CREATE INDEX idx_sla_instances_policy_id           ON sla_instances (policy_id);
+CREATE INDEX idx_sla_instances_resolution_due      ON sla_instances (resolution_due_at);
+CREATE INDEX idx_sla_instances_resolution_due_open ON sla_instances (resolution_due_at)
+  WHERE responded_at IS NULL;
+CREATE INDEX idx_sla_instances_response_due        ON sla_instances (response_due_at);
 
 
 -- ============================================================
@@ -582,9 +614,9 @@ CREATE TABLE kb_document_chunks (
   UNIQUE (document_version_id, chunk_index)
 );
 
-CREATE INDEX idx_kb_chunks_embedding_ivfflat
-  ON kb_document_chunks USING ivfflat (embedding vector_cosine_ops)
-  WITH (lists = 100);
+CREATE INDEX idx_kb_chunks_embedding_hnsw
+  ON kb_document_chunks USING hnsw (embedding vector_cosine_ops)
+  WITH (m = 16, ef_construction = 64);
 CREATE INDEX idx_kb_chunks_document_id   ON kb_document_chunks (document_id);
 CREATE INDEX idx_kb_chunks_version_id    ON kb_document_chunks (document_version_id);
 CREATE INDEX idx_kb_versions_document    ON kb_document_versions (document_id);
@@ -605,21 +637,20 @@ CREATE TABLE kb_resolution_settings (
   updated_by           UUID        REFERENCES profiles(id) ON DELETE SET NULL
 );
 
--- ── 7d. Retrieval config (singleton row) ────────────────────
+-- ── 7d. Retrieval config (one row per environment) ──────────
 
 CREATE TABLE kb_retrieval_config (
-  id                   BOOLEAN     PRIMARY KEY DEFAULT true CHECK (id),
+  environment          TEXT        PRIMARY KEY DEFAULT 'production',
   similarity_threshold NUMERIC(4,3) NOT NULL DEFAULT 0.70
     CHECK (similarity_threshold >= 0 AND similarity_threshold <= 1),
   max_results          INT         NOT NULL DEFAULT 5 CHECK (max_results > 0 AND max_results <= 50),
   source_weights       JSONB       NOT NULL DEFAULT '{"resolution":1.0,"document":1.0}',
   sources_enabled      JSONB       NOT NULL DEFAULT '{"resolution":true,"document":true}',
-  environment          TEXT        NOT NULL DEFAULT 'production',
   updated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_by           UUID        REFERENCES profiles(id) ON DELETE SET NULL
 );
 
-INSERT INTO kb_retrieval_config (id) VALUES (true);
+INSERT INTO kb_retrieval_config (environment) VALUES ('production');
 
 -- ── 7e. Audit + analytics ────────────────────────────────────
 
@@ -741,7 +772,8 @@ CREATE TABLE work_item_comments (
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_work_item_comments_item ON work_item_comments (work_item_id, created_at DESC);
+CREATE INDEX idx_work_item_comments_item                    ON work_item_comments (work_item_id, created_at DESC);
+CREATE INDEX idx_work_item_comments_attachments_gin        ON work_item_comments USING gin (attachments jsonb_path_ops);
 
 -- ── 8e. Work item history (audit trail) ─────────────────────
 -- Written exclusively by DB triggers. App code must never INSERT here.
@@ -754,6 +786,9 @@ CREATE TABLE work_item_history (
   field_name   TEXT,
   old_value    TEXT,
   new_value    TEXT,
+  changes      JSONB       NOT NULL DEFAULT '{}',
+  source_table TEXT,
+  source_id    UUID,
   metadata     JSONB       NOT NULL DEFAULT '{}',
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -792,49 +827,50 @@ ALTER TABLE link_types
   ADD CONSTRAINT link_types_inverse_fk
   FOREIGN KEY (inverse_id) REFERENCES link_types(id) DEFERRABLE INITIALLY DEFERRED;
 
-CREATE TABLE item_links (
-  id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  source_ticket_id    UUID        REFERENCES tickets(id)    ON DELETE CASCADE,
-  source_work_item_id UUID        REFERENCES work_items(id) ON DELETE CASCADE,
-  target_work_item_id UUID        NOT NULL REFERENCES work_items(id) ON DELETE CASCADE,
-  link_type           TEXT        NOT NULL REFERENCES link_types(id),
-  is_primary          BOOLEAN     NOT NULL DEFAULT FALSE,
-  note                TEXT,
-  created_by          UUID        REFERENCES profiles(id) ON DELETE SET NULL,
-  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+-- ── ticket_work_item_links — tickets → work items ─────────────
 
-  CONSTRAINT item_links_one_source CHECK (
-    (source_ticket_id IS NOT NULL AND source_work_item_id IS NULL)
-    OR
-    (source_ticket_id IS NULL AND source_work_item_id IS NOT NULL)
-  ),
-  CONSTRAINT item_links_no_self CHECK (
-    source_work_item_id IS NULL OR source_work_item_id <> target_work_item_id
-  ),
-  CONSTRAINT item_links_note_length CHECK (note IS NULL OR length(note) <= 500)
+CREATE TABLE ticket_work_item_links (
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  ticket_id    UUID        NOT NULL REFERENCES tickets(id)    ON DELETE CASCADE,
+  work_item_id UUID        NOT NULL REFERENCES work_items(id) ON DELETE CASCADE,
+  link_type    TEXT        NOT NULL REFERENCES link_types(id),
+  is_primary   BOOLEAN     NOT NULL DEFAULT FALSE,
+  note         TEXT,
+  created_by   UUID        REFERENCES profiles(id) ON DELETE SET NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT twil_unique      UNIQUE (ticket_id, work_item_id, link_type),
+  CONSTRAINT twil_note_length CHECK  (note IS NULL OR length(note) <= 500)
 );
 
-CREATE UNIQUE INDEX uniq_item_links_ticket
-  ON item_links (source_ticket_id, target_work_item_id, link_type)
-  WHERE source_ticket_id IS NOT NULL;
+CREATE UNIQUE INDEX twil_unique_primary
+  ON ticket_work_item_links (ticket_id)
+  WHERE is_primary = TRUE;
 
-CREATE UNIQUE INDEX uniq_item_links_work_item
-  ON item_links (source_work_item_id, target_work_item_id, link_type)
-  WHERE source_work_item_id IS NOT NULL;
+CREATE INDEX idx_twil_ticket_id    ON ticket_work_item_links (ticket_id);
+CREATE INDEX idx_twil_work_item_id ON ticket_work_item_links (work_item_id);
 
-CREATE UNIQUE INDEX uniq_item_links_primary_ticket
-  ON item_links (source_ticket_id)
-  WHERE is_primary AND source_ticket_id IS NOT NULL;
+-- ── work_item_links — work items → work items ─────────────────
 
-CREATE UNIQUE INDEX uniq_item_links_primary_work_item
-  ON item_links (source_work_item_id)
-  WHERE is_primary AND source_work_item_id IS NOT NULL;
+CREATE TABLE work_item_links (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  source_id  UUID        NOT NULL REFERENCES work_items(id) ON DELETE CASCADE,
+  target_id  UUID        NOT NULL REFERENCES work_items(id) ON DELETE CASCADE,
+  link_type  TEXT        NOT NULL REFERENCES link_types(id),
+  is_primary BOOLEAN     NOT NULL DEFAULT FALSE,
+  note       TEXT,
+  created_by UUID        REFERENCES profiles(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT wil_no_self    CHECK  (source_id <> target_id),
+  CONSTRAINT wil_unique     UNIQUE (source_id, target_id, link_type),
+  CONSTRAINT wil_note_length CHECK (note IS NULL OR length(note) <= 500)
+);
 
-CREATE INDEX idx_item_links_target           ON item_links (target_work_item_id);
-CREATE INDEX idx_item_links_source_ticket    ON item_links (source_ticket_id)
-  WHERE source_ticket_id IS NOT NULL;
-CREATE INDEX idx_item_links_source_work_item ON item_links (source_work_item_id)
-  WHERE source_work_item_id IS NOT NULL;
+CREATE UNIQUE INDEX wil_unique_primary
+  ON work_item_links (source_id)
+  WHERE is_primary = TRUE;
+
+CREATE INDEX idx_wil_source_id ON work_item_links (source_id);
+CREATE INDEX idx_wil_target_id ON work_item_links (target_id);
 
 
 -- ============================================================
@@ -874,11 +910,11 @@ CREATE INDEX idx_project_members_user_id    ON project_members (user_id);
 -- ── 10c. escalation_history — ticket support-level escalations ─
 
 CREATE TABLE escalation_history (
-  id                      UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  ticket_id               UUID        NOT NULL REFERENCES tickets(id)  ON DELETE CASCADE,
-  user_id                 UUID        REFERENCES profiles(id) ON DELETE SET NULL,
-  from_support_level      TEXT        CHECK (from_support_level IN ('L1', 'L2', 'L3')),
-  to_support_level        TEXT        NOT NULL CHECK (to_support_level IN ('L1', 'L2', 'L3')),
+  id                      UUID               PRIMARY KEY DEFAULT gen_random_uuid(),
+  ticket_id               UUID               NOT NULL REFERENCES tickets(id)  ON DELETE CASCADE,
+  user_id                 UUID               REFERENCES profiles(id) ON DELETE SET NULL,
+  from_support_level      support_level_enum,
+  to_support_level        support_level_enum NOT NULL,
   from_team_id            UUID        REFERENCES teams(id) ON DELETE SET NULL,
   to_team_id              UUID        NOT NULL REFERENCES teams(id) ON DELETE SET NULL,
   notes                   TEXT,
@@ -892,10 +928,10 @@ CREATE INDEX idx_escalation_history_to_team ON escalation_history (to_team_id);
 -- ── 10d. ticket_collaborators — secondary teams on a ticket ──
 
 CREATE TABLE ticket_collaborators (
-  id                 UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  ticket_id          UUID        NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
-  team_id            UUID        NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
-  support_level      TEXT        CHECK (support_level IN ('L1', 'L2', 'L3')),
+  id                 UUID               PRIMARY KEY DEFAULT gen_random_uuid(),
+  ticket_id          UUID               NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+  team_id            UUID               NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+  support_level      support_level_enum,
   added_by           UUID        REFERENCES profiles(id) ON DELETE SET NULL,
   notes              TEXT,
   created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -1602,40 +1638,50 @@ AS $$
 DECLARE v_actor UUID := auth.uid();
 BEGIN
   IF TG_OP = 'INSERT' THEN
-    INSERT INTO work_item_history (work_item_id, user_id, action, metadata)
+    INSERT INTO work_item_history (work_item_id, user_id, action, metadata, changes)
     VALUES (NEW.id, v_actor, 'created',
-      jsonb_build_object('item_key', NEW.item_key, 'title', NEW.title, 'type', NEW.type, 'status', NEW.status));
+      jsonb_build_object('item_key', NEW.item_key, 'title', NEW.title, 'type', NEW.type,
+                         'status', NEW.status, 'priority_id', NEW.priority_id),
+      jsonb_build_object('event', 'created', 'item_key', NEW.item_key, 'title', NEW.title,
+                         'type', NEW.type));
     RETURN NEW;
   END IF;
 
   IF TG_OP = 'UPDATE' THEN
     IF NEW.status IS DISTINCT FROM OLD.status THEN
-      INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value, new_value)
-      VALUES (NEW.id, v_actor, 'updated', 'status', OLD.status::TEXT, NEW.status::TEXT);
+      INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value, new_value, changes)
+      VALUES (NEW.id, v_actor, 'updated', 'status', OLD.status::TEXT, NEW.status::TEXT,
+              jsonb_build_object('field', 'status', 'old', OLD.status, 'new', NEW.status));
     END IF;
     IF NEW.assigned_to IS DISTINCT FROM OLD.assigned_to THEN
-      INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value, new_value)
-      VALUES (NEW.id, v_actor, 'updated', 'assigned_to', OLD.assigned_to::TEXT, NEW.assigned_to::TEXT);
+      INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value, new_value, changes)
+      VALUES (NEW.id, v_actor, 'updated', 'assigned_to', OLD.assigned_to::TEXT, NEW.assigned_to::TEXT,
+              jsonb_build_object('field', 'assigned_to', 'old', OLD.assigned_to, 'new', NEW.assigned_to));
     END IF;
     IF NEW.priority_id IS DISTINCT FROM OLD.priority_id THEN
-      INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value, new_value)
-      VALUES (NEW.id, v_actor, 'updated', 'priority_id', OLD.priority_id::TEXT, NEW.priority_id::TEXT);
+      INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value, new_value, changes)
+      VALUES (NEW.id, v_actor, 'updated', 'priority_id', OLD.priority_id::TEXT, NEW.priority_id::TEXT,
+              jsonb_build_object('field', 'priority_id', 'old', OLD.priority_id, 'new', NEW.priority_id));
     END IF;
     IF NEW.sprint_id IS DISTINCT FROM OLD.sprint_id THEN
-      INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value, new_value)
-      VALUES (NEW.id, v_actor, 'updated', 'sprint_id', OLD.sprint_id::TEXT, NEW.sprint_id::TEXT);
+      INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value, new_value, changes)
+      VALUES (NEW.id, v_actor, 'updated', 'sprint_id', OLD.sprint_id::TEXT, NEW.sprint_id::TEXT,
+              jsonb_build_object('field', 'sprint_id', 'old', OLD.sprint_id, 'new', NEW.sprint_id));
     END IF;
     IF NEW.title IS DISTINCT FROM OLD.title THEN
-      INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value, new_value)
-      VALUES (NEW.id, v_actor, 'updated', 'title', OLD.title, NEW.title);
+      INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value, new_value, changes)
+      VALUES (NEW.id, v_actor, 'updated', 'title', OLD.title, NEW.title,
+              jsonb_build_object('field', 'title', 'old', OLD.title, 'new', NEW.title));
     END IF;
     IF NEW.story_points IS DISTINCT FROM OLD.story_points THEN
-      INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value, new_value)
-      VALUES (NEW.id, v_actor, 'updated', 'story_points', OLD.story_points::TEXT, NEW.story_points::TEXT);
+      INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value, new_value, changes)
+      VALUES (NEW.id, v_actor, 'updated', 'story_points', OLD.story_points::TEXT, NEW.story_points::TEXT,
+              jsonb_build_object('field', 'story_points', 'old', OLD.story_points, 'new', NEW.story_points));
     END IF;
     IF NEW.type IS DISTINCT FROM OLD.type THEN
-      INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value, new_value)
-      VALUES (NEW.id, v_actor, 'updated', 'type', OLD.type::TEXT, NEW.type::TEXT);
+      INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value, new_value, changes)
+      VALUES (NEW.id, v_actor, 'updated', 'type', OLD.type::TEXT, NEW.type::TEXT,
+              jsonb_build_object('field', 'type', 'old', OLD.type, 'new', NEW.type));
     END IF;
     RETURN NEW;
   END IF;
@@ -1654,125 +1700,85 @@ CREATE TRIGGER work_items_history_update
 
 -- ── 11o. Item links → ticket_history + work_item_history ─────
 
-CREATE OR REPLACE FUNCTION log_item_link_ticket_history()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  v_actor    UUID := auth.uid();
-  v_wi       RECORD;
-  v_lt_label TEXT;
-BEGIN
-  IF TG_OP = 'INSERT' THEN
-    IF NEW.source_ticket_id IS NULL THEN RETURN NEW; END IF;
-    SELECT item_key, title, type INTO v_wi FROM work_items WHERE id = NEW.target_work_item_id;
-    SELECT label INTO v_lt_label FROM link_types WHERE id = NEW.link_type;
-    INSERT INTO ticket_history (ticket_id, user_id, action, field_name, old_value, new_value, source_table, source_id, metadata, changes)
-    VALUES (
-      NEW.source_ticket_id, v_actor, 'link_added', 'scrum_link', NULL,
-      format('%s %s: %s', v_lt_label, v_wi.item_key, v_wi.title),
-      'work_items', NEW.target_work_item_id,
-      jsonb_build_object('item_key', v_wi.item_key, 'title', v_wi.title, 'type', v_wi.type, 'link_type', NEW.link_type, 'is_primary', NEW.is_primary),
-      jsonb_build_object('event', 'linked', 'item_key', v_wi.item_key, 'link_type', NEW.link_type)
-    );
-    RETURN NEW;
-  END IF;
-
-  IF TG_OP = 'UPDATE' THEN
-    IF NEW.source_ticket_id IS NULL THEN RETURN NEW; END IF;
-    IF NEW.is_primary IS DISTINCT FROM OLD.is_primary THEN
-      SELECT item_key, title INTO v_wi FROM work_items WHERE id = NEW.target_work_item_id;
-      INSERT INTO ticket_history (ticket_id, user_id, action, field_name, old_value, new_value, source_table, source_id, metadata, changes)
-      VALUES (
-        NEW.source_ticket_id, v_actor, 'link_primary_changed', 'scrum_link',
-        OLD.is_primary::TEXT, NEW.is_primary::TEXT, 'work_items', NEW.target_work_item_id,
-        jsonb_build_object('item_key', v_wi.item_key, 'title', v_wi.title, 'link_type', NEW.link_type, 'is_primary', NEW.is_primary),
-        jsonb_build_object('event', 'primary_changed', 'item_key', v_wi.item_key, 'is_primary', NEW.is_primary)
-      );
-    END IF;
-    RETURN NEW;
-  END IF;
-
-  IF TG_OP = 'DELETE' THEN
-    IF OLD.source_ticket_id IS NULL THEN RETURN OLD; END IF;
-    SELECT item_key, title, type INTO v_wi FROM work_items WHERE id = OLD.target_work_item_id;
-    SELECT label INTO v_lt_label FROM link_types WHERE id = OLD.link_type;
-    INSERT INTO ticket_history (ticket_id, user_id, action, field_name, old_value, new_value, source_table, source_id, metadata, changes)
-    VALUES (
-      OLD.source_ticket_id, v_actor, 'link_removed', 'scrum_link',
-      format('%s %s: %s', COALESCE(v_lt_label, OLD.link_type), COALESCE(v_wi.item_key, '?'), COALESCE(v_wi.title, '?')),
-      NULL, 'work_items', OLD.target_work_item_id,
-      jsonb_build_object('item_key', v_wi.item_key, 'title', v_wi.title, 'link_type', OLD.link_type),
-      jsonb_build_object('event', 'unlinked', 'item_key', v_wi.item_key, 'link_type', OLD.link_type)
-    );
-    RETURN OLD;
-  END IF;
-
-  RETURN NULL;
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION log_item_link_work_item_history()
+CREATE OR REPLACE FUNCTION log_twil_history()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
   v_actor       UUID := auth.uid();
-  v_target_wi   RECORD;
-  v_source_wi   RECORD;
-  v_source_tkt  RECORD;
+  v_wi          RECORD;
+  v_lt_label    TEXT;
+  v_tkt         RECORD;
   v_target_meta JSONB;
-  v_source_meta JSONB;
 BEGIN
   IF TG_OP = 'INSERT' THEN
-    SELECT item_key, title, type INTO v_target_wi FROM work_items WHERE id = NEW.target_work_item_id;
-    IF NEW.source_ticket_id IS NOT NULL THEN
-      SELECT ticket_number, title INTO v_source_tkt FROM tickets WHERE id = NEW.source_ticket_id;
-      v_target_meta := jsonb_build_object(
-        'source_kind','ticket','ticket_id',NEW.source_ticket_id,
-        'ticket_number',v_source_tkt.ticket_number,'ticket_title',v_source_tkt.title,'link_type',NEW.link_type);
-    ELSE
-      SELECT item_key, title, type INTO v_source_wi FROM work_items WHERE id = NEW.source_work_item_id;
-      v_target_meta := jsonb_build_object(
-        'source_kind','work_item','work_item_id',NEW.source_work_item_id,
-        'item_key',v_source_wi.item_key,'title',v_source_wi.title,'type',v_source_wi.type,'link_type',NEW.link_type);
-    END IF;
-    INSERT INTO work_item_history (work_item_id, user_id, action, field_name, new_value, metadata)
-    VALUES (NEW.target_work_item_id, v_actor, 'link_added', 'link', NEW.link_type, v_target_meta);
-    IF NEW.source_work_item_id IS NOT NULL THEN
-      v_source_meta := jsonb_build_object(
-        'target_kind','work_item','work_item_id',NEW.target_work_item_id,
-        'item_key',v_target_wi.item_key,'title',v_target_wi.title,'type',v_target_wi.type,'link_type',NEW.link_type);
-      INSERT INTO work_item_history (work_item_id, user_id, action, field_name, new_value, metadata)
-      VALUES (NEW.source_work_item_id, v_actor, 'link_added', 'link', NEW.link_type, v_source_meta);
+    SELECT item_key, title, type INTO v_wi FROM work_items WHERE id = NEW.work_item_id;
+    SELECT label INTO v_lt_label FROM link_types WHERE id = NEW.link_type;
+    INSERT INTO ticket_history (ticket_id, user_id, action, field_name, old_value, new_value,
+      source_table, source_id, metadata, changes)
+    VALUES (
+      NEW.ticket_id, v_actor, 'link_added', 'scrum_link', NULL,
+      format('%s %s: %s', v_lt_label, v_wi.item_key, v_wi.title),
+      'work_items', NEW.work_item_id,
+      jsonb_build_object('item_key', v_wi.item_key, 'title', v_wi.title, 'type', v_wi.type,
+        'link_type', NEW.link_type, 'is_primary', NEW.is_primary),
+      jsonb_build_object('event', 'linked', 'item_key', v_wi.item_key, 'link_type', NEW.link_type)
+    );
+    SELECT ticket_number, title INTO v_tkt FROM tickets WHERE id = NEW.ticket_id;
+    v_target_meta := jsonb_build_object(
+      'source_kind', 'ticket', 'ticket_id', NEW.ticket_id,
+      'ticket_number', v_tkt.ticket_number, 'ticket_title', v_tkt.title,
+      'link_type', NEW.link_type);
+    INSERT INTO work_item_history (work_item_id, user_id, action, field_name, new_value,
+      source_table, source_id, metadata, changes)
+    VALUES (NEW.work_item_id, v_actor, 'link_added', 'link', NEW.link_type,
+      'tickets', NEW.ticket_id, v_target_meta,
+      jsonb_build_object('event', 'linked', 'ticket_id', NEW.ticket_id,
+        'ticket_number', v_tkt.ticket_number, 'link_type', NEW.link_type));
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    IF NEW.is_primary IS DISTINCT FROM OLD.is_primary THEN
+      SELECT item_key, title INTO v_wi FROM work_items WHERE id = NEW.work_item_id;
+      INSERT INTO ticket_history (ticket_id, user_id, action, field_name, old_value, new_value,
+        source_table, source_id, metadata, changes)
+      VALUES (
+        NEW.ticket_id, v_actor, 'link_primary_changed', 'scrum_link',
+        OLD.is_primary::TEXT, NEW.is_primary::TEXT, 'work_items', NEW.work_item_id,
+        jsonb_build_object('item_key', v_wi.item_key, 'title', v_wi.title,
+          'link_type', NEW.link_type, 'is_primary', NEW.is_primary),
+        jsonb_build_object('event', 'primary_changed', 'item_key', v_wi.item_key,
+          'is_primary', NEW.is_primary)
+      );
     END IF;
     RETURN NEW;
   END IF;
 
   IF TG_OP = 'DELETE' THEN
-    SELECT item_key, title, type INTO v_target_wi FROM work_items WHERE id = OLD.target_work_item_id;
-    IF OLD.source_ticket_id IS NOT NULL THEN
-      SELECT ticket_number, title INTO v_source_tkt FROM tickets WHERE id = OLD.source_ticket_id;
-      v_target_meta := jsonb_build_object(
-        'source_kind','ticket','ticket_id',OLD.source_ticket_id,
-        'ticket_number',v_source_tkt.ticket_number,'link_type',OLD.link_type);
-    ELSE
-      SELECT item_key, title, type INTO v_source_wi FROM work_items WHERE id = OLD.source_work_item_id;
-      v_target_meta := jsonb_build_object(
-        'source_kind','work_item','work_item_id',OLD.source_work_item_id,
-        'item_key',v_source_wi.item_key,'link_type',OLD.link_type);
-    END IF;
-    INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value, metadata)
-    VALUES (OLD.target_work_item_id, v_actor, 'link_removed', 'link', OLD.link_type, v_target_meta);
-    IF OLD.source_work_item_id IS NOT NULL THEN
-      v_source_meta := jsonb_build_object(
-        'target_kind','work_item','work_item_id',OLD.target_work_item_id,
-        'item_key',v_target_wi.item_key,'link_type',OLD.link_type);
-      INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value, metadata)
-      VALUES (OLD.source_work_item_id, v_actor, 'link_removed', 'link', OLD.link_type, v_source_meta);
-    END IF;
+    SELECT item_key, title, type INTO v_wi FROM work_items WHERE id = OLD.work_item_id;
+    SELECT label INTO v_lt_label FROM link_types WHERE id = OLD.link_type;
+    INSERT INTO ticket_history (ticket_id, user_id, action, field_name, old_value, new_value,
+      source_table, source_id, metadata, changes)
+    VALUES (
+      OLD.ticket_id, v_actor, 'link_removed', 'scrum_link',
+      format('%s %s: %s', COALESCE(v_lt_label, OLD.link_type),
+        COALESCE(v_wi.item_key, '?'), COALESCE(v_wi.title, '?')),
+      NULL, 'work_items', OLD.work_item_id,
+      jsonb_build_object('item_key', v_wi.item_key, 'title', v_wi.title, 'link_type', OLD.link_type),
+      jsonb_build_object('event', 'unlinked', 'item_key', v_wi.item_key, 'link_type', OLD.link_type)
+    );
+    SELECT ticket_number, title INTO v_tkt FROM tickets WHERE id = OLD.ticket_id;
+    v_target_meta := jsonb_build_object(
+      'source_kind', 'ticket', 'ticket_id', OLD.ticket_id,
+      'ticket_number', v_tkt.ticket_number, 'link_type', OLD.link_type);
+    INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value,
+      source_table, source_id, metadata, changes)
+    VALUES (OLD.work_item_id, v_actor, 'link_removed', 'link', OLD.link_type,
+      'tickets', OLD.ticket_id, v_target_meta,
+      jsonb_build_object('event', 'unlinked', 'ticket_id', OLD.ticket_id,
+        'ticket_number', v_tkt.ticket_number, 'link_type', OLD.link_type));
     RETURN OLD;
   END IF;
 
@@ -1780,13 +1786,79 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER item_links_ticket_history
-  AFTER INSERT OR UPDATE OR DELETE ON item_links
-  FOR EACH ROW EXECUTE FUNCTION log_item_link_ticket_history();
+CREATE TRIGGER twil_ticket_history
+  AFTER INSERT OR UPDATE OR DELETE ON ticket_work_item_links
+  FOR EACH ROW EXECUTE FUNCTION log_twil_history();
 
-CREATE TRIGGER item_links_work_item_history
-  AFTER INSERT OR DELETE ON item_links
-  FOR EACH ROW EXECUTE FUNCTION log_item_link_work_item_history();
+CREATE OR REPLACE FUNCTION log_wil_history()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_actor       UUID := auth.uid();
+  v_source_wi   RECORD;
+  v_target_wi   RECORD;
+  v_source_meta JSONB;
+  v_target_meta JSONB;
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    SELECT item_key, title, type INTO v_source_wi FROM work_items WHERE id = NEW.source_id;
+    SELECT item_key, title, type INTO v_target_wi FROM work_items WHERE id = NEW.target_id;
+    v_target_meta := jsonb_build_object(
+      'source_kind', 'work_item', 'work_item_id', NEW.source_id,
+      'item_key', v_source_wi.item_key, 'title', v_source_wi.title,
+      'type', v_source_wi.type, 'link_type', NEW.link_type);
+    v_source_meta := jsonb_build_object(
+      'target_kind', 'work_item', 'work_item_id', NEW.target_id,
+      'item_key', v_target_wi.item_key, 'title', v_target_wi.title,
+      'type', v_target_wi.type, 'link_type', NEW.link_type);
+    INSERT INTO work_item_history (work_item_id, user_id, action, field_name, new_value,
+      source_table, source_id, metadata, changes)
+    VALUES (NEW.target_id, v_actor, 'link_added', 'link', NEW.link_type,
+      'work_items', NEW.source_id, v_target_meta,
+      jsonb_build_object('event', 'linked', 'source_id', NEW.source_id,
+        'item_key', v_source_wi.item_key, 'link_type', NEW.link_type));
+    INSERT INTO work_item_history (work_item_id, user_id, action, field_name, new_value,
+      source_table, source_id, metadata, changes)
+    VALUES (NEW.source_id, v_actor, 'link_added', 'link', NEW.link_type,
+      'work_items', NEW.target_id, v_source_meta,
+      jsonb_build_object('event', 'linked', 'target_id', NEW.target_id,
+        'item_key', v_target_wi.item_key, 'link_type', NEW.link_type));
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'DELETE' THEN
+    SELECT item_key, title, type INTO v_source_wi FROM work_items WHERE id = OLD.source_id;
+    SELECT item_key, title, type INTO v_target_wi FROM work_items WHERE id = OLD.target_id;
+    v_target_meta := jsonb_build_object(
+      'source_kind', 'work_item', 'work_item_id', OLD.source_id,
+      'item_key', v_source_wi.item_key, 'link_type', OLD.link_type);
+    v_source_meta := jsonb_build_object(
+      'target_kind', 'work_item', 'work_item_id', OLD.target_id,
+      'item_key', v_target_wi.item_key, 'link_type', OLD.link_type);
+    INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value,
+      source_table, source_id, metadata, changes)
+    VALUES (OLD.target_id, v_actor, 'link_removed', 'link', OLD.link_type,
+      'work_items', OLD.source_id, v_target_meta,
+      jsonb_build_object('event', 'unlinked', 'source_id', OLD.source_id,
+        'item_key', v_source_wi.item_key, 'link_type', OLD.link_type));
+    INSERT INTO work_item_history (work_item_id, user_id, action, field_name, old_value,
+      source_table, source_id, metadata, changes)
+    VALUES (OLD.source_id, v_actor, 'link_removed', 'link', OLD.link_type,
+      'work_items', OLD.target_id, v_source_meta,
+      jsonb_build_object('event', 'unlinked', 'target_id', OLD.target_id,
+        'item_key', v_target_wi.item_key, 'link_type', OLD.link_type));
+    RETURN OLD;
+  END IF;
+
+  RETURN NULL;
+END;
+$$;
+
+CREATE TRIGGER wil_work_item_history
+  AFTER INSERT OR DELETE ON work_item_links
+  FOR EACH ROW EXECUTE FUNCTION log_wil_history();
 
 
 -- ── 11p. Security: prevent role self-elevation ───────────────
@@ -1874,10 +1946,15 @@ LANGUAGE SQL STABLE SECURITY DEFINER
 AS $$
   SELECT EXISTS (
     SELECT 1
-      FROM projects pr JOIN profiles pf ON pf.id = p_user
+      FROM projects pr, profiles pf
      WHERE pr.id = p_project_id
+       AND pf.id = p_user
        AND pf.role <> 'client'
-       AND (pf.role IN ('admin','support_lead') OR pf.team_id = pr.team_id OR pr.lead_id = pf.id)
+       AND (
+         pf.role IN ('admin','support_lead')
+         OR pr.lead_id = pf.id
+         OR pr.team_id IN (SELECT tm.team_id FROM team_members tm WHERE tm.user_id = p_user)
+       )
   );
 $$;
 
@@ -1887,57 +1964,43 @@ LANGUAGE SQL STABLE SECURITY DEFINER
 AS $$
   SELECT EXISTS (
     SELECT 1
-      FROM projects pr JOIN profiles pf ON pf.id = p_user
+      FROM projects pr, profiles pf
      WHERE pr.id = p_project_id
+       AND pf.id = p_user
        AND pf.role <> 'client'
-       AND (pf.role IN ('admin','support_lead') OR pr.lead_id = pf.id OR pf.team_id = pr.team_id)
+       AND (
+         pf.role IN ('admin','support_lead')
+         OR pr.lead_id = pf.id
+         OR pr.team_id IN (SELECT tm.team_id FROM team_members tm WHERE tm.user_id = p_user)
+       )
   );
 $$;
 
--- ── 12b. Item links: read/write checks ───────────────────────
-
-CREATE OR REPLACE FUNCTION item_links_can_read(
-  p_source_ticket_id UUID, p_source_work_item_id UUID, p_target_work_item_id UUID, p_user UUID
-) RETURNS BOOLEAN LANGUAGE SQL STABLE SECURITY DEFINER AS $$
-  SELECT
-    pm_can_read_project((SELECT project_id FROM work_items WHERE id = p_target_work_item_id), p_user)
-    AND (p_source_ticket_id IS NULL
-      OR EXISTS (
-        SELECT 1 FROM tickets t JOIN profiles pf ON pf.id = p_user
-         WHERE t.id = p_source_ticket_id
-           AND (pf.role IN ('admin','support_lead','support_member') OR t.created_by = p_user OR t.assigned_to = p_user)
-      ))
-    AND (p_source_work_item_id IS NULL
-      OR pm_can_read_project((SELECT project_id FROM work_items WHERE id = p_source_work_item_id), p_user));
-$$;
-
-CREATE OR REPLACE FUNCTION item_links_can_write(
-  p_source_ticket_id UUID, p_source_work_item_id UUID, p_target_work_item_id UUID, p_user UUID
-) RETURNS BOOLEAN LANGUAGE SQL STABLE SECURITY DEFINER AS $$
-  SELECT
-    pm_can_write_project((SELECT project_id FROM work_items WHERE id = p_target_work_item_id), p_user)
-    AND (p_source_ticket_id IS NULL
-      OR EXISTS (SELECT 1 FROM profiles WHERE id = p_user AND role IN ('admin','support_lead','support_member')))
-    AND (p_source_work_item_id IS NULL
-      OR pm_can_write_project((SELECT project_id FROM work_items WHERE id = p_source_work_item_id), p_user));
-$$;
-
--- ── 12c. Atomic "set primary link" ───────────────────────────
+-- ── 12b. Atomic "set primary link" ───────────────────────────
 
 CREATE OR REPLACE FUNCTION set_primary_item_link(p_link_id UUID)
-RETURNS VOID LANGUAGE plpgsql SECURITY INVOKER AS $$
-DECLARE v_ticket UUID; v_work_item UUID;
+RETURNS VOID
+LANGUAGE plpgsql SECURITY INVOKER
+AS $$
+DECLARE
+  v_ticket_id UUID;
+  v_source_id  UUID;
 BEGIN
-  SELECT source_ticket_id, source_work_item_id INTO v_ticket, v_work_item FROM item_links WHERE id = p_link_id;
-  IF v_ticket IS NULL AND v_work_item IS NULL THEN
-    RAISE EXCEPTION 'link % not found', p_link_id;
+  SELECT ticket_id INTO v_ticket_id FROM ticket_work_item_links WHERE id = p_link_id;
+  IF FOUND THEN
+    UPDATE ticket_work_item_links SET is_primary = FALSE
+     WHERE ticket_id = v_ticket_id AND is_primary AND id <> p_link_id;
+    UPDATE ticket_work_item_links SET is_primary = TRUE WHERE id = p_link_id;
+    RETURN;
   END IF;
-  IF v_ticket IS NOT NULL THEN
-    UPDATE item_links SET is_primary = FALSE WHERE source_ticket_id = v_ticket AND is_primary AND id <> p_link_id;
-  ELSE
-    UPDATE item_links SET is_primary = FALSE WHERE source_work_item_id = v_work_item AND is_primary AND id <> p_link_id;
+  SELECT source_id INTO v_source_id FROM work_item_links WHERE id = p_link_id;
+  IF FOUND THEN
+    UPDATE work_item_links SET is_primary = FALSE
+     WHERE source_id = v_source_id AND is_primary AND id <> p_link_id;
+    UPDATE work_item_links SET is_primary = TRUE WHERE id = p_link_id;
+    RETURN;
   END IF;
-  UPDATE item_links SET is_primary = TRUE WHERE id = p_link_id;
+  RAISE EXCEPTION 'link % not found', p_link_id;
 END;
 $$;
 
@@ -1985,7 +2048,7 @@ DECLARE
   v_en_res    BOOLEAN;
   v_en_doc    BOOLEAN;
 BEGIN
-  SELECT * INTO cfg FROM kb_retrieval_config WHERE id = true;
+  SELECT * INTO cfg FROM kb_retrieval_config WHERE environment = 'production';
   v_threshold := COALESCE(match_threshold, cfg.similarity_threshold);
   v_count     := COALESCE(match_count,     cfg.max_results);
   v_w_res     := COALESCE((cfg.source_weights  ->> 'resolution')::NUMERIC, 1.0);
@@ -1996,10 +2059,13 @@ BEGIN
   RETURN QUERY
   WITH res AS (
     SELECT
-      'resolution'::TEXT, t.id, NULL::UUID, t.title,
-      LEFT(COALESCE(t.resolution_plain, ''), 400),
-      ((1 - (t.resolution_embedding <=> query_embedding))::NUMERIC * v_w_res),
-      jsonb_build_object('ticket_number', t.ticket_number)
+      'resolution'::TEXT                                                        AS source_type,
+      t.id                                                                      AS source_id,
+      NULL::UUID                                                                AS chunk_id,
+      t.title                                                                   AS title,
+      LEFT(COALESCE(t.resolution_plain, ''), 400)                              AS snippet,
+      ((1 - (t.resolution_embedding <=> query_embedding))::NUMERIC * v_w_res)  AS similarity,
+      jsonb_build_object('ticket_number', t.ticket_number)                     AS metadata
     FROM tickets t
     LEFT JOIN kb_resolution_settings s ON s.ticket_id = t.id
     WHERE v_en_res
@@ -2009,10 +2075,13 @@ BEGIN
   ),
   docs AS (
     SELECT
-      'document'::TEXT, d.id, c.id, d.title,
-      LEFT(c.content, 400),
-      ((1 - (c.embedding <=> query_embedding))::NUMERIC * v_w_doc),
-      jsonb_build_object('page', c.page_number, 'chunk_index', c.chunk_index, 'document_id', d.id)
+      'document'::TEXT                                                         AS source_type,
+      d.id                                                                     AS source_id,
+      c.id                                                                     AS chunk_id,
+      d.title                                                                  AS title,
+      LEFT(c.content, 400)                                                     AS snippet,
+      ((1 - (c.embedding <=> query_embedding))::NUMERIC * v_w_doc)            AS similarity,
+      jsonb_build_object('page', c.page_number, 'chunk_index', c.chunk_index, 'document_id', d.id) AS metadata
     FROM kb_document_chunks c
     JOIN kb_documents d ON d.id = c.document_id
     WHERE v_en_doc
@@ -2408,7 +2477,9 @@ CREATE POLICY "projects_insert" ON projects FOR INSERT TO authenticated
     SELECT 1 FROM profiles pf WHERE pf.id = auth.uid() AND pf.role <> 'client'
       AND (pf.role IN ('admin','support_lead')
            OR (projects.lead_id IS NOT NULL AND projects.lead_id = pf.id)
-           OR (projects.team_id IS NOT NULL AND projects.team_id = pf.team_id))
+           OR (projects.team_id IS NOT NULL AND projects.team_id IN (
+                 SELECT tm.team_id FROM team_members tm WHERE tm.user_id = auth.uid()
+               )))
   ));
 CREATE POLICY "projects_update" ON projects FOR UPDATE TO authenticated
   USING (pm_can_write_project(id, auth.uid())) WITH CHECK (pm_can_write_project(id, auth.uid()));
@@ -2441,22 +2512,53 @@ CREATE POLICY "work_item_history_read" ON work_item_history FOR SELECT TO authen
 CREATE POLICY "work_item_history_service" ON work_item_history FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- ── Item links ────────────────────────────────────────────────
-ALTER TABLE link_types ENABLE ROW LEVEL SECURITY;
-ALTER TABLE item_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE link_types               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_work_item_links   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE work_item_links          ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "link_types_read"    ON link_types FOR SELECT TO authenticated USING (true);
 CREATE POLICY "link_types_service" ON link_types FOR ALL    TO service_role  USING (true) WITH CHECK (true);
 
-CREATE POLICY "item_links_read" ON item_links FOR SELECT TO authenticated
-  USING (item_links_can_read(source_ticket_id, source_work_item_id, target_work_item_id, auth.uid()));
-CREATE POLICY "item_links_insert" ON item_links FOR INSERT TO authenticated
-  WITH CHECK (item_links_can_write(source_ticket_id, source_work_item_id, target_work_item_id, auth.uid()));
-CREATE POLICY "item_links_update" ON item_links FOR UPDATE TO authenticated
-  USING  (item_links_can_write(source_ticket_id, source_work_item_id, target_work_item_id, auth.uid()))
-  WITH CHECK (item_links_can_write(source_ticket_id, source_work_item_id, target_work_item_id, auth.uid()));
-CREATE POLICY "item_links_delete" ON item_links FOR DELETE TO authenticated
-  USING (item_links_can_write(source_ticket_id, source_work_item_id, target_work_item_id, auth.uid()));
-CREATE POLICY "item_links_service" ON item_links FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "twil_read" ON ticket_work_item_links FOR SELECT TO authenticated
+  USING (
+    pm_can_read_project((SELECT project_id FROM work_items WHERE id = work_item_id), auth.uid())
+    AND EXISTS (
+      SELECT 1 FROM tickets t JOIN profiles pf ON pf.id = auth.uid()
+       WHERE t.id = ticket_id
+         AND (pf.role IN ('admin','support_lead','support_member')
+              OR t.created_by = auth.uid()
+              OR t.assigned_to = auth.uid())
+    )
+  );
+CREATE POLICY "twil_insert" ON ticket_work_item_links FOR INSERT TO authenticated
+  WITH CHECK (
+    pm_can_write_project((SELECT project_id FROM work_items WHERE id = work_item_id), auth.uid())
+    AND EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid()
+                  AND role IN ('admin','support_lead','support_member'))
+  );
+CREATE POLICY "twil_update" ON ticket_work_item_links FOR UPDATE TO authenticated
+  USING  (pm_can_write_project((SELECT project_id FROM work_items WHERE id = work_item_id), auth.uid()))
+  WITH CHECK (pm_can_write_project((SELECT project_id FROM work_items WHERE id = work_item_id), auth.uid()));
+CREATE POLICY "twil_delete" ON ticket_work_item_links FOR DELETE TO authenticated
+  USING  (pm_can_write_project((SELECT project_id FROM work_items WHERE id = work_item_id), auth.uid()));
+CREATE POLICY "twil_service" ON ticket_work_item_links FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+CREATE POLICY "wil_read" ON work_item_links FOR SELECT TO authenticated
+  USING (
+    pm_can_read_project((SELECT project_id FROM work_items WHERE id = source_id), auth.uid())
+    AND pm_can_read_project((SELECT project_id FROM work_items WHERE id = target_id), auth.uid())
+  );
+CREATE POLICY "wil_insert" ON work_item_links FOR INSERT TO authenticated
+  WITH CHECK (
+    pm_can_write_project((SELECT project_id FROM work_items WHERE id = source_id), auth.uid())
+    AND pm_can_write_project((SELECT project_id FROM work_items WHERE id = target_id), auth.uid())
+  );
+CREATE POLICY "wil_update" ON work_item_links FOR UPDATE TO authenticated
+  USING  (pm_can_write_project((SELECT project_id FROM work_items WHERE id = source_id), auth.uid()))
+  WITH CHECK (pm_can_write_project((SELECT project_id FROM work_items WHERE id = source_id), auth.uid()));
+CREATE POLICY "wil_delete" ON work_item_links FOR DELETE TO authenticated
+  USING  (pm_can_write_project((SELECT project_id FROM work_items WHERE id = source_id), auth.uid()));
+CREATE POLICY "wil_service" ON work_item_links FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- ── team_members ──────────────────────────────────────────────
 ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
@@ -2580,3 +2682,181 @@ CREATE POLICY "ticket_collaborators_delete"
 
 CREATE POLICY "ticket_collaborators_service"
   ON ticket_collaborators FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+
+-- ============================================================
+-- 15. UTILITY RPC FUNCTIONS (migration 038)
+-- ============================================================
+
+-- Returns the single most-retrieved KB source title in the last N days.
+-- Replaces O(n × m) JS aggregation in services/knowledge.ts:getKpiSnapshot.
+
+CREATE OR REPLACE FUNCTION get_top_kb_source(days_back INT DEFAULT 7)
+RETURNS TABLE (title TEXT, cnt BIGINT)
+LANGUAGE SQL
+STABLE
+SECURITY INVOKER
+AS $$
+  SELECT
+    elem->>'title'  AS title,
+    count(*)        AS cnt
+  FROM kb_retrieval_log,
+       jsonb_array_elements(results) AS elem
+  WHERE created_at >= now() - (days_back || ' days')::interval
+    AND elem->>'title' IS NOT NULL
+  GROUP BY title
+  ORDER BY cnt DESC
+  LIMIT 1;
+$$;
+
+
+-- ============================================================
+-- 16. OPERATIONAL MAINTENANCE FUNCTIONS (migrations 042-043)
+-- ============================================================
+
+-- ── 16a. Embedding retry — migration 042 ─────────────────────
+-- Re-fires the embed-resolution Edge Function for any ticket
+-- whose resolution_plain is populated but resolution_embedding
+-- is still NULL after the 1-hour grace period (pg_net failure).
+
+CREATE OR REPLACE FUNCTION requeue_missing_embeddings()
+RETURNS TABLE (requeued_count INT, error_text TEXT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_url      TEXT;
+  v_anon_key TEXT;
+  v_count    INT := 0;
+  v_ticket   RECORD;
+BEGIN
+  v_url      := current_setting('app.supabase_url',     true);
+  v_anon_key := current_setting('app.supabase_anon_key', true);
+
+  IF v_url IS NULL OR v_anon_key IS NULL THEN
+    RETURN QUERY SELECT 0, 'app.supabase_url or app.supabase_anon_key not configured'::TEXT;
+    RETURN;
+  END IF;
+
+  FOR v_ticket IN
+    SELECT id
+    FROM tickets
+    WHERE resolution_plain IS NOT NULL
+      AND length(resolution_plain) > 0
+      AND resolution_embedding IS NULL
+      AND updated_at < now() - INTERVAL '1 hour'
+    ORDER BY updated_at ASC
+    LIMIT 100
+  LOOP
+    PERFORM net.http_post(
+      url     := v_url || '/functions/v1/embed-resolution',
+      headers := jsonb_build_object(
+        'Content-Type',  'application/json',
+        'Authorization', 'Bearer ' || v_anon_key
+      ),
+      body    := jsonb_build_object('ticket_id', v_ticket.id)
+    );
+    v_count := v_count + 1;
+  END LOOP;
+
+  RETURN QUERY SELECT v_count, NULL::TEXT;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION requeue_missing_embeddings() TO service_role;
+
+-- ── 16b. Stuck document auto-fail — migration 042 ────────────
+-- Finds kb_document_versions stuck in processing (status_id=2)
+-- for more than 10 minutes, marks them failed, and logs to
+-- kb_audit_log so operators can see what happened.
+
+CREATE OR REPLACE FUNCTION mark_stuck_documents()
+RETURNS INT
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_count INT := 0;
+  v_ver   RECORD;
+BEGIN
+  FOR v_ver IN
+    SELECT id
+    FROM kb_document_versions
+    WHERE status_id = 2
+      AND updated_at < now() - INTERVAL '10 minutes'
+  LOOP
+    UPDATE kb_document_versions
+    SET
+      status_id        = 4,
+      processing_error = 'Timed out in processing state (auto-marked by mark_stuck_documents)',
+      processed_at     = now()
+    WHERE id = v_ver.id;
+
+    INSERT INTO kb_audit_log (entity_type, entity_id, action, payload)
+    VALUES (
+      'document_version',
+      v_ver.id,
+      'ingest_stuck',
+      jsonb_build_object('error', 'Stuck in processing for > 10 min; auto-failed by mark_stuck_documents()')
+    );
+
+    v_count := v_count + 1;
+  END LOOP;
+
+  RETURN v_count;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION mark_stuck_documents() TO service_role;
+
+-- ── 16c. TTL archival — migration 043 ────────────────────────
+-- Deletes rows older than p_retention_days (default 730 = 24
+-- months) from the six unbounded append-only audit tables.
+-- Returns per-table deleted counts. Called monthly by pg_cron
+-- (if enabled) or manually by operators.
+
+CREATE OR REPLACE FUNCTION purge_old_records(
+  p_retention_days INT DEFAULT 730
+)
+RETURNS TABLE (table_name TEXT, deleted_count BIGINT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_cutoff            TIMESTAMPTZ := now() - make_interval(days => p_retention_days);
+  v_ticket_history    BIGINT;
+  v_work_item_history BIGINT;
+  v_kb_audit          BIGINT;
+  v_kb_retrieval      BIGINT;
+  v_company_health    BIGINT;
+  v_escalation        BIGINT;
+BEGIN
+  DELETE FROM ticket_history         WHERE created_at < v_cutoff;
+  GET DIAGNOSTICS v_ticket_history = ROW_COUNT;
+
+  DELETE FROM work_item_history      WHERE created_at < v_cutoff;
+  GET DIAGNOSTICS v_work_item_history = ROW_COUNT;
+
+  DELETE FROM kb_audit_log           WHERE created_at < v_cutoff;
+  GET DIAGNOSTICS v_kb_audit = ROW_COUNT;
+
+  DELETE FROM kb_retrieval_log       WHERE created_at < v_cutoff;
+  GET DIAGNOSTICS v_kb_retrieval = ROW_COUNT;
+
+  DELETE FROM company_health_history WHERE changed_at < v_cutoff;
+  GET DIAGNOSTICS v_company_health = ROW_COUNT;
+
+  DELETE FROM escalation_history     WHERE created_at < v_cutoff;
+  GET DIAGNOSTICS v_escalation = ROW_COUNT;
+
+  RETURN QUERY VALUES
+    ('ticket_history',         v_ticket_history),
+    ('work_item_history',      v_work_item_history),
+    ('kb_audit_log',           v_kb_audit),
+    ('kb_retrieval_log',       v_kb_retrieval),
+    ('company_health_history', v_company_health),
+    ('escalation_history',     v_escalation);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION purge_old_records(INT) TO service_role;

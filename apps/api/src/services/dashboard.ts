@@ -1,5 +1,5 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "../types/database.types";
+﻿import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "@stms/contracts";
 export { getSlaStats, getMostUrgentSlaTickets } from "./slas";
 
 type Client = SupabaseClient<Database>;
@@ -32,7 +32,7 @@ export async function getDashboardStats(
     .from("tasks")
     .select("*", { count: "exact", head: true })
     .eq("assigned_to", userId)
-    .neq("status", "completed");
+    .neq("status_id", 2); // status_id 2 = 'completed'
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);

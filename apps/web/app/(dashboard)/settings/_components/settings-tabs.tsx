@@ -11,7 +11,6 @@ import { TicketConfigTab } from "./ticket-config-tab";
 import { TagsTab } from "./tags-tab";
 import { SlaTab } from "./sla-tab";
 import type { Profile } from "@/types/user.types";
-import type { Team } from "@/types/team.types";
 import type {
   TicketStatusRow,
   TicketPriorityRow,
@@ -22,7 +21,6 @@ import type { SlaPolicy } from "@/types/sla.types";
 
 interface SettingsTabsProps {
   profiles: Profile[];
-  teams: Team[];
   statuses: TicketStatusRow[];
   priorities: TicketPriorityRow[];
   categories: TicketCategoryRow[];
@@ -32,7 +30,6 @@ interface SettingsTabsProps {
 
 export function SettingsTabs({
   profiles,
-  teams,
   statuses,
   priorities,
   categories,
@@ -49,7 +46,7 @@ export function SettingsTabs({
       </TabsList>
 
       <TabsContent value="users">
-        <UsersTab profiles={profiles} teams={teams} />
+        <UsersTab profiles={profiles} />
       </TabsContent>
 
       <TabsContent value="ticket-config">

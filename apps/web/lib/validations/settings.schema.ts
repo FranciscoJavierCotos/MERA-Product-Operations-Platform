@@ -130,7 +130,7 @@ export const tagSchema = z.object({
 
 export const updateTagSchema = tagSchema
   .partial()
-  .extend({ id: z.number().int() });
+  .extend({ id: z.string().uuid() });
 
 export type TagFormData = z.infer<typeof tagSchema>;
 export type UpdateTagData = z.infer<typeof updateTagSchema>;
@@ -167,7 +167,6 @@ export const profileAdminUpdateSchema = z.object({
   role: z
     .enum(["admin", "support_lead", "support_member", "client"])
     .optional(),
-  team_id: z.string().uuid().optional().nullable(),
 });
 
 export type ProfileAdminUpdateData = z.infer<typeof profileAdminUpdateSchema>;

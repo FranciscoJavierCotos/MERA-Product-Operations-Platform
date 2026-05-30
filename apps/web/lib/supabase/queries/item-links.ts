@@ -1,4 +1,4 @@
-/** Thin client-side shim around the owned API. */
+﻿/** Thin client-side shim around the owned API. */
 
 import { apiBrowser } from "@/lib/api-client-browser";
 import type {
@@ -13,10 +13,12 @@ type AnyClient = unknown;
 
 // ── Reads ────────────────────────────────────────────────────────────────────
 
+/** @deprecated */
 export async function listLinkTypes(_sb: AnyClient): Promise<LinkTypeRow[]> {
   return apiBrowser.get<LinkTypeRow[]>("/item-links/types");
 }
 
+/** @deprecated */
 export async function listTicketLinks(
   _sb: AnyClient,
   ticketId: string,
@@ -26,6 +28,7 @@ export async function listTicketLinks(
   );
 }
 
+/** @deprecated */
 export async function getPrimaryTicketLink(
   _sb: AnyClient,
   ticketId: string,
@@ -35,6 +38,7 @@ export async function getPrimaryTicketLink(
   );
 }
 
+/** @deprecated */
 export async function listWorkItemInboundLinks(
   _sb: AnyClient,
   workItemId: string,
@@ -44,6 +48,7 @@ export async function listWorkItemInboundLinks(
   );
 }
 
+/** @deprecated */
 export async function listWorkItemOutboundLinks(
   _sb: AnyClient,
   workItemId: string,
@@ -62,6 +67,7 @@ export type LinkableWorkItem = {
   project: { id: string; key: string; name: string };
 };
 
+/** @deprecated */
 export async function searchLinkableWorkItems(
   _sb: AnyClient,
   opts: {
@@ -84,6 +90,7 @@ export async function searchLinkableWorkItems(
   return results.filter((r) => !excluded.has(r.id));
 }
 
+/** @deprecated */
 export async function listLinkableProjects(_sb: AnyClient) {
   return apiBrowser.get<Array<{ id: string; key: string; name: string }>>(
     "/item-links/projects",
@@ -92,6 +99,7 @@ export async function listLinkableProjects(_sb: AnyClient) {
 
 // ── Mutations ───────────────────────────────────────────────────────────────
 
+/** @deprecated */
 export async function createItemLink(
   _sb: AnyClient,
   input: CreateItemLinkInput & { created_by?: string | null },
@@ -101,10 +109,12 @@ export async function createItemLink(
   return apiBrowser.post("/item-links", body);
 }
 
+/** @deprecated */
 export async function setPrimaryItemLink(_sb: AnyClient, linkId: string) {
   return apiBrowser.post(`/item-links/${linkId}/primary`);
 }
 
+/** @deprecated */
 export async function deleteItemLink(_sb: AnyClient, linkId: string) {
   await apiBrowser.del(`/item-links/${linkId}`);
 }

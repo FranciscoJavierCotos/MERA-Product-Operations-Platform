@@ -1,6 +1,9 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "../types/database.types";
+﻿import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "@stms/contracts";
 import { TicketComment } from "../types/ticket.types";
+
+type CommentInsert = Database["public"]["Tables"]["ticket_comments"]["Insert"];
+type CommentUpdate = Database["public"]["Tables"]["ticket_comments"]["Update"];
 
 type Client = SupabaseClient<Database>;
 
@@ -25,7 +28,6 @@ export async function createComment(
   comment: {
     ticket_id: string;
     content: string;
-    time_worked_minutes?: number;
     is_internal?: boolean;
   }
 ) {
@@ -37,16 +39,19 @@ export async function createComment(
     throw new Error("User not authenticated");
   }
 
+  // supabase-js resolves .insert().select() to `never` when the table has no
+  // Relationships entry for the join â€” cast from() to bypass inference.
+  // The payload is explicitly typed against CommentInsert so phantom fields
+  // (like the removed time_worked_minutes) are caught at compile time.
+  const payload: CommentInsert = {
+    ticket_id: comment.ticket_id,
+    user_id: user.id,
+    content: comment.content,
+    is_internal: comment.is_internal || false,
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase.from("ticket_comments") as any)
-    .insert([
-      {
-        ticket_id: comment.ticket_id,
-        user_id: user.id,
-        content: comment.content,
-        time_worked_minutes: comment.time_worked_minutes || 0,
-        is_internal: comment.is_internal || false,
-      },
-    ])
+    .insert([payload])
     .select(
       `
       *,
@@ -64,8 +69,10 @@ export async function updateComment(
   commentId: string,
   content: string
 ) {
+  const updatePayload: CommentUpdate = { content };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase.from("ticket_comments") as any)
-    .update({ content })
+    .update(updatePayload)
     .eq("id", commentId)
     .select(
       `

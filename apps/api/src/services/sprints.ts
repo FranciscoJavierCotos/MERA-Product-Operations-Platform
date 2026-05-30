@@ -1,5 +1,5 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../types/database.types";
+﻿import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@stms/contracts";
 import type {
   Sprint,
   SprintWithCounts,
@@ -141,7 +141,7 @@ export async function startSprint(supabase: Client, id: string): Promise<Sprint>
 
 /**
  * Completes a sprint, returning any non-done items back to the backlog
- * (sprint_id = NULL). Two writes — first move items, then mark the sprint.
+ * (sprint_id = NULL). Two writes â€” first move items, then mark the sprint.
  */
 export async function completeSprint(
   supabase: Client,

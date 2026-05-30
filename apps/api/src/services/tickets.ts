@@ -1,5 +1,5 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "../types/database.types";
+﻿import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "@stms/contracts";
 import type {
   Ticket,
   TicketComment,
@@ -337,77 +337,34 @@ export async function getMyTicketNavigation(
 
 export async function searchTickets(supabase: Client, query: string) {
   const normalizedQuery = query.trim();
-
-  if (!normalizedQuery) {
-    return [] as Ticket[];
-  }
+  if (!normalizedQuery) return [] as Ticket[];
 
   const searchTerm = normalizedQuery.replace(/^"(.+)"$/, "$1").trim();
+  if (!searchTerm) return [] as Ticket[];
 
-  if (!searchTerm) {
-    return [] as Ticket[];
+  // Numeric input: exact ticket_number lookup (e.g. "#123" or "123")
+  const ticketNumberMatch = searchTerm.match(/^#?(\d+)$/);
+  if (ticketNumberMatch) {
+    const { data, error } = await supabase
+      .from("tickets")
+      .select(TICKET_SELECT)
+      .eq("ticket_number", Number(ticketNumberMatch[1]))
+      .order("created_at", { ascending: false })
+      .order("ticket_number", { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as unknown as Ticket[];
   }
 
-  const selectStr = `
-    ${TICKET_SELECT}
-  `;
+  // Full-text search via the search_vector GIN index (single round-trip)
+  const { data, error } = await supabase
+    .from("tickets")
+    .select(TICKET_SELECT)
+    .textSearch("search_vector", searchTerm, { type: "websearch", config: "english" })
+    .order("created_at", { ascending: false })
+    .order("ticket_number", { ascending: false });
 
-  const searchWithIlike = async () => {
-    const ticketNumberMatch = searchTerm.match(/^#?(\d+)$/);
-    if (ticketNumberMatch) {
-      const ticketNumber = Number(ticketNumberMatch[1]);
-
-      const { data, error } = await supabase
-        .from("tickets")
-        .select(selectStr)
-        .eq("ticket_number", ticketNumber)
-        .order("created_at", { ascending: false })
-        .order("ticket_number", { ascending: false });
-
-      if (error) throw error;
-      return (data ?? []) as unknown as Ticket[];
-    }
-
-    const terms = searchTerm
-      .split(/\s+/)
-      .map((term) => term.trim())
-      .filter(Boolean);
-
-    let titleQuery = supabase.from("tickets").select(selectStr);
-    let descriptionQuery = supabase.from("tickets").select(selectStr);
-
-    for (const term of terms) {
-      const pattern = `%${term}%`;
-      titleQuery = titleQuery.ilike("title", pattern);
-      descriptionQuery = descriptionQuery.ilike("description", pattern);
-    }
-
-    const [titleResult, descriptionResult] = await Promise.all([
-      titleQuery
-        .order("created_at", { ascending: false })
-        .order("ticket_number", { ascending: false }),
-      descriptionQuery
-        .order("created_at", { ascending: false })
-        .order("ticket_number", { ascending: false }),
-    ]);
-
-    if (titleResult.error) throw titleResult.error;
-    if (descriptionResult.error) throw descriptionResult.error;
-
-    const seen = new Set<string>();
-    const merged = [
-      ...(titleResult.data ?? []),
-      ...(descriptionResult.data ?? []),
-    ] as unknown as Ticket[];
-
-    return merged.filter((ticket) => {
-      if (seen.has(ticket.id)) return false;
-      seen.add(ticket.id);
-      return true;
-    });
-  };
-
-  return searchWithIlike();
+  if (error) throw error;
+  return (data ?? []) as unknown as Ticket[];
 }
 
 export async function deleteTicket(supabase: Client, id: string) {

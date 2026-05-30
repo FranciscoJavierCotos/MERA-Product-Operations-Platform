@@ -1,5 +1,5 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "../types/database.types";
+﻿import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "@stms/contracts";
 import type {
   Company,
   CompanyContact,
@@ -24,7 +24,7 @@ const CONTACT_SELECT = `
   id, company_id, full_name, email, title, phone, is_primary, created_at, updated_at
 `;
 
-// ── Queries ─────────────────────────────────────────────────────────────────
+// â”€â”€ Queries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getCompanies(supabase: Client): Promise<Company[]> {
   const { data, error } = await supabase
@@ -50,7 +50,7 @@ export async function getCompanyById(
   return (data as unknown as Company) ?? null;
 }
 
-// ── Company detail (aggregated) ───────────────────────────────────────────────
+// â”€â”€ Company detail (aggregated) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getCompanyDetail(
   supabase: Client,
@@ -153,7 +153,7 @@ export async function getCompanyDetail(
   };
 }
 
-// ── Mutations ─────────────────────────────────────────────────────────────────
+// â”€â”€ Mutations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function createCompany(
   supabase: Client,
@@ -230,7 +230,7 @@ export async function updateCompanyHealth(
   return data as unknown as Company;
 }
 
-// ── Contacts ──────────────────────────────────────────────────────────────────
+// â”€â”€ Contacts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getCompanyContacts(
   supabase: Client,
@@ -302,7 +302,7 @@ export async function removeContact(
   if (error) throw error;
 }
 
-// ── Health status lookup ──────────────────────────────────────────────────────
+// â”€â”€ Health status lookup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getCompanyHealthStatuses(
   supabase: Client,

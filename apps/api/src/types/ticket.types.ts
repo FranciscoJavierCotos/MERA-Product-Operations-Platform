@@ -47,7 +47,7 @@ export interface TicketTemperatureRow {
 }
 
 export interface TicketTagRow {
-  id: number;
+  id: string;
   name: string;
   slug: string;
   color_class: string;
@@ -129,7 +129,6 @@ export interface TicketComment {
   user_id: string;
   content: string;
   is_internal: boolean;
-  time_worked_minutes?: number;
   attachments?: unknown[];
   created_at: string;
   updated_at: string;

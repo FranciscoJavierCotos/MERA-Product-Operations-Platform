@@ -43,7 +43,6 @@ export function CommentForm({
     resolver: zodResolver(commentSchema),
     defaultValues: {
       content: "",
-      time_worked_minutes: 0,
       is_internal: false,
     },
   });
@@ -68,7 +67,6 @@ export function CommentForm({
       await createComment(supabase, {
         ticket_id: ticketId,
         content: data.content,
-        time_worked_minutes: data.time_worked_minutes,
         is_internal: data.is_internal,
       });
 
@@ -132,34 +130,7 @@ export function CommentForm({
         </div>
       )}
 
-      <div className="flex items-center gap-3 justify-between flex-wrap">
-        <div className="flex items-center gap-2">
-          <Label
-            htmlFor="time_worked"
-            className="text-sm font-medium whitespace-nowrap"
-          >
-            Time Worked (min)
-          </Label>
-          <Input
-            id="time_worked"
-            type="number"
-            min="0"
-            max="999"
-            {...register("time_worked_minutes", { valueAsNumber: true })}
-            placeholder="0"
-            disabled={isSubmitting}
-            className="w-20"
-            aria-describedby={
-              errors.time_worked_minutes ? "time-error" : undefined
-            }
-          />
-          {errors.time_worked_minutes && (
-            <p id="time-error" className="text-sm text-red-500" role="alert">
-              {errors.time_worked_minutes.message}
-            </p>
-          )}
-        </div>
-
+      <div className="flex items-center gap-3 justify-end flex-wrap">
         <div className="flex items-center gap-2">
           {onCancel && (
             <Button

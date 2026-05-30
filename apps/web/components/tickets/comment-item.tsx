@@ -225,14 +225,6 @@ export function CommentItem({
               {isEdited && (
                 <span className="text-xs text-gray-400 italic">(edited)</span>
               )}
-              {/* Time worked text in header */}
-              {comment.time_worked_minutes != null &&
-                comment.time_worked_minutes > 0 && (
-                  <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-                    <Clock className="h-3 w-3" />
-                    {comment.time_worked_minutes} min worked
-                  </span>
-                )}
             </div>
 
             {/* Three-dot dropdown menu - always visible, but Edit/Delete only for owner */}

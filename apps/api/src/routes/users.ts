@@ -21,7 +21,6 @@ const PublicProfileUpdateBody = z
 /** Extended fields only an admin may set — on any profile. */
 const AdminProfileUpdateBody = PublicProfileUpdateBody.extend({
   role: z.enum(["admin", "support_lead", "support_member", "client"]).optional(),
-  team_id: z.string().uuid().nullable().optional(),
 }).strict();
 
 export const userRoutes: FastifyPluginAsyncZod = async (app) => {
@@ -74,12 +73,11 @@ export const userRoutes: FastifyPluginAsyncZod = async (app) => {
       }
 
       // ── 3. Field-level check ─────────────────────────────────────────────
-      // Non-admins are not allowed to touch role or team_id even on their
-      // own row. This prevents self-promotion attacks.
-      if (!isAdmin && ("role" in req.body || "team_id" in req.body)) {
+      // Non-admins are not allowed to touch role even on their own row.
+      if (!isAdmin && "role" in req.body) {
         return reply.code(403).send({
           error: "forbidden",
-          message: "Only administrators may change role or team assignment",
+          message: "Only administrators may change role",
         });
       }
 

@@ -1,4 +1,4 @@
-/** Thin client-side shim around the owned API. */
+﻿/** Thin client-side shim around the owned API. */
 
 import { apiBrowser } from "@/lib/api-client-browser";
 
@@ -13,6 +13,7 @@ export interface DashboardStats {
   resolvedToday: number;
 }
 
+/** @deprecated */
 export async function getDashboardStats(
   _sb: AnyClient,
   _userId: string,
@@ -20,6 +21,7 @@ export async function getDashboardStats(
   return apiBrowser.get<DashboardStats>("/dashboard/stats");
 }
 
+/** @deprecated */
 export async function getRecentTickets(_sb: AnyClient, limit: number = 10) {
   return apiBrowser.get<unknown[]>("/dashboard/recent-tickets", { limit });
 }

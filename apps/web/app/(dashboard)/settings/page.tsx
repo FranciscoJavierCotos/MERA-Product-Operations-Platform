@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { api } from "@/lib/api-client";
 import type { Profile } from "@/types/user.types";
-import type { Team } from "@/types/team.types";
 import type {
   TicketStatusRow,
   TicketPriorityRow,
@@ -25,10 +24,9 @@ export default async function SettingsPage() {
 
   if (profile?.role !== "admin") redirect("/dashboard");
 
-  const [profiles, teams, statuses, priorities, categories, tags, slaPolicies] =
+  const [profiles, statuses, priorities, categories, tags, slaPolicies] =
     await Promise.all([
       api.get<Profile[]>("/users"),
-      api.get<Team[]>("/teams"),
       api.get<TicketStatusRow[]>("/lookup/statuses"),
       api.get<TicketPriorityRow[]>("/lookup/priorities"),
       api.get<TicketCategoryRow[]>("/lookup/categories"),
@@ -46,7 +44,6 @@ export default async function SettingsPage() {
       </div>
       <SettingsTabs
         profiles={profiles}
-        teams={teams}
         statuses={statuses}
         priorities={priorities}
         categories={categories}

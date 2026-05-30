@@ -12,6 +12,7 @@ export interface Project {
   methodology: ProjectMethodology;
   status: ProjectStatus;
   team_id: string | null;
+  company_id: string | null;
   lead_id: string | null;
   next_item_number: number;
   /** Default sprint length in weeks (1–4). Only relevant for Scrum projects. */
@@ -22,6 +23,7 @@ export interface Project {
 
   // Joined relations
   team?: Pick<Team, "id" | "name"> | null;
+  company?: { id: string; name: string } | null;
   lead?: Profile | null;
   creator?: Profile | null;
 }
@@ -38,6 +40,7 @@ export interface CreateProjectInput {
   methodology?: ProjectMethodology;
   sprint_duration_weeks?: number;
   team_id?: string | null;
+  company_id?: string | null;
   lead_id?: string | null;
 }
 
@@ -48,5 +51,6 @@ export interface UpdateProjectInput {
   status?: ProjectStatus;
   sprint_duration_weeks?: number;
   team_id?: string | null;
+  company_id?: string | null;
   lead_id?: string | null;
 }

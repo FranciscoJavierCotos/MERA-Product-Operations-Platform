@@ -1,4 +1,4 @@
-/** Thin client-side shim around the owned API. */
+﻿/** Thin client-side shim around the owned API. */
 
 import { apiBrowser } from "@/lib/api-client-browser";
 import type {
@@ -15,16 +15,19 @@ type AnyClient = unknown;
 
 // ── Reads ────────────────────────────────────────────────────────────────────
 
+/** @deprecated */
 export async function listBacklog(_sb: AnyClient, projectId: string) {
   return apiBrowser.get<WorkItemWithRelations[]>("/work-items/backlog", {
     projectId,
   });
 }
 
+/** @deprecated */
 export async function listSprintItems(_sb: AnyClient, sprintId: string) {
   return apiBrowser.get<WorkItemWithRelations[]>(`/work-items/sprint/${sprintId}`);
 }
 
+/** @deprecated */
 export async function listSprintBoard(
   _sb: AnyClient,
   sprintId: string | null,
@@ -33,22 +36,26 @@ export async function listSprintBoard(
   return apiBrowser.get<BoardColumn[]>(`/work-items/sprint/${sprintId}/board`);
 }
 
+/** @deprecated */
 export async function getWorkItemByKey(_sb: AnyClient, itemKey: string) {
   return apiBrowser.get<WorkItemWithRelations | null>(
     `/work-items/by-key/${itemKey}`,
   );
 }
 
+/** @deprecated */
 export async function getWorkItem(_sb: AnyClient, id: string) {
   return apiBrowser.get<WorkItemWithRelations | null>(`/work-items/${id}`);
 }
 
+/** @deprecated */
 export async function getWorkItemHistory(_sb: AnyClient, workItemId: string) {
   return apiBrowser.get<WorkItemHistoryEntry[]>(
     `/work-items/${workItemId}/history`,
   );
 }
 
+/** @deprecated */
 export async function getFirstRank(
   _sb: AnyClient,
   projectId: string,
@@ -66,6 +73,7 @@ export async function getFirstRank(
   return rank;
 }
 
+/** @deprecated */
 export async function getLastRank(
   _sb: AnyClient,
   projectId: string,
@@ -85,6 +93,7 @@ export async function getLastRank(
 
 // ── Mutations ───────────────────────────────────────────────────────────────
 
+/** @deprecated */
 export async function createWorkItem(
   _sb: AnyClient,
   input: CreateWorkItemInput & { reporter_id?: string; rank: string },
@@ -93,6 +102,7 @@ export async function createWorkItem(
   return apiBrowser.post<WorkItem>("/work-items", body);
 }
 
+/** @deprecated */
 export async function updateWorkItem(
   _sb: AnyClient,
   id: string,
@@ -101,6 +111,7 @@ export async function updateWorkItem(
   return apiBrowser.patch<WorkItem>(`/work-items/${id}`, updates);
 }
 
+/** @deprecated */
 export async function moveToSprint(
   _sb: AnyClient,
   id: string,
@@ -111,6 +122,7 @@ export async function moveToSprint(
   });
 }
 
+/** @deprecated */
 export async function updateStatus(
   _sb: AnyClient,
   id: string,
@@ -119,6 +131,7 @@ export async function updateStatus(
   return apiBrowser.patch<WorkItem>(`/work-items/${id}/status`, { status });
 }
 
+/** @deprecated */
 export async function reorderItem(
   _sb: AnyClient,
   id: string,

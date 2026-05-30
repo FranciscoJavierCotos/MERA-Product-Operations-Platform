@@ -1,8 +1,8 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "../types/database.types";
+﻿import { SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "@stms/contracts";
 import { Profile } from "../types/user.types";
 
-// ─── Typed update payloads ────────────────────────────────────────────────────
+// â”€â”€â”€ Typed update payloads â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // These mirror the Zod schemas in routes/users.ts and are exported so the
 // route handler can use them without re-declaring the shapes.
 
@@ -47,7 +47,7 @@ export async function updateProfile(
   updates: PublicProfileUpdate | AdminProfileUpdate,
 ): Promise<Profile> {
   // The typed Supabase client resolves .update()'s argument to `never` when
-  // the payload type isn't the exact generated Update shape — a known upstream
+  // the payload type isn't the exact generated Update shape â€” a known upstream
   // limitation. All other services in this codebase (tickets.ts:267,
   // tasks.ts:163, knowledge-admin.ts:70) use the same `as any` workaround.
   // Type safety is enforced at the function boundary via the typed `updates`

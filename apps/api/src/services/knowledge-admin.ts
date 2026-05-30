@@ -1,5 +1,5 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../types/database.types";
+﻿import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@stms/contracts";
 
 type Client = SupabaseClient<Database>;
 
@@ -29,7 +29,7 @@ async function writeAudit(
   });
 }
 
-// ── Documents ───────────────────────────────────────────────────────────────
+// â”€â”€ Documents â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function createDocument(
   sb: Client,
@@ -106,7 +106,7 @@ export async function deleteDocument(
   return { storage_paths: (versions ?? []).map((v) => v.storage_path) };
 }
 
-// ── Document versions ───────────────────────────────────────────────────────
+// â”€â”€ Document versions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getNextVersionNumber(sb: Client, documentId: string) {
   const { data } = await sb
@@ -157,7 +157,7 @@ export async function reprocessVersion(sb: Client, actorId: string, versionId: s
   return { ok: true as const };
 }
 
-// ── Collections ─────────────────────────────────────────────────────────────
+// â”€â”€ Collections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function upsertCollection(
   sb: Client,
@@ -211,7 +211,7 @@ export async function archiveCollection(
   return { ok: true as const };
 }
 
-// ── Retrieval config ────────────────────────────────────────────────────────
+// â”€â”€ Retrieval config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function updateRetrievalConfig(
   sb: Client,
@@ -225,13 +225,13 @@ export async function updateRetrievalConfig(
 ) {
   const { error } = await (sb.from("kb_retrieval_config") as any)
     .update({ ...input, updated_by: actorId })
-    .eq("id", true);
+    .eq("environment", "production");
   if (error) throw new Error(error.message);
   await writeAudit(sb, actorId, "config", null, "updated", input);
   return { ok: true as const };
 }
 
-// ── Resolution governance ───────────────────────────────────────────────────
+// â”€â”€ Resolution governance â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function toggleResolutionAi(
   sb: Client,
@@ -296,7 +296,7 @@ export async function reembedResolution(sb: Client, actorId: string, ticketId: s
   return { ok: true as const };
 }
 
-// ── Retrieval log ───────────────────────────────────────────────────────────
+// â”€â”€ Retrieval log â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function writeRetrievalLog(
   sb: Client,

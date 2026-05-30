@@ -1,5 +1,5 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../types/database.types";
+﻿import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@stms/contracts";
 import type {
   WorkItem,
   WorkItemWithRelations,
@@ -117,7 +117,7 @@ export async function createWorkItem(
   supabase: Client,
   input: CreateWorkItemInput & { reporter_id: string },
 ): Promise<WorkItem> {
-  // item_key is left null on insert — the BEFORE INSERT trigger fills it
+  // item_key is left null on insert â€” the BEFORE INSERT trigger fills it
   // via generate_work_item_key(). We cast through any because the generated
   // types still require item_key on Insert (regenerate to fix).
   const payload = {
