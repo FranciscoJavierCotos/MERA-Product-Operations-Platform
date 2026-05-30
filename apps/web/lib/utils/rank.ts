@@ -50,13 +50,24 @@ function midpoint(low: string, high: string | null): string {
 
   if (highChar - lowChar > 1) {
     const mid = Math.floor((lowChar + highChar) / 2);
-    return low.slice(0, i) + String.fromCharCode(mid);
+    if (mid > ALPHA_START) {
+      return low.slice(0, i) + String.fromCharCode(mid);
+    }
+    // mid === 'a': ranks cannot end with 'a'. Extend with MID_CHAR to stay valid.
+    return low.slice(0, i) + String.fromCharCode(ALPHA_START) + MID_CHAR;
   }
 
-  // No room at this position — emit the low char and recurse on the suffixes.
-  const prefix = low.slice(0, i + 1);
-  const lowSuffix = low.slice(i + 1);
-  return prefix + midpoint(lowSuffix || String.fromCharCode(ALPHA_START), null);
+  if (i < low.length) {
+    // Both strings have a char at position i. Emit low[i] and recurse on suffixes.
+    const prefix = low.slice(0, i + 1);
+    const lowSuffix = low.slice(i + 1);
+    return prefix + midpoint(lowSuffix || String.fromCharCode(ALPHA_START), null);
+  }
+
+  // low is a proper prefix of high, and high[i] === 'a'.
+  // Need: low + 'a' + (something strictly less than high.slice(i+1)).
+  const highSuffix = high.slice(i + 1);
+  return low + String.fromCharCode(ALPHA_START) + rankBetween(null, highSuffix || null);
 }
 
 export function rankBetween(
@@ -69,12 +80,16 @@ export function rankBetween(
   if (a == null && b == null) return MID_CHAR;
   if (a == null && b != null) {
     // Place before `b`: take a value smaller than b.
-    // Walk down from the first char.
     const first = b.charCodeAt(0);
-    if (first > ALPHA_START + 1) {
-      return String.fromCharCode(Math.floor((ALPHA_START + first) / 2));
+    if (first > ALPHA_START) {
+      const midFirst = Math.floor((ALPHA_START + first) / 2);
+      if (midFirst > ALPHA_START) {
+        return String.fromCharCode(midFirst);
+      }
+      // midFirst === 'a': cannot use as a single-char rank (ends with 'a').
+      return String.fromCharCode(ALPHA_START) + MID_CHAR;
     }
-    // Recursively insert before the suffix.
+    // b[0] === 'a': must recurse into suffix to stay below b.
     return b[0] + rankBetween(null, b.slice(1) || null);
   }
   if (a != null && b == null) return midpoint(a, null);
